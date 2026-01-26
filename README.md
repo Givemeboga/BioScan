@@ -43,4 +43,4 @@
 - **Lab Technician**
 - **Biologist**
 - **Administrator**
-- **Health Authority**
+- **Patient**
