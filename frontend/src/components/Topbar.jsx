@@ -1,7 +1,8 @@
 import React from 'react';
 import { AppBar, Toolbar, Typography, Box, IconButton, MenuItem, Menu } from '@mui/material';
 import AccountCircle from '@mui/icons-material/AccountCircle';
-import logo from '../assets/logo.png';
+
+const drawerWidth = 240;
 
 export default function Topbar() {
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -15,14 +16,11 @@ export default function Topbar() {
   };
 
   return (
-    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, backgroundColor: '#2196F3' }}>
+    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, backgroundColor: '#2196F3', width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}>
       <Toolbar>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <img src={logo} alt="BioScan Logo" style={{ height: '70px', width: '90px' }} />
-          <Typography variant="h6" noWrap component="div">
-            BioScan
-          </Typography>
-        </Box>
+        <Typography variant="h6" noWrap component="div">
+          BioScan
+        </Typography>
         <Box sx={{ flexGrow: 1 }} />
         <div>
           <IconButton
