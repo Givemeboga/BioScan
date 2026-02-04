@@ -1,14 +1,14 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import BaseDashboardLayout from "./layouts/BaseDashboardLayout";
-import BaseDashboard from "./pages/BaseDashboard";
+import Welcome from "./pages/Welcome";
 import TechnicienDashboard from "./pages/technicien/Dashboard";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Welcome />} />
         <Route element={<BaseDashboardLayout />}>
-          <Route path="/" element={<BaseDashboard />} />
           <Route path="/technicien" element={<TechnicienDashboard />} />
         </Route>
       </Routes>
