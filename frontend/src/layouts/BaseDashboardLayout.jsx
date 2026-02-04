@@ -5,8 +5,6 @@ import Topbar from '../components/Topbar';
 import { Outlet } from 'react-router-dom';
 
 export default function BaseDashboardLayout() {
-  const drawerWidth = 240;
-
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
