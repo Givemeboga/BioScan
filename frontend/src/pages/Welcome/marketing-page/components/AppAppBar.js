@@ -11,6 +11,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Drawer from '@mui/material/Drawer';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { Link } from 'react-router-dom';
 import ColorModeIconDropdown from '../../../../theme/shared-theme/ColorModeIconDropdown';
 import logo from '../../../../assets/logo.png';
 
@@ -33,9 +34,7 @@ const StyledToolbar = styled(Toolbar)(({ theme }) => ({
 export default function AppAppBar() {
   const [open, setOpen] = React.useState(false);
 
-  const toggleDrawer = (newOpen) => () => {
-    setOpen(newOpen);
-  };
+  const toggleDrawer = (newOpen) => () => setOpen(newOpen);
 
   return (
     <AppBar
@@ -50,44 +49,43 @@ export default function AppAppBar() {
     >
       <Container maxWidth="lg">
         <StyledToolbar variant="dense" disableGutters>
+          {/* Logo + Menu Desktop */}
           <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', px: 0 }}>
             <img src={logo} alt="Logo" style={{ height: '70px', marginRight: '16px' }} />
             <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
-              <Button variant="text" color="info" size="small">
-                Fonctionnalités
-              </Button>
-              <Button variant="text" color="info" size="small">
-                Témoignages
-              </Button>
-              <Button variant="text" color="info" size="small">
-                Points forts
-              </Button>
-              <Button variant="text" color="info" size="small">
-                Tarifs
-              </Button>
-              <Button variant="text" color="info" size="small" sx={{ minWidth: 0 }}>
-                FAQ
-              </Button>
-              <Button variant="text" color="info" size="small" sx={{ minWidth: 0 }}>
-                Blog
-              </Button>
+              <Button variant="text" color="info" size="small">Fonctionnalités</Button>
+              <Button variant="text" color="info" size="small">Témoignages</Button>
+              <Button variant="text" color="info" size="small">Points forts</Button>
+              <Button variant="text" color="info" size="small">Tarifs</Button>
+              <Button variant="text" color="info" size="small" sx={{ minWidth: 0 }}>FAQ</Button>
+              <Button variant="text" color="info" size="small" sx={{ minWidth: 0 }}>Blog</Button>
             </Box>
           </Box>
-          <Box
-            sx={{
-              display: { xs: 'none', md: 'flex' },
-              gap: 1,
-              alignItems: 'center',
-            }}
-          >
-            <Button color="primary" variant="text" size="small">
+
+          {/* Boutons Desktop */}
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, alignItems: 'center' }}>
+            <Button
+              component={Link}
+              to="/sign-in"
+              color="primary"
+              variant="text"
+              size="small"
+            >
               Se connecter
             </Button>
-            <Button color="primary" variant="contained" size="small">
+            <Button
+              component={Link}
+              to="/signup"
+              color="primary"
+              variant="contained"
+              size="small"
+            >
               S'inscrire
             </Button>
             <ColorModeIconDropdown />
           </Box>
+
+          {/* Boutons Mobile */}
           <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1 }}>
             <ColorModeIconDropdown size="medium" />
             <IconButton aria-label="Bouton menu" onClick={toggleDrawer(true)}>
@@ -97,19 +95,10 @@ export default function AppAppBar() {
               anchor="top"
               open={open}
               onClose={toggleDrawer(false)}
-              PaperProps={{
-                sx: {
-                  top: 'var(--template-frame-height, 0px)',
-                },
-              }}
+              PaperProps={{ sx: { top: 'var(--template-frame-height, 0px)' } }}
             >
               <Box sx={{ p: 2, backgroundColor: 'background.default' }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                  }}
-                >
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <IconButton onClick={toggleDrawer(false)}>
                     <CloseRoundedIcon />
                   </IconButton>
@@ -122,13 +111,26 @@ export default function AppAppBar() {
                 <MenuItem>FAQ</MenuItem>
                 <MenuItem>Blog</MenuItem>
                 <Divider sx={{ my: 3 }} />
+
                 <MenuItem>
-                  <Button color="primary" variant="contained" fullWidth>
+                  <Button
+                    component={Link}
+                    to="/signup"
+                    color="primary"
+                    variant="contained"
+                    fullWidth
+                  >
                     S'inscrire
                   </Button>
                 </MenuItem>
                 <MenuItem>
-                  <Button color="primary" variant="outlined" fullWidth>
+                  <Button
+                    component={Link}
+                    to="/sign-in"
+                    color="primary"
+                    variant="outlined"
+                    fullWidth
+                  >
                     Se connecter
                   </Button>
                 </MenuItem>

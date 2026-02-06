@@ -1,0 +1,144 @@
+/* Conteneur principal centré */
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f0f4f8;
+  font-family: Arial, sans-serif;
+}
+
+/* Carte du formulaire */
+.auth-card {
+      justify-content: center;
+
+  background: #ffffff;
+  padding: 40px 30px;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(173, 211, 223, 0.1);
+  width: 380px;
+  text-align: center;
+}
+
+/* Logo */
+.logo-img {
+  width: 170px;
+  margin-bottom: 20px;
+}
+
+/* Titres */
+.auth-title {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 30px;
+}
+
+/* Formulaire */
+.auth-form .form-group {
+  margin-bottom: 10px;
+  position: relative;
+}
+
+/* Input texte et mot de passe */
+.auth-form input {
+  width: 100%;
+  padding: 12px 15px;
+  padding-right: 5px; /* espace pour l’œil */
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.auth-form input:focus {
+  border-color: #00bfff; /* bleu ciel */
+}
+
+/* Eye pour password */
+.password-group .eye {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 18px;
+}
+
+/* Mot de passe oublié */
+.forgot-password {
+  text-align: right;
+  font-size: 13px;
+  color: #00bfff;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+/* Bouton principal */
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background-color: #00bfff;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #009acd;
+}
+
+/* Diviseur */
+.divider {
+  margin: 15px 0;
+  font-size: 12px;
+  color: #aaa;
+}
+
+/* Bouton Google */
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-google:hover {
+  background: #f7f7f7;
+  border-color: #00bfff;
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* Texte d'inscription */
+.signup-text {
+  margin-top: 20px;
+  font-size: 13px;
+}
+
+.signup-link {
+  color: #00bfff;
+  cursor: pointer;
+  font-weight: bold;
+}

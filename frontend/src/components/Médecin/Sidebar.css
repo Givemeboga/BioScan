@@ -1,0 +1,164 @@
+:root {
+  --sidebar-width-open: 240px;
+  --sidebar-width-collapsed: 76px;
+  --transition: 0.28s ease;
+  --primary: #0284c7;
+  --primary-dark: #0369a1;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --bg-hover: rgba(255,255,255,0.07);
+  --active-bg: rgba(2,132,199,0.18);
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width-open);
+  height: 100vh;
+  background: #0f172a;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  transition: width var(--transition);
+  box-shadow: 3px 0 15px rgba(0,0,0,0.28);
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-width-collapsed);
+}
+
+/* Header / Logo */
+.sidebar-header {
+  height: 88px;
+  padding: 1.25rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.logo-wrapper {
+    margin-top: 50px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.logo-wrapper:hover {
+  opacity: 0.92;
+}
+
+/* Le cercle bleu est supprimé → on garde juste l’image */
+.logo-img {
+  width: 200px;               /* valeur raisonnable pour un logo horizontal */
+  height: auto;               /* garde les proportions */
+  max-width: 100%;            /* ne dépasse jamais la sidebar */
+  object-fit: contain;
+  display: block;
+  transition: transform 0.25s ease;
+}
+
+
+
+.brand-name {
+  font-size: 1.38rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: white;
+  white-space: nowrap;
+}
+
+/* Navigation */
+.sidebar-nav {
+  flex: 1;
+  padding: 1.5rem 0.6rem;
+  overflow-y: auto;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 0.9rem 1.1rem;
+  color: var(--text-dim);
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.22s ease;
+  margin: 0.25rem 0;
+}
+
+.nav-item:hover {
+  background: var(--bg-hover);
+  color: white;
+}
+
+.nav-item.active {
+  background: var(--active-bg);
+  color: #7dd3fc;
+  font-weight: 500;
+}
+
+.icon-wrapper {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 1.1rem;
+  color: inherit;
+}
+
+.nav-label {
+  font-size: 0.96rem;
+  font-weight: 500;
+}
+
+/* Mode replié */
+.sidebar.collapsed .brand-name,
+.sidebar.collapsed .nav-label {
+  display: none;
+}
+
+.sidebar.collapsed .nav-item,
+.sidebar.collapsed .logout-btn {
+  justify-content: center;
+  padding: 0.95rem;
+}
+
+.sidebar.collapsed .icon-wrapper {
+  margin-right: 0;
+}
+
+/* Footer / Déconnexion */
+.sidebar-footer {
+  padding: 1rem 0.8rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0.9rem 1.1rem;
+  background: transparent;
+  border: none;
+  color: #f87171;
+  font-size: 0.96rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.22s;
+}
+
+.logout-btn:hover {
+  background: rgba(248,113,113,0.12);
+  color: #fca5a5;
+}
+
+.logout-btn .icon-wrapper {
+  color: inherit;
+}

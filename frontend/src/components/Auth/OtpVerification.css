@@ -1,0 +1,105 @@
+/* Component/Auth/otpVerification.css */
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f0f4f8;
+}
+
+.auth-card {
+  background: white;
+  padding: 40px 32px;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  width: 420px;
+  text-align: center;
+}
+
+.logo-img {
+  width: 140px;
+  margin-bottom: 24px;
+}
+
+.auth-title {
+  font-size: 26px;
+  margin: 0 0 12px 0;
+  color: #1f2937;
+}
+
+.subtitle {
+  font-size: 15px;
+  color: #4b5563;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+.otp-container {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.otp-input {
+  width: 48px;
+  height: 56px;
+  font-size: 28px;
+  font-weight: 600;
+  text-align: center;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  transition: all 0.15s;
+}
+
+.otp-input:focus {
+  outline: none;
+  border-color: #00bfff;
+  box-shadow: 0 0 0 3px rgba(0,191,255,0.12);
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: #00bfff;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #009acd;
+}
+
+.btn-primary:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.resend-section {
+  margin-top: 24px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.resend-btn {
+  background: none;
+  border: none;
+  color: #00bfff;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.back-link {
+  margin-top: 28px;
+  color: #00bfff;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-block;
+}

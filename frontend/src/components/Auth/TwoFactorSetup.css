@@ -1,0 +1,22 @@
+/* TwoFactorSetup.css - styles simples pour l'interface 2FA */
+
+.auth-container { display:flex; justify-content:center; align-items:center; min-height:100vh; background:#f6f8fb; font-family:Arial, sans-serif; }
+.auth-card.twofa-card { width:480px; padding:24px; border-radius:12px; background:#fff; box-shadow:0 8px 20px rgba(7,22,39,0.06); text-align:center; }
+.logo-img { width:100px; margin-bottom:8px; }
+.auth-title { font-size:20px; margin:8px 0; color:#0f1724; font-weight:700; }
+.subtitle { font-size:13px; color:#6b7280; margin-bottom:14px; line-height:1.4; }
+
+.twofa-actions { display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+.btn-primary { padding:10px 12px; background:#06a6ff; color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; }
+.btn-outline { padding:10px 12px; background:#fff; color:#0f1724; border:1px solid #e5e7eb; border-radius:8px; cursor:pointer; }
+.btn-link { padding:8px; background:none; color:#06a6ff; border:none; cursor:pointer; text-decoration:underline; }
+
+.qr-box { display:flex; flex-direction:column; align-items:center; gap:8px; margin:12px 0; }
+.qr-placeholder { width:180px; height:180px; display:flex; align-items:center; justify-content:center; border:2px dashed #e5e7eb; border-radius:8px; color:#9ca3af; font-weight:700; }
+.secret { font-size:13px; color:#111827; }
+
+.verify-form { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+.form-input { padding:10px; border:1px solid #e5e7eb; border-radius:8px; font-size:14px; }
+.verify-actions { display:flex; gap:10px; justify-content:center; align-items:center; }
+.sms-resend { margin-top:8px; font-size:13px; color:#6b7280; }
+.small { font-size:12px; color:#6b7280; }
