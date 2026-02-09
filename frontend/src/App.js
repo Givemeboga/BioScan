@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 // Layouts
 import BaseDashboardLayout from "./layouts/BaseDashboardLayout";
 import MedecinLayout from "./layouts/MedecinLayout";
+import TechnicienLayout from "./layouts/TechnicienLayout";
 
 // Pages publiques / auth
 import Welcome from "./pages/Welcome";
@@ -15,6 +16,8 @@ import TwoFactorSetup from "./components/Auth/TwoFactorSetup";
 
 // Pages technicien
 import TechnicienDashboard from "./pages/technicien/Dashboard";
+import UploadFiles from "./pages/technicien/UploadFiles";
+import FilesList from "./pages/technicien/FilesList"; // si existant
 
 // Pages médecin
 import MedecinDashboard from "./components/Médecin/BaseDashboardMedecin";
@@ -35,30 +38,24 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/2fa-setup" element={<TwoFactorSetup />} />
 
-        {/* Routes technicien */}
-        <Route element={<BaseDashboardLayout />}>
-          <Route path="/technicien" element={<TechnicienDashboard />} />
-        </Route>
-
-        {/* Routes médecin – toutes imbriquées sous le layout */}
+        {/* === Routes médecin (layout parent) === */}
         <Route element={<MedecinLayout />}>
-          {/* Le dashboard principal (tableau de bord) */}
           <Route path="/medecin-biologiste" element={<MedecinDashboard />} />
-
-          {/* Sous-pages */}
           <Route path="/medecin-biologiste/tableau" element={<TableauDeBord />} />
           <Route path="/medecin-biologiste/bilan" element={<BilanBiologique />} />
+          <Route path="/medecin-biologiste/rapports" element={<RapportAnomalie />} />
+        </Route>
 
-      
-          {<Route path="/medecin-biologiste/rapports" element={<RapportAnomalie />} /> }
-          {/* <Route path="/medecin-biologiste/parametres" element={<Parametres />} /> */}
+        {/* === Routes technicien (layout parent) : garder UNE seule déclaration === */}
+        <Route path="/technicien" element={<TechnicienLayout />}>
+          <Route index element={<TechnicienDashboard />} />
+          <Route path="tableau" element={<TechnicienDashboard />} />
+          <Route path="upload" element={<UploadFiles />} />
+          <Route path="files" element={<FilesList />} />
         </Route>
 
         {/* Fallbacks */}
-        <Route path="/404" element={<div style={{ padding: 40, textAlign: "center" }}>
-          <h1>404</h1>
-          <p>Page non trouvée</p>
-        </div>} />
+        <Route path="/404" element={<div style={{ padding: 40, textAlign: "center" }}><h1>404</h1><p>Page non trouvée</p></div>} />
         <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
