@@ -24,6 +24,10 @@ import MedecinDashboard from "./components/Médecin/BaseDashboardMedecin";
 import TableauDeBord from "./pages/MedecinBiologiste/TableauDeBord";
 import BilanBiologique from "./pages/MedecinBiologiste/BilanBiologique";
 import RapportAnomalie from "./pages/MedecinBiologiste/RapportAnomalie";
+import RapportMedicale from "./pages/MedecinBiologiste/RapportMedical";
+import  Parametres from "./pages/MedecinBiologiste/Parametres";
+import ProfilMedecin from "./pages/MedecinBiologiste/ProfilMedecin";
+import NotificationMedecin from "./pages/MedecinBiologiste/Notification";
 
 function App() {
   return (
@@ -40,10 +44,15 @@ function App() {
 
         {/* === Routes médecin (layout parent) === */}
         <Route element={<MedecinLayout />}>
-          <Route path="/medecin-biologiste" element={<MedecinDashboard />} />
           <Route path="/medecin-biologiste/tableau" element={<TableauDeBord />} />
           <Route path="/medecin-biologiste/bilan" element={<BilanBiologique />} />
           <Route path="/medecin-biologiste/rapports" element={<RapportAnomalie />} />
+          <Route path="/medecin-biologiste/rapportAnomalie" element={<RapportAnomalie />} /> 
+          <Route path="/medecin-biologiste/parametres" element={<Parametres />} /> 
+          <Route path="/medecin-biologiste/profil" element={<ProfilMedecin />} /> 
+          <Route path="/medecin-biologiste/notifications" element={<NotificationMedecin/>} /> 
+              <Route path="/medecin-biologiste/rapportMédicale" element={<      RapportMedicale
+/>} /> 
         </Route>
 
         {/* === Routes technicien (layout parent) : garder UNE seule déclaration === */}
@@ -52,6 +61,10 @@ function App() {
           <Route path="tableau" element={<TechnicienDashboard />} />
           <Route path="upload" element={<UploadFiles />} />
           <Route path="files" element={<FilesList />} />
+      
+
+         
+
         </Route>
 
         {/* Fallbacks */}

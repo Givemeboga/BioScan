@@ -7,7 +7,7 @@
 }
 
 .page-header {
-    margin-top: 30px;
+  margin-top: 30px;
   margin-bottom: 28px;
 }
 
@@ -198,7 +198,132 @@
   font-size: 1.05rem;
 }
 
-/* Responsive */
+/* ──────────────────────────────────────────────── */
+/*               MODAL STYLES                      */
+/* ──────────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px); /* optionnel - joli effet */
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 620px;
+  padding: 24px 32px;
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  font-weight: 300;
+  color: #6b7280;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: #1a202c;
+}
+
+.modal-content h2 {
+  margin: 0 0 20px 0;
+  font-size: 1.6rem;
+  color: #1a202c;
+}
+
+.modal-info p {
+  margin: 12px 0;
+  font-size: 1rem;
+  color: #374151;
+}
+
+.modal-info strong {
+  color: #1a202c;
+  font-weight: 600;
+}
+
+.results-section {
+  margin-top: 24px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+.results-section h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.15rem;
+  color: #1a202c;
+}
+
+.placeholder {
+  color: #6b7280;
+  font-style: italic;
+  margin: 0;
+}
+
+.modal-actions {
+  margin-top: 28px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.modal-actions button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-actions button:first-child {
+  background: #e5e7eb;
+  color: #374151;
+  border: none;
+}
+
+.modal-actions button:first-child:hover {
+  background: #d1d5db;
+}
+
+.modal-actions .btn-primary {
+  /* déjà défini plus haut */
+}
+
+/* Responsive modal */
+@media (max-width: 640px) {
+  .modal-content {
+    padding: 20px;
+    max-width: 95%;
+  }
+
+  .modal-close {
+    top: 12px;
+    right: 16px;
+    font-size: 1.8rem;
+  }
+}
+
+/* Responsive global (existant) */
 @media (max-width: 992px) {
   .actions-bar {
     flex-direction: column;

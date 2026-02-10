@@ -1,0 +1,288 @@
+.profil-medecin-page {
+  padding: 32px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.page-header h1 {
+  font-size: 2.3rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 8px;
+}
+
+.page-header p {
+  color: #64748b;
+  font-size: 1.05rem;
+}
+
+.profil-container {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 32px;
+}
+
+.profil-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+  padding: 40px;
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.profil-avatar {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.avatar-img {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 6px solid #e2e8f0;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+  margin-bottom: 16px;
+}
+
+.btn-change-photo {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-change-photo:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.profil-info {
+  flex: 1;
+}
+
+.profil-info h2 {
+  margin: 0 0 8px;
+  font-size: 2.1rem;
+  color: #1e293b;
+}
+
+.specialite {
+  color: #3b82f6;
+  font-weight: 500;
+  font-size: 1.15rem;
+  margin: 0 0 32px 0;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 40px;
+  margin-bottom: 32px;
+}
+
+.info-item {
+  font-size: 1.03rem;
+}
+
+.info-item .label {
+  font-weight: 600;
+  color: #475569;
+  width: 140px;
+  display: inline-block;
+}
+
+.profil-actions {
+  margin-top: 32px;
+}
+
+.btn-edit {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-edit:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* ─── Mode édition ─── */
+.form-section {
+  margin-bottom: 44px;
+}
+
+.form-section-title {
+  font-size: 1.35rem;
+  color: #1e293b;
+  margin: 0 0 20px;
+  font-weight: 600;
+}
+
+.password-section {
+  padding-top: 32px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.help-text {
+  color: #64748b;
+  font-size: 0.92rem;
+  margin: -8px 0 20px 0;
+}
+
+.form-group {
+  margin-bottom: 22px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.97rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 0.95rem;
+  margin: 8px 0 16px;
+  font-weight: 500;
+}
+
+.form-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+  padding: 12px 32px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.btn-secondary {
+  background: #e2e8f0;
+  color: #475569;
+  padding: 12px 32px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background: #cbd5e1;
+}
+
+/* Stats */
+.stats-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+  padding: 32px;
+  height: fit-content;
+}
+
+.stats-card h3 {
+  margin: 0 0 24px;
+  font-size: 1.4rem;
+}
+
+.stats-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.stats-list li {
+  margin-bottom: 16px;
+  font-size: 1.05rem;
+}
+
+.stats-list strong {
+  color: #3b82f6;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .profil-container {
+    grid-template-columns: 1fr;
+  }
+  .profil-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .info-item {
+    justify-content: center;
+  }
+  .info-item .label {
+    width: auto;
+    margin-right: 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .avatar-img {
+    width: 150px;
+    height: 150px;
+  }
+  .form-actions {
+    flex-direction: column;
+  }
+  .btn-primary,
+  .btn-secondary,
+  .btn-edit {
+    width: 100%;
+  }
+}
