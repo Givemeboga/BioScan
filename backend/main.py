@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 # Routers
 from api.routers.bilan_biologique import router as bilan_router
 from api.routers.profil import router as profil_router
-from api.routers.auth import router as auth_router             # ← AJOUTÉ
 
 # Base de données
 from database import engine, Base
@@ -35,7 +34,6 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 # Inclusion des routers
-app.include_router(auth_router, prefix="/api")
 app.include_router(bilan_router, prefix="/api")
 app.include_router(profil_router, prefix="/api")
 
