@@ -9,7 +9,7 @@ const navItems = [
   { to: '/admin/medecins',            label: 'Médecins',            icon: 'doctor'   },
   { to: '/admin/techniciens',         label: 'Techniciens',         icon: 'tech'     },
   { to: '/admin/reports',             label: 'Rapports',            icon: 'report'   },
-  { to: '/admin/settings',            label: 'Paramètres',          icon: 'settings' },
+  { to: '/admin/parametres',          label: 'Paramètres',          icon: 'settings' },
 ];
 
 function NavIcon({ name }) {
@@ -66,7 +66,6 @@ export default function Sidebar({ collapsed = false, onClose }) {
             to={item.to}
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
             end
-            onClick={onClose}
           >
             <div className="icon-wrapper">
               <NavIcon name={item.icon} />
