@@ -47,7 +47,9 @@
   cursor: pointer;
   padding: 10px;
   border-radius: 8px;
-  display: none; /* caché par défaut, visible en mobile */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: background 0.2s;
 }
 

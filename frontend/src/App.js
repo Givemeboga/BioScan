@@ -2,10 +2,15 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 // Layouts
-import BaseDashboardLayout from "./layouts/BaseDashboardLayout";
 import MedecinLayout from "./layouts/MedecinLayout";
 import TechnicienLayout from "./layouts/TechnicienLayout";
 import AdminLayout from "./layouts/AdminLayout";
+import AdminDashboard from "./pages/Admin/Dashboard";
+import AdminUsers from "./pages/Admin/Users";
+import AdminMedecins from "./pages/Admin/Medecins";
+import AdminTechniciens from "./pages/Admin/Techniciens";
+import AdminReports from "./pages/Admin/Reports";
+import AdminParametres from "./pages/Admin/Parametres";
 
 // Pages publiques / auth
 import Welcome from "./pages/Welcome";
@@ -21,12 +26,11 @@ import UploadFiles from "./pages/technicien/UploadFiles";
 import FilesList from "./pages/technicien/FilesList"; // si existant
 
 // Pages médecin
-import MedecinDashboard from "./components/Médecin/BaseDashboardMedecin";
 import TableauDeBord from "./pages/MedecinBiologiste/TableauDeBord";
 import BilanBiologique from "./pages/MedecinBiologiste/BilanBiologique";
 import RapportAnomalie from "./pages/MedecinBiologiste/RapportAnomalie";
 import RapportMedicale from "./pages/MedecinBiologiste/RapportMedical";
-import  Parametres from "./pages/MedecinBiologiste/Parametres";
+import ParametresMedecin from "./pages/MedecinBiologiste/Parametres";
 import ProfilMedecin from "./pages/MedecinBiologiste/ProfilMedecin";
 import NotificationMedecin from "./pages/MedecinBiologiste/Notification";
 
@@ -49,22 +53,21 @@ function App() {
           <Route path="/medecin-biologiste/bilan" element={<BilanBiologique />} />
           <Route path="/medecin-biologiste/rapports" element={<RapportAnomalie />} />
           <Route path="/medecin-biologiste/rapportAnomalie" element={<RapportAnomalie />} /> 
-          <Route path="/medecin-biologiste/parametres" element={<Parametres />} /> 
+          <Route path="/medecin-biologiste/parametres" element={<ParametresMedecin />} /> 
           <Route path="/medecin-biologiste/profil" element={<ProfilMedecin />} /> 
-          <Route path="/medecin-biologiste/notifications" element={<NotificationMedecin/>} /> 
-              <Route path="/medecin-biologiste/rapportMédicale" element={<      RapportMedicale
-/>} /> 
+          <Route path="/medecin-biologiste/notifications" element={<NotificationMedecin />} />
+          <Route path="/medecin-biologiste/rapportMédicale" element={<RapportMedicale />} /> 
         </Route>
 
         {/* === Routes admin (layout parent) === */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<div style={{ padding: 40 }}><h2>Admin Dashboard</h2><p>Page à créer</p></div>} />
-          <Route path="users" element={<div style={{ padding: 40 }}><h2>Gestion Utilisateurs</h2><p>Page à créer</p></div>} />
-          <Route path="medecins" element={<div style={{ padding: 40 }}><h2>Gestion Médecins</h2><p>Page à créer</p></div>} />
-          <Route path="techniciens" element={<div style={{ padding: 40 }}><h2>Gestion Techniciens</h2><p>Page à créer</p></div>} />
-          <Route path="reports" element={<div style={{ padding: 40 }}><h2>Rapports</h2><p>Page à créer</p></div>} />
-          <Route path="settings" element={<div style={{ padding: 40 }}><h2>Paramètres</h2><p>Page à créer</p></div>} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="medecins" element={<AdminMedecins />} />
+          <Route path="techniciens" element={<AdminTechniciens />} />
+          <Route path="reports" element={<AdminReports />} />
+          <Route path="parametres" element={<AdminParametres />} /> 
           <Route path="profile" element={<div style={{ padding: 40 }}><h2>Profil Admin</h2><p>Page à créer</p></div>} />
           <Route path="notifications" element={<div style={{ padding: 40 }}><h2>Notifications</h2><p>Page à créer</p></div>} />
         </Route>
