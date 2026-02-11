@@ -1,5 +1,5 @@
 # 🧬 BioScan
-![BioScan Logo](assets/logo.png)
+![BioScan Logo](assets/Capture%20d’écran%202026-02-05%20215037.png)
 ### Hybrid Cloud Platform for Medical Data Analysis and Security
 
 ---

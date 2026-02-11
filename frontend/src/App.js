@@ -75,10 +75,6 @@ function App() {
           <Route path="tableau" element={<TechnicienDashboard />} />
           <Route path="upload" element={<UploadFiles />} />
           <Route path="files" element={<FilesList />} />
-      
-
-         
-
         </Route>
 
         {/* Fallbacks */}
