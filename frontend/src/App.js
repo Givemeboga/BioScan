@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import BaseDashboardLayout from "./layouts/BaseDashboardLayout";
 import MedecinLayout from "./layouts/MedecinLayout";
 import TechnicienLayout from "./layouts/TechnicienLayout";
+import AdminLayout from "./layouts/AdminLayout";
 
 // Pages publiques / auth
 import Welcome from "./pages/Welcome";
@@ -53,6 +54,19 @@ function App() {
           <Route path="/medecin-biologiste/notifications" element={<NotificationMedecin/>} /> 
               <Route path="/medecin-biologiste/rapportMédicale" element={<      RapportMedicale
 />} /> 
+        </Route>
+
+        {/* === Routes admin (layout parent) === */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<div style={{ padding: 40 }}><h2>Admin Dashboard</h2><p>Page à créer</p></div>} />
+          <Route path="users" element={<div style={{ padding: 40 }}><h2>Gestion Utilisateurs</h2><p>Page à créer</p></div>} />
+          <Route path="medecins" element={<div style={{ padding: 40 }}><h2>Gestion Médecins</h2><p>Page à créer</p></div>} />
+          <Route path="techniciens" element={<div style={{ padding: 40 }}><h2>Gestion Techniciens</h2><p>Page à créer</p></div>} />
+          <Route path="reports" element={<div style={{ padding: 40 }}><h2>Rapports</h2><p>Page à créer</p></div>} />
+          <Route path="settings" element={<div style={{ padding: 40 }}><h2>Paramètres</h2><p>Page à créer</p></div>} />
+          <Route path="profile" element={<div style={{ padding: 40 }}><h2>Profil Admin</h2><p>Page à créer</p></div>} />
+          <Route path="notifications" element={<div style={{ padding: 40 }}><h2>Notifications</h2><p>Page à créer</p></div>} />
         </Route>
 
         {/* === Routes technicien (layout parent) : garder UNE seule déclaration === */}
