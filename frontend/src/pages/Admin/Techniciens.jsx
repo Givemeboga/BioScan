@@ -3,77 +3,77 @@ import './Techniciens.css';
 
 const initialTechniciens = [
   {
-    id: 1,
+    technicien_id: 1,
     nom: 'Ines Gharbi',
     departement: 'Laboratoire Central',
     email: 'ines.gharbi@bioscan.tn',
     telephone: '+216 27 987 321',
-    utilisateurId: 3,
+    utilisateur_id: 3,
     bilansTraites: 1247,
     analysesIA: 892,
     rapportsCrees: 1103,
-    status: 'ACTIVE',
-    dateInscription: '2026-01-19',
+    statut: 'ACTIVE',
+    date_generation: '2026-01-19',
     derniereActivite: '2026-02-11 10:45',
     tempsTraitementMoyen: '8.4 min',
     bilansEnAttente: 12,
   },
   {
-    id: 2,
+    technicien_id: 2,
     nom: 'Leila Mansour',
     departement: 'Hematologie',
     email: 'leila.mansour@bioscan.tn',
     telephone: '+216 29 220 990',
-    utilisateurId: 5,
+    utilisateur_id: 5,
     bilansTraites: 2134,
     analysesIA: 1876,
     rapportsCrees: 2089,
-    status: 'ACTIVE',
-    dateInscription: '2025-09-14',
+    statut: 'ACTIVE',
+    date_generation: '2025-09-14',
     derniereActivite: '2026-02-11 11:20',
     tempsTraitementMoyen: '6.8 min',
     bilansEnAttente: 5,
   },
   {
-    id: 3,
+    technicien_id: 3,
     nom: 'Fares Ben Ali',
     departement: 'Biochimie',
     email: 'fares.benali@bioscan.tn',
     telephone: '+216 26 543 789',
-    utilisateurId: 8,
+    utilisateur_id: 8,
     bilansTraites: 987,
     analysesIA: 654,
     rapportsCrees: 912,
-    status: 'ACTIVE',
-    dateInscription: '2025-12-01',
+    statut: 'ACTIVE',
+    date_generation: '2025-12-01',
     derniereActivite: '2026-02-11 09:30',
     tempsTraitementMoyen: '9.2 min',
     bilansEnAttente: 18,
   },
   {
-    id: 4,
+    technicien_id: 4,
     nom: 'Amira Jlidi',
     departement: 'Microbiologie',
     email: 'amira.jlidi@bioscan.tn',
     telephone: '+216 28 765 432',
-    utilisateurId: 11,
+    utilisateur_id: 11,
     bilansTraites: 756,
     analysesIA: 521,
     rapportsCrees: 698,
-    status: 'SUSPENDED',
-    dateInscription: '2025-11-10',
+    statut: 'INACTIVE',
+    date_generation: '2025-11-10',
     derniereActivite: '2026-02-05 14:15',
     tempsTraitementMoyen: '11.5 min',
     bilansEnAttente: 0,
   },
 ];
 
-const statuses = ['TOUS', 'ACTIVE', 'SUSPENDED'];
+const statuts = ['TOUS', 'ACTIVE', 'INACTIVE'];
 
 export default function AdminTechniciens() {
   const [techniciens, setTechniciens] = useState(initialTechniciens);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('TOUS');
+  const [statutFilter, setStatutFilter] = useState('TOUS');
   const [selectedId, setSelectedId] = useState(null);
 
   const filteredTechniciens = useMemo(() => {
@@ -82,16 +82,16 @@ export default function AdminTechniciens() {
         tech.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tech.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tech.departement.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'TOUS' || tech.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesStatut = statutFilter === 'TOUS' || tech.statut === statutFilter;
+      return matchesSearch && matchesStatut;
     });
-  }, [techniciens, searchTerm, statusFilter]);
+  }, [techniciens, searchTerm, statutFilter]);
 
-  const updateTechnicienStatus = (id, status) => {
-    setTechniciens((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
+  const updateTechnicienStatut = (technicien_id, statut) => {
+    setTechniciens((prev) => prev.map((t) => (t.technicien_id === technicien_id ? { ...t, statut } : t)));
   };
 
-  const selectedTechnicien = selectedId ? techniciens.find((t) => t.id === selectedId) : null;
+  const selectedTechnicien = selectedId ? techniciens.find((t) => t.technicien_id === selectedId) : null;
 
   return (
     <div className="admin-techniciens-page">
@@ -119,11 +119,11 @@ export default function AdminTechniciens() {
               </div>
 
               <div className="field-group">
-                <label htmlFor="status">Statut</label>
-                <select id="status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                  {statuses.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
+                <label htmlFor="statut">Statut</label>
+                <select id="statut" value={statutFilter} onChange={(e) => setStatutFilter(e.target.value)}>
+                  {statuts.map((statut) => (
+                    <option key={statut} value={statut}>
+                      {statut}
                     </option>
                   ))}
                 </select>
@@ -134,9 +134,9 @@ export default function AdminTechniciens() {
           <div className="techniciens-grid">
             {filteredTechniciens.map((tech) => (
               <div
-                key={tech.id}
-                className={`technicien-card ${selectedId === tech.id ? 'selected' : ''}`}
-                onClick={() => setSelectedId(tech.id)}
+                key={tech.technicien_id}
+                className={`technicien-card ${selectedId === tech.technicien_id ? 'selected' : ''}`}
+                onClick={() => setSelectedId(tech.technicien_id)}
               >
                 <div className="technicien-header">
                   <div className="technicien-avatar">{tech.nom[0]}</div>
@@ -144,8 +144,8 @@ export default function AdminTechniciens() {
                     <h3>{tech.nom}</h3>
                     <p className="departement">{tech.departement}</p>
                   </div>
-                  <span className={`status ${tech.status === 'ACTIVE' ? 'active' : 'suspended'}`}>
-                    {tech.status}
+                  <span className={`status ${tech.statut === 'ACTIVE' ? 'active' : 'inactive'}`}>
+                    {tech.statut}
                   </span>
                 </div>
 
@@ -181,7 +181,7 @@ export default function AdminTechniciens() {
                 </div>
 
                 <div className="technicien-footer">
-                  <span className="date-info">Inscrit le {tech.dateInscription}</span>
+                  <span className="date-info">Inscrit le {tech.date_generation}</span>
                 </div>
               </div>
             ))}
@@ -221,7 +221,7 @@ export default function AdminTechniciens() {
               </div>
               <div className="info-row">
                 <span className="label">Utilisateur lié</span>
-                <span className="value">#{selectedTechnicien.utilisateurId}</span>
+                <span className="value">#{selectedTechnicien.utilisateur_id}</span>
               </div>
             </div>
 
@@ -257,7 +257,7 @@ export default function AdminTechniciens() {
               </div>
               <div className="perf-stat">
                 <span className="perf-label">Date inscription</span>
-                <span className="perf-value">{selectedTechnicien.dateInscription}</span>
+                <span className="perf-value">{selectedTechnicien.date_generation}</span>
               </div>
             </div>
 
@@ -268,15 +268,15 @@ export default function AdminTechniciens() {
                 <button className="action-btn action-outline">Voir statistiques détaillées</button>
                 <button className="action-btn action-outline">Activité log</button>
                 <button
-                  className={`action-btn ${selectedTechnicien.status === 'ACTIVE' ? 'action-warn' : 'action-ok'}`}
+                  className={`action-btn ${selectedTechnicien.statut === 'ACTIVE' ? 'action-warn' : 'action-ok'}`}
                   onClick={() =>
-                    updateTechnicienStatus(
-                      selectedTechnicien.id,
-                      selectedTechnicien.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'
+                    updateTechnicienStatut(
+                      selectedTechnicien.technicien_id,
+                      selectedTechnicien.statut === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
                     )
                   }
                 >
-                  {selectedTechnicien.status === 'ACTIVE' ? 'Suspendre' : 'Activer'}
+                  {selectedTechnicien.statut === 'ACTIVE' ? 'Désactiver' : 'Activer'}
                 </button>
               </div>
             </div>
