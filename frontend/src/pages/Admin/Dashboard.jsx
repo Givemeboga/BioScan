@@ -16,8 +16,8 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Le
 export default function AdminDashboard() {
   const stats = {
     utilisateurs: 382,
-    comptesActifs: 341,
-    signalements: 12,
+    utilisateursActifs: 341,
+    documentsEnAttente: 12,
     rapportsGeneres: 128,
   };
 
@@ -47,7 +47,7 @@ export default function AdminDashboard() {
   };
 
   const donutData = {
-    labels: ['Actifs', 'En attente', 'Suspendus', 'Supprimes'],
+    labels: ['ACTIVE', 'EN_COURS', 'VALIDE', 'REJETE'],
     datasets: [
       {
         data: [71, 14, 9, 6],
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
       <header className="dashboard-header">
         <div>
           <h1>Tableau de bord admin</h1>
-          <p>Vue d'ensemble des operations - {new Date().toLocaleDateString('fr-TN')}</p>
+          <p>Vue d'ensemble des opérations - {new Date().toLocaleDateString('fr-TN')}</p>
         </div>
         <button className="btn-refresh">Actualiser</button>
       </header>
@@ -85,16 +85,16 @@ export default function AdminDashboard() {
         <div className="stat-card success">
           <div className="stat-icon">✅</div>
           <div className="stat-content">
-            <h3>Comptes actifs</h3>
-            <div className="stat-value">{stats.comptesActifs}</div>
+            <h3>Utilisateurs actifs</h3>
+            <div className="stat-value">{stats.utilisateursActifs}</div>
           </div>
         </div>
 
         <div className="stat-card warning">
-          <div className="stat-icon">🚩</div>
+          <div className="stat-icon">⏳</div>
           <div className="stat-content">
-            <h3>Signalements</h3>
-            <div className="stat-value">{stats.signalements}</div>
+            <h3>Documents en attente</h3>
+            <div className="stat-value">{stats.documentsEnAttente}</div>
           </div>
         </div>
 

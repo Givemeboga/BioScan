@@ -11,7 +11,7 @@ const mockReports = [
     medecinId: 2,
     patient: 'Mohammed Aziz',
     patientId: 142,
-    status: 'VALIDE',
+    statut: 'VALIDE',
     dateCreation: '2026-02-10',
     dateValidation: '2026-02-10',
   },
@@ -23,7 +23,7 @@ const mockReports = [
     medecinId: 4,
     patient: 'Fatma Ben Ali',
     patientId: 89,
-    status: 'VALIDE',
+    statut: 'VALIDE',
     dateCreation: '2026-02-09',
     dateValidation: '2026-02-09',
   },
@@ -35,7 +35,7 @@ const mockReports = [
     medecinId: 2,
     patient: 'Karim Jlidi',
     patientId: 203,
-    status: 'EN_COURS',
+    statut: 'EN_COURS',
     dateCreation: '2026-02-11',
     dateValidation: null,
   },
@@ -47,7 +47,7 @@ const mockReports = [
     medecinId: 7,
     patient: 'Amira Mansour',
     patientId: 178,
-    status: 'REJETE',
+    statut: 'REJETE',
     dateCreation: '2026-02-08',
     dateValidation: '2026-02-09',
   },
@@ -59,7 +59,7 @@ const mockReports = [
     medecinId: 9,
     patient: 'Youssef Gharbi',
     patientId: 91,
-    status: 'VALIDE',
+    statut: 'VALIDE',
     dateCreation: '2026-02-07',
     dateValidation: '2026-02-08',
   },
@@ -71,13 +71,13 @@ const mockReports = [
     medecinId: 4,
     patient: 'Ines Trabelsi',
     patientId: 156,
-    status: 'EN_COURS',
+    statut: 'EN_COURS',
     dateCreation: '2026-02-11',
     dateValidation: null,
   },
 ];
 
-const statusOptions = ['TOUS', 'VALIDE', 'EN_COURS', 'REJETE'];
+const statusOptions = ['TOUS', 'BROUILLON', 'EN_COURS', 'VALIDE', 'REJETE', 'ARCHIVE'];
 const typeOptions = ['TOUS', 'MEDICAL', 'ANOMALIE'];
 const medecins = [
   'TOUS',
@@ -88,9 +88,9 @@ const medecins = [
 ];
 
 export default function AdminReports() {
-  const [reports, setReports] = useState(mockReports);
+  const [reports] = useState(mockReports);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('TOUS');
+  const [statutFilter, setStatutFilter] = useState('TOUS');
   const [typeFilter, setTypeFilter] = useState('TOUS');
   const [medecinFilter, setMedecinFilter] = useState('TOUS');
   const [dateFilter, setDateFilter] = useState('');
@@ -98,9 +98,9 @@ export default function AdminReports() {
   const stats = useMemo(() => {
     const totalMedical = reports.filter((r) => r.type === 'MEDICAL').length;
     const totalAnomalie = reports.filter((r) => r.type === 'ANOMALIE').length;
-    const valides = reports.filter((r) => r.status === 'VALIDE').length;
-    const enCours = reports.filter((r) => r.status === 'EN_COURS').length;
-    const rejetes = reports.filter((r) => r.status === 'REJETE').length;
+    const valides = reports.filter((r) => r.statut === 'VALIDE').length;
+    const enCours = reports.filter((r) => r.statut === 'EN_COURS').length;
+    const rejetes = reports.filter((r) => r.statut === 'REJETE').length;
 
     return { totalMedical, totalAnomalie, valides, enCours, rejetes };
   }, [reports]);
@@ -111,14 +111,14 @@ export default function AdminReports() {
         report.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         report.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
         report.medecin.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'TOUS' || report.status === statusFilter;
+      const matchesStatut = statutFilter === 'TOUS' || report.statut === statutFilter;
       const matchesType = typeFilter === 'TOUS' || report.type === typeFilter;
       const matchesMedecin = medecinFilter === 'TOUS' || report.medecin === medecinFilter;
       const matchesDate = !dateFilter || report.dateCreation === dateFilter;
 
-      return matchesSearch && matchesStatus && matchesType && matchesMedecin && matchesDate;
+      return matchesSearch && matchesStatut && matchesType && matchesMedecin && matchesDate;
     });
-  }, [reports, searchTerm, statusFilter, typeFilter, medecinFilter, dateFilter]);
+  }, [reports, searchTerm, statutFilter, typeFilter, medecinFilter, dateFilter]);
 
   const barData = {
     labels: ['Validés', 'En cours', 'Rejetés'],
@@ -243,11 +243,11 @@ export default function AdminReports() {
           </div>
 
           <div className="field-group">
-            <label htmlFor="status">Statut</label>
-            <select id="status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-              {statusOptions.map((status) => (
-                <option key={status} value={status}>
-                  {status}
+            <label htmlFor="statut">Statut</label>
+            <select id="statut" value={statutFilter} onChange={(e) => setStatutFilter(e.target.value)}>
+              {statusOptions.map((statut) => (
+                <option key={statut} value={statut}>
+                  {statut}
                 </option>
               ))}
             </select>
@@ -309,14 +309,14 @@ export default function AdminReports() {
                   <td>
                     <span
                       className={`status ${
-                        report.status === 'VALIDE'
+                        report.statut === 'VALIDE'
                           ? 'valide'
-                          : report.status === 'EN_COURS'
+                          : report.statut === 'EN_COURS'
                           ? 'en-cours'
                           : 'rejete'
                       }`}
                     >
-                      {report.status}
+                      {report.statut}
                     </span>
                   </td>
                   <td>{report.dateCreation}</td>
