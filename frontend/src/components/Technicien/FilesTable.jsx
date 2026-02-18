@@ -1,67 +1,174 @@
 import React, { useMemo, useState } from "react";
 import {
-  Table, TableHead, TableBody, TableRow, TableCell, TableContainer, TextField, IconButton, Chip, Box, Pagination, Stack, Tooltip
+  Box,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
+  TextField,
+  IconButton,
+  Chip,
+  Pagination,
+  Stack,
+  Tooltip,
+  Typography,
+  Paper,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ReplayIcon from "@mui/icons-material/Replay";
 import DeleteIcon from "@mui/icons-material/Delete";
 
-export default function FilesTable({ files = [], onRelaunch = () => {}, onDelete = () => {}, onView = () => {} }) {
+export default function FilesTable({
+  files = [],
+  onRelaunch = () => {},
+  onDelete = () => {},
+  onView = () => {},
+}) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [page, setPage] = useState(1);
+
   const perPage = 8;
 
+  /* ---------------------------- Status Normalizer ---------------------------- */
+
+  const normalizeStatus = (status = "") => status.toString().toUpperCase();
+
+  const statusChipSx = (status) => {
+    const s = normalizeStatus(status);
+
+    if (["VALIDE", "VALIDATED"].includes(s))
+      return {
+        bgcolor: "#E8F5E9",
+        color: "#2E7D32",
+      };
+
+    if (["EN_COURS", "PROCESSING"].includes(s))
+      return {
+        bgcolor: "#E3F2FD",
+        color: "#1565C0",
+      };
+
+    if (["REJETE", "REJECTED", "ERROR"].includes(s))
+      return {
+        bgcolor: "#FDECEA",
+        color: "#C62828",
+      };
+
+    return {
+      bgcolor: "#F3F4F6",
+      color: "#374151",
+    };
+  };
+
+  /* ---------------------------- Status List ---------------------------- */
+
   const statuses = useMemo(() => {
-    const s = new Set(files.map((f) => (f.status || "").toString()));
+    const s = new Set(files.map((f) => normalizeStatus(f.status)));
     return ["ALL", ...Array.from(s)];
   }, [files]);
 
+  /* ---------------------------- Filtering ---------------------------- */
+
   const filtered = useMemo(() => {
-    let res = files;
+    let result = files;
+
     if (query) {
       const q = query.toLowerCase();
-      res = res.filter((f) => (f.filename || "").toLowerCase().includes(q) || (f.source || "").toLowerCase().includes(q));
+      result = result.filter(
+        (f) =>
+          (f.filename || "").toLowerCase().includes(q) ||
+          (f.source || "").toLowerCase().includes(q)
+      );
     }
+
     if (statusFilter !== "ALL") {
-      res = res.filter((f) => (f.status || "") === statusFilter);
+      result = result.filter(
+        (f) => normalizeStatus(f.status) === statusFilter
+      );
     }
-    return res;
+
+    return result;
   }, [files, query, statusFilter]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / perPage));
-  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+  /* ---------------------------- Pagination ---------------------------- */
 
-  const statusColor = (s) => {
-    if (!s) return "default";
-    if (["VALIDE", "validated", "VALIDATED"].includes(s)) return "success";
-    if (["EN_COURS", "ENCOUR", "EN_COURS"].includes(s)) return "primary";
-    if (["REJETE", "REJECTED", "error"].includes(s)) return "error";
-    return "default";
-  };
+  const pageCount = Math.max(1, Math.ceil(filtered.length / perPage));
+  const paginated = filtered.slice(
+    (page - 1) * perPage,
+    page * perPage
+  );
+
+  /* ---------------------------- Render ---------------------------- */
 
   return (
     <Box>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={1} mb={2} alignItems="center" justifyContent="space-between">
-        <TextField size="small" placeholder="Recherche fichier ou source..." value={query} onChange={(e) => { setQuery(e.target.value); setPage(1); }} sx={{ minWidth: 240 }} />
-        <Stack direction="row" spacing={1} alignItems="center">
-          <TextField
-            select
-            size="small"
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            SelectProps={{ native: true }}
-            sx={{ minWidth: 140 }}
-          >
-            {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
-          </TextField>
-        </Stack>
+      {/* ================== Filters ================== */}
+
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2}
+        mb={3}
+        justifyContent="space-between"
+        alignItems="center"
+      >
+        <TextField
+          size="small"
+          placeholder="Rechercher fichier ou source..."
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setPage(1);
+          }}
+          sx={{ minWidth: 260 }}
+        />
+
+        <TextField
+          select
+          size="small"
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(1);
+          }}
+          SelectProps={{ native: true }}
+          sx={{ minWidth: 160 }}
+        >
+          {statuses.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </TextField>
       </Stack>
 
-      <TableContainer>
+      {/* ================== Table ================== */}
+
+      <TableContainer
+        component={Paper}
+        elevation={0}
+        sx={{
+          borderRadius: 3,
+          border: "1px solid #EEF2F7",
+          overflow: "hidden",
+        }}
+      >
         <Table size="small">
           <TableHead>
-            <TableRow>
+            <TableRow
+              sx={{
+                backgroundColor: "#F9FAFB",
+                "& th": {
+                  fontWeight: 600,
+                  fontSize: "0.75rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  color: "text.secondary",
+                },
+              }}
+            >
               <TableCell>ID</TableCell>
               <TableCell>Fichier</TableCell>
               <TableCell>Type</TableCell>
@@ -73,28 +180,98 @@ export default function FilesTable({ files = [], onRelaunch = () => {}, onDelete
           </TableHead>
 
           <TableBody>
-            {paginated.map((f) => (
-              <TableRow key={f.id} hover>
-                <TableCell sx={{ width: 80 }}>{f.id}</TableCell>
-                <TableCell>{f.filename}</TableCell>
-                <TableCell><Chip label={f.type} size="small" /></TableCell>
+            {paginated.map((file) => (
+              <TableRow
+                key={file.id}
+                hover
+                sx={{
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    backgroundColor: "#F3F4F6",
+                  },
+                  "& td": {
+                    fontSize: "0.85rem",
+                    borderBottom: "1px solid #F1F5F9",
+                  },
+                }}
+              >
+                <TableCell>{file.id}</TableCell>
+
                 <TableCell>
-                  <Chip label={f.status} color={statusColor(f.status)} size="small" />
+                  <Typography fontWeight={500}>
+                    {file.filename}
+                  </Typography>
                 </TableCell>
-                <TableCell>{new Date(f.uploadedAt).toLocaleString()}</TableCell>
-                <TableCell>{f.source}</TableCell>
+
+                <TableCell>
+                  <Chip
+                    label={file.type}
+                    size="small"
+                    sx={{
+                      bgcolor: "#F3F4F6",
+                      fontWeight: 500,
+                    }}
+                  />
+                </TableCell>
+
+                <TableCell>
+                  <Chip
+                    label={file.status}
+                    size="small"
+                    sx={{
+                      fontWeight: 600,
+                      borderRadius: 2,
+                      ...statusChipSx(file.status),
+                    }}
+                  />
+                </TableCell>
+
+                <TableCell>
+                  {file.uploadedAt
+                    ? new Date(file.uploadedAt).toLocaleString()
+                    : "-"}
+                </TableCell>
+
+                <TableCell>{file.source}</TableCell>
+
                 <TableCell align="right">
-                  <Tooltip title="Voir"><IconButton size="small" onClick={() => onView(f)}><VisibilityIcon fontSize="small" /></IconButton></Tooltip>
-                  <Tooltip title="Relancer"><IconButton size="small" onClick={() => onRelaunch(f.id)}><ReplayIcon fontSize="small" /></IconButton></Tooltip>
-                  <Tooltip title="Supprimer"><IconButton size="small" onClick={() => onDelete(f.id)} color="error"><DeleteIcon fontSize="small" /></IconButton></Tooltip>
+                  <Tooltip title="Voir">
+                    <IconButton
+                      size="small"
+                      onClick={() => onView(file)}
+                    >
+                      <VisibilityIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+
+                  <Tooltip title="Relancer">
+                    <IconButton
+                      size="small"
+                      onClick={() => onRelaunch(file.id)}
+                    >
+                      <ReplayIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+
+                  <Tooltip title="Supprimer">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => onDelete(file.id)}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                 </TableCell>
               </TableRow>
             ))}
 
             {paginated.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
-                  Aucun fichier correspondant.
+                <TableCell colSpan={7} align="center" sx={{ py: 5 }}>
+                  <Typography color="text.secondary">
+                    Aucun fichier correspondant.
+                  </Typography>
                 </TableCell>
               </TableRow>
             )}
@@ -102,9 +279,24 @@ export default function FilesTable({ files = [], onRelaunch = () => {}, onDelete
         </Table>
       </TableContainer>
 
-      <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
-        <Box component="span" color="text.secondary">{filtered.length} résultat(s)</Box>
-        <Pagination count={pageCount} page={page} onChange={(e, v) => setPage(v)} size="small" />
+      {/* ================== Footer ================== */}
+
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mt={3}
+      >
+        <Typography variant="body2" color="text.secondary">
+          {filtered.length} résultat(s)
+        </Typography>
+
+        <Pagination
+          count={pageCount}
+          page={page}
+          onChange={(e, value) => setPage(value)}
+          size="small"
+        />
       </Box>
     </Box>
   );

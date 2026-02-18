@@ -42,9 +42,6 @@ body {
 /* ────────────────────────────────────────────────
    SIDEBAR
 ───────────────────────────────────────────────── */
-/* ──────────────────────────────────────────────
-   SIDEBAR TECHNICIEN
-──────────────────────────────────────────────── */
 .technicien-layout__sidebar {
   position: fixed;
   top: 0;
@@ -57,8 +54,17 @@ body {
   display: flex;
   flex-direction: column;
   transition: width 0.28s ease, transform 0.28s ease, background 0.2s ease;
+  will-change: width, transform;
   overflow: hidden;
   box-shadow: var(--shadow-md, 0 8px 24px rgba(16,24,40,0.10));
+}
+.technicien-layout__sidebar-menu-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.technicien-layout__sidebar-menu-item:hover {
+  background: rgba(255,255,255,0.06);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
 }
 
 .technicien-layout__sidebar--open {
@@ -73,29 +79,25 @@ body {
 }
 
 .technicien-layout__sidebar-logo-circle {
-  background: var(--surface, #fff);
+  width: 82px;
+  height: 82px;
   border-radius: 50%;
-  width: 76px;
-  height: 76px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
-  box-shadow: 0 10px 30px rgba(2,6,23,0.12);
   cursor: pointer;
-  transition: transform 180ms ease, box-shadow 180ms ease;
+  transition: transform 200ms ease;
 }
 
 .technicien-layout__sidebar-logo-circle:hover {
   transform: scale(1.05);
-  box-shadow: 0 14px 36px rgba(2,6,23,0.18);
 }
 
 .technicien-layout__sidebar-logo-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 8px;
+  width: 115%;
+  height: 115%;
+  object-fit: cover;
 }
 
 /* Divider */
@@ -115,6 +117,7 @@ body {
 
 .technicien-layout__sidebar-menu-item {
   display: flex;
+  position: relative;
   align-items: center;
   gap: 14px;
   padding: 10px 14px;
@@ -130,6 +133,30 @@ body {
   background: rgba(255,255,255,0.04);
   transform: translateY(-1px);
 }
+.technicien-layout__sidebar:not(.technicien-layout__sidebar--open)
+.technicien-layout__sidebar:not(.technicien-layout__sidebar--open)
+.technicien-layout__sidebar-menu-item::after {
+  content: attr(data-label);
+  position: absolute;
+  left: 80px;
+  background: #0f172a;
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.technicien-layout__sidebar:not(.technicien-layout__sidebar--open)
+.technicien-layout__sidebar-menu-item:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 
 .technicien-layout__sidebar-menu-item--active,
 .technicien-layout__sidebar-menu-item[aria-current="page"] {
@@ -205,24 +232,25 @@ body {
 .technicien-layout__topbar {
   position: fixed;
   top: 0;
-  left: var(--sidebar-width-closed);
+  left: var(--sidebar-width-closed, 72px);
   right: 0;
-  height: var(--topbar-height);
+  height: var(--topbar-height, 64px);
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 0 1.25rem;
-  background: linear-gradient(90deg, rgba(0,170,170,0.95), var(--primary-600));
+  align-items: center;
+  padding: 0 1rem;
+  background: linear-gradient(90deg, #00aaba 0%, #1e88e5 100%);
   color: white;
   z-index: 800;
-  box-shadow: var(--shadow-sm);
-  transition: left var(--transition-speed) ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transition: left 0.28s ease, background 0.2s ease;
 }
 
-.technicien-layout__topbar.sidebar-open {
-  left: var(--sidebar-width-open);
+.technicien-layout__topbar--sidebar-open {
+  left: var(--sidebar-width-open, 260px);
 }
 
+/* Left section */
 .technicien-layout__topbar-left {
   display: flex;
   align-items: center;
@@ -230,7 +258,22 @@ body {
   min-width: 0;
 }
 
-.technicien-layout__page-title {
+.technicien-layout__topbar-btn-menu {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 160ms ease, transform 120ms ease;
+}
+
+.technicien-layout__topbar-btn-menu:hover {
+  background: rgba(255,255,255,0.08);
+  transform: scale(1.05);
+}
+
+.technicien-layout__topbar-page-title {
   margin: 0;
   font-size: 1.125rem;
   font-weight: 600;
@@ -238,53 +281,62 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
 }
 
-.technicien-layout__btn-menu {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  display: none;
-  transition: background 160ms ease;
-}
-
-.technicien-layout__btn-menu:hover {
-  background: rgba(255,255,255,0.08);
-}
-
+/* Right section */
 .technicien-layout__topbar-right {
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
-
-.technicien-layout__topbar-btn {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
+.technicien-layout__topbar-right > * {
   position: relative;
+}
+
+.technicien-layout__topbar-right > *::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: 20%;
+  height: 60%;
+  width: 1px;
+  background: rgba(255,255,255,0.15);
+}
+
+.technicien-layout__topbar-right > *:last-child::after {
+  display: none;
+}
+
+/* Upload button */
+.technicien-layout__topbar-upload-btn {
+  color: white;
+  text-transform: none;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 8px;
   transition: background 160ms ease, transform 120ms ease;
 }
 
-.technicien-layout__topbar-btn:hover {
-  background: rgba(255,255,255,0.06);
+.technicien-layout__topbar-upload-btn:hover {
+  background: rgba(255,255,255,0.08);
   transform: translateY(-1px);
 }
 
-.technicien-layout__theme-toggle {
-  color: white;
-  border-radius: 8px;
+/* Notification button */
+.technicien-layout__topbar-btn-notif {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
   padding: 6px;
+  border-radius: 8px;
+  transition: background 160ms ease, transform 120ms ease;
 }
 
-.technicien-layout__theme-toggle:hover {
-  background: rgba(255,255,255,0.06);
+.technicien-layout__topbar-btn-notif:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-1px);
 }
 
 .technicien-layout__notification-badge {
@@ -304,7 +356,27 @@ body {
   padding: 0 4px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
+@keyframes notif-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
+  100% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+}
 
+.technicien-layout__notification-badge {
+  animation: notif-pulse 1.6s infinite;
+}
+
+/* Theme toggle */
+.technicien-layout__topbar-theme-toggle {
+  color: white;
+  border-radius: 8px;
+  padding: 6px;
+}
+
+.technicien-layout__topbar-theme-toggle:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+/* Profile */
 .technicien-layout__topbar-user {
   display: flex;
   align-items: center;
@@ -312,14 +384,14 @@ body {
   cursor: pointer;
   padding: 6px 10px;
   border-radius: 10px;
-  transition: background 160ms ease;
+  transition: background 160ms ease, transform 120ms ease;
 }
 
 .technicien-layout__topbar-user:hover {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.08);
 }
 
-.technicien-layout__avatar {
+.technicien-layout__topbar-user-avatar {
   width: 38px;
   height: 38px;
   border-radius: 50%;
@@ -327,62 +399,219 @@ body {
   border: 2px solid rgba(255,255,255,0.12);
 }
 
+.technicien-layout__topbar-user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.technicien-layout__topbar-user-name {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #fff;
+}
+
+.technicien-layout__topbar-user-role {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.7);
+}
+
+
 /* ────────────────────────────────────────────────
    STATCARD
 ───────────────────────────────────────────────── */
-.technicien-layout__stat-card {
-  display: flex;
-  align-items: center;
-  border-radius: 8px;
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease;
-  padding: 16px;
+/* ────────────────────────────────────────────────
+   STATCARD — CSS + MUI HARMONIE 2026
+───────────────────────────────────────────────── */
+
+/* 🆕 BASE - Compatible MUI classes */
+.technicien-layout__stat-card,
+.technicien-layout__stat-card.MuiCard-root {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 18px !important;
+  padding: 22px !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border: 1px solid rgba(15, 23, 42, 0.04) !important;
+  height: 110px !important;
+  cursor: pointer !important;
+  overflow: visible !important;
 }
 
-.technicien-layout__stat-card:hover {
-  transform: translateY(-2px);
+/* 🆕 ACCENT BAR - Toujours visible */
+.technicien-layout__stat-card::before,
+.MuiCard-root.technicien-layout__stat-card::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  height: 100% !important;
+  width: 8px !important;
+  border-radius: 18px 0 0 18px !important;
+  background: var(--primary, #1e88e5) !important;
+  z-index: 1 !important;
 }
 
-.technicien-layout__stat-card--small {
-  height: 84px;
-  padding: 12px;
+/* 🆕 HOVER - Priorité absolue */
+.technicien-layout__stat-card:hover,
+.MuiCard-root.technicien-layout__stat-card:hover {
+  transform: translateY(-6px) !important;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.15) !important;
+  border-color: rgba(30, 136, 229, 0.2) !important;
 }
 
-.technicien-layout__stat-card-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  margin-right: 12px;
+/* ────────────────────────────────────────────────
+   ICON - Parfaitement aligné
+───────────────────────────────────────────────── */
+.technicien-layout__stat-card-icon,
+.MuiCardContent-root .stat-icon {
+  width: 60px !important;
+  height: 60px !important;
+  border-radius: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 26px !important;
+  font-weight: bold !important;
+  margin-right: 18px !important;
+  flex-shrink: 0 !important;
 }
 
-.technicien-layout__stat-card--small .technicien-layout__stat-card-icon {
-  font-size: 20px;
+/* ────────────────────────────────────────────────
+   COLOR VARIANTS - Classes CSS
+───────────────────────────────────────────────── */
+.stat-blue.technicien-layout__stat-card::before,
+.stat-blue.MuiCard-root::before {
+  background: #1e88e5 !important;
+}
+.stat-blue .technicien-layout__stat-card-icon,
+.stat-blue .stat-icon {
+  background: rgba(30,136,229,0.12) !important;
+  color: #1e88e5 !important;
+  border: 1px solid rgba(30,136,229,0.3) !important;
 }
 
-.technicien-layout__stat-card-text {
-  min-width: 0;
+.stat-orange.technicien-layout__stat-card::before,
+.stat-orange.MuiCard-root::before {
+  background: #f59e0b !important;
+}
+.stat-orange .technicien-layout__stat-card-icon,
+.stat-orange .stat-icon {
+  background: rgba(245,158,11,0.12) !important;
+  color: #f59e0b !important;
+  border: 1px solid rgba(245,158,11,0.3) !important;
 }
 
-.technicien-layout__stat-card-title {
-  font-size: 0.75rem;
-  color: var(--muted);
-  white-space: nowrap;
+.stat-red.technicien-layout__stat-card::before,
+.stat-red.MuiCard-root::before {
+  background: #ef4444 !important;
+}
+.stat-red .technicien-layout__stat-card-icon,
+.stat-red .stat-icon {
+  background: rgba(239,68,68,0.12) !important;
+  color: #ef4444 !important;
+  border: 1px solid rgba(239,68,68,0.3) !important;
 }
 
-.technicien-layout__stat-card-value {
-  font-weight: 700;
-  margin-top: 4px;
-  white-space: nowrap;
+.stat-green.technicien-layout__stat-card::before,
+.stat-green.MuiCard-root::before {
+  background: #22c55e !important;
+}
+.stat-green .technicien-layout__stat-card-icon,
+.stat-green .stat-icon {
+  background: rgba(34,197,94,0.12) !important;
+  color: #22c55e !important;
+  border: 1px solid rgba(34,197,94,0.3) !important;
 }
 
-.technicien-layout__stat-card-subtitle {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.7rem;
-  color: var(--muted);
+/* ────────────────────────────────────────────────
+   TYPOGRAPHIE - Parfaite hiérarchie
+───────────────────────────────────────────────── */
+.technicien-layout__stat-card-title,
+.MuiCardContent-root .MuiTypography-caption,
+.MuiTypography-subtitle2 {
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  color: #64748b !important;
+  margin-bottom: 4px !important;
+  line-height: 1.3 !important;
 }
+
+.technicien-layout__stat-card-value,
+.MuiTypography-h4,
+.MuiTypography-h5 {
+  font-size: 1.8rem !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+}
+
+.technicien-layout__stat-card-subtitle,
+.MuiTypography-caption:not(.technicien-layout__stat-card-title) {
+  font-size: 0.75rem !important;
+  color: #94a3b8 !important;
+  font-weight: 500 !important;
+}
+
+/* ────────────────────────────────────────────────
+   RESPONSIVE - Tous écrans
+───────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .technicien-layout__stat-card {
+    padding: 18px !important;
+    gap: 14px !important;
+    height: 92px !important;
+  }
+  
+  .technicien-layout__stat-card::before {
+    width: 6px !important;
+  }
+  
+  .technicien-layout__stat-card-icon {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 22px !important;
+  }
+  
+  .technicien-layout__stat-card-value {
+    font-size: 1.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .technicien-layout__stat-card {
+    padding: 16px !important;
+    gap: 12px !important;
+    height: 84px !important;
+  }
+  
+  .technicien-layout__stat-card-icon {
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 20px !important;
+  }
+}
+
+/* ────────────────────────────────────────────────
+   MUI OVERRIDE - Priorité maximale
+───────────────────────────────────────────────── */
+.MuiCardContent-root:has(.technicien-layout__stat-card) {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.technicien-layout__stat-card .MuiCardContent-root {
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  height: 100% !important;
+  width: 100% !important;
+}
+
+
 
 /* ────────────── PAGE CONTENT ────────────── */
 .technicien-layout__page-content {

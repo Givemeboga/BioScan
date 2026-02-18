@@ -17,7 +17,7 @@ import TwoFactorSetup from "./components/Auth/TwoFactorSetup";
 // Pages technicien
 import TechnicienDashboard from "./pages/technicien/Dashboard";
 import UploadFiles from "./pages/technicien/UploadFiles";
-import FilesList from "./pages/technicien/FilesList"; // si existant
+import LoginBioScan from "./pages/technicien/Login"; 
 
 // Pages médecin
 import MedecinDashboard from "./components/Médecin/BaseDashboardMedecin";
@@ -37,6 +37,7 @@ function App() {
         <Route path="/otp" element={<OtpVerification />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/2fa-setup" element={<TwoFactorSetup />} />
+        <Route path="/login-technicien" element={<LoginBioScan />} />
 
         {/* === Routes médecin (layout parent) === */}
         <Route element={<MedecinLayout />}>
@@ -51,7 +52,6 @@ function App() {
           <Route index element={<TechnicienDashboard />} />
           <Route path="tableau" element={<TechnicienDashboard />} />
           <Route path="upload" element={<UploadFiles />} />
-          <Route path="files" element={<FilesList />} />
         </Route>
 
         {/* Fallbacks */}

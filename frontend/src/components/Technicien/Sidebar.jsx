@@ -8,7 +8,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SecurityIcon from "@mui/icons-material/Security";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-import logo from "../../assets/logo.png";
+import logo from "../../assets/BioScan2.jpg";
 import './TechnicienLayout.css'; // CSS spécifique
 
 export default function Sidebar({ isOpen = true }) {
