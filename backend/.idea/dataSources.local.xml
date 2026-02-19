@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="dataSourceStorageLocal" created-in="PY-253.29346.308">
+    <data-source name="postgres@localhost" uuid="d08acef7-de37-468f-aefa-2cb0faa27d4e">
+      <database-info product="PostgreSQL" version="16.11" jdbc-version="4.2" driver-name="PostgreSQL JDBC Driver" driver-version="42.7.3" dbms="POSTGRES" exact-version="16.11" exact-driver-version="42.7">
+        <identifier-quote-string>&quot;</identifier-quote-string>
+      </database-info>
+      <case-sensitivity plain-identifiers="lower" quoted-identifiers="exact" />
+      <secret-storage>master_key</secret-storage>
+      <user-name>postgres</user-name>
+      <schema-mapping>
+        <introspection-scope>
+          <node negative="1">
+            <node kind="database" negative="1" />
+            <node kind="database">
+              <name qname="@" />
+              <name qname="postgres" />
+              <node kind="schema" negative="1" />
+            </node>
+            <node kind="database" qname="bioscan_db">
+              <node kind="schema">
+                <name qname="@" />
+                <name qname="bioscan" />
+                <name qname="information_schema" />
+                <name qname="pg_catalog" />
+                <name qname="public" />
+              </node>
+            </node>
+          </node>
+        </introspection-scope>
+      </schema-mapping>
+    </data-source>
+  </component>
+</project>
