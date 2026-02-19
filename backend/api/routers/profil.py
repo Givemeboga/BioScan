@@ -1,113 +1,106 @@
-# api/routers/profil.py
-
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from datetime import datetime
+from typing import List
 
 from database import get_db
-from schemas.profil import ProfilMedecinOut, ProfilMedecinUpdate
+from schemas.bilan import BilanBiologiqueList
 
-router = APIRouter(prefix="/profil", tags=["profil"])
+router = APIRouter(
+    prefix="/bilans-biologiques",
+    tags=["bilans-biologiques"]
+)
 
 
-# ==================== GET /api/profil/{user_id} ====================
-@router.get("/{user_id}", response_model=ProfilMedecinOut)
-def get_profil_par_id(user_id: int, db: Session = Depends(get_db)):
-
+@router.get("/", response_model=List[BilanBiologiqueList])
+def get_bilans(
+        db: Session = Depends(get_db),
+        search: str = Query(None, description="Recherche dans le nom du patient ou le type de bilan"),
+        statut: str = Query(None, description="Filtre par statut (ex: BROUILLON, EN_COURS, TERMINE, VALIDE)"),
+        limit: int = Query(50, ge=1, le=500, description="Nombre max de résultats"),
+        offset: int = Query(0, ge=0, description="Décalage pour la pagination")
+):
+    """
+    Récupère la liste des bilans biologiques avec nom du patient et âge.
+    Fonctionne même si patient_id ou utilisateur_id est absent.
+    """
     sql_str = """
         SELECT 
-            utilisateur_id,
-            nom_utilisateur,
-            mot_de_passe,
-            email,
-            telephone,
-            adresse,
-            date_naissance,
-            statut,
-            date_generation,
-            date_mise_a_jour
-        FROM utilisateur
-        WHERE utilisateur_id = :user_id
-        LIMIT 1
+            bb.bilan_id,
+            bb.type,
+            bb.statut,
+            bb.date_generation,
+            bb.nom_fichier,
+            bb.patient_id,
+            bb.technicien_id,
+            COALESCE(u.nom_utilisateur, 'Aucun patient associé') AS patient_nom_complet,
+            CASE 
+                WHEN u.date_naissance IS NOT NULL 
+                THEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_naissance))::integer 
+                ELSE NULL 
+            END AS age
+        FROM bilan_biologique bb
+        LEFT JOIN patient p          ON bb.patient_id = p.patient_id
+        LEFT JOIN utilisateur u      ON p.utilisateur_id = u.utilisateur_id
+        WHERE 1 = 1
     """
 
-    try:
-        result = db.execute(text(sql_str), {"user_id": user_id})
-        row = result.mappings().first()
+    params = {}
 
-        if not row:
-            raise HTTPException(status_code=404, detail="Profil non trouvé")
+    # Filtre recherche (sur nom utilisateur ou type de bilan)
+    if search and search.strip():
+        pattern = f"%{search.strip()}%"
+        sql_str += """
+            AND (
+                u.nom_utilisateur ILIKE :search 
+                OR bb.type ILIKE :search
+            )
+        """
+        params["search"] = pattern
 
-        row_dict = dict(row)
+    # Filtre statut
+    if statut and statut.strip():
+        sql_str += " AND bb.statut = :statut "
+        params["statut"] = statut.strip().upper()
 
-        # valeurs par défaut si champs vides
-        row_dict["nom_utilisateur"] = row_dict.get("nom_utilisateur") or "—"
-        row_dict["telephone"] = row_dict.get("telephone") or "—"
-        row_dict["email"] = row_dict.get("email") or "—"
-        row_dict["adresse"] = row_dict.get("adresse") or "—"
-        row_dict["mot_de_passe"] = row_dict.get("mot_de_passe") or "—"
-        row_dict["statut"] = row_dict.get("statut") or "actif"  # valeur par défaut simple
-        row_dict["date_generation"] = row_dict.get("date_generation") or datetime.utcnow()
-        row_dict["date_mise_a_jour"] = row_dict.get("date_mise_a_jour") or datetime.utcnow()
-        row_dict["date_naissance"] = row_dict.get("date_naissance")  # peut rester None
-
-        return ProfilMedecinOut(**row_dict)
-
-    except Exception as e:
-        print("ERREUR :", e)
-        raise HTTPException(status_code=500, detail="Erreur lors de la récupération du profil")
-
-
-# ==================== PUT /api/profil/{user_id} ====================
-@router.put("/{user_id}", response_model=ProfilMedecinOut)
-def modifier_profil(user_id: int, profil: ProfilMedecinUpdate, db: Session = Depends(get_db)):
-
-    # Vérifier si le profil existe
-    existing = db.execute(
-        text("SELECT * FROM utilisateur WHERE utilisateur_id = :id"),
-        {"id": user_id}
-    ).mappings().first()
-
-    if not existing:
-        raise HTTPException(status_code=404, detail="Profil non trouvé")
-
-    # Construire la requête UPDATE dynamiquement
-    update_fields = {k: v for k, v in profil.dict(exclude_unset=True).items() if v is not None}
-
-    if not update_fields:
-        raise HTTPException(status_code=400, detail="Aucun champ à mettre à jour")
-
-    update_fields["date_mise_a_jour"] = datetime.utcnow()  # mise à jour automatique
-
-    set_clause = ", ".join(f"{key} = :{key}" for key in update_fields.keys())
-    sql_str = f"UPDATE utilisateur SET {set_clause} WHERE utilisateur_id = :user_id"
-
-    update_fields["user_id"] = user_id
+    # Tri + pagination
+    sql_str += """
+        ORDER BY bb.date_generation DESC NULLS LAST
+        LIMIT :limit 
+        OFFSET :offset
+    """
+    params["limit"] = limit
+    params["offset"] = offset
 
     try:
-        db.execute(text(sql_str), update_fields)
-        db.commit()
+        sql = text(sql_str)
+        result = db.execute(sql, params)
+        rows = result.mappings().all()
 
-        # Retourner le profil mis à jour
-        row = db.execute(
-            text("SELECT * FROM utilisateur WHERE utilisateur_id = :id"),
-            {"id": user_id}
-        ).mappings().first()
+        # Debug dans le terminal
+        print(f"[DEBUG] Nombre de bilans trouvés : {len(rows)}")
+        if rows:
+            print("[DEBUG] Premier bilan :", dict(rows[0]))
 
-        row_dict = dict(row)
-        row_dict["nom_utilisateur"] = row_dict.get("nom_utilisateur") or "—"
-        row_dict["telephone"] = row_dict.get("telephone") or "—"
-        row_dict["email"] = row_dict.get("email") or "—"
-        row_dict["adresse"] = row_dict.get("adresse") or "—"
-        row_dict["mot_de_passe"] = row_dict.get("mot_de_passe") or "—"
-        row_dict["statut"] = row_dict.get("statut") or "actif"
-        row_dict["date_generation"] = row_dict.get("date_generation") or datetime.utcnow()
-        row_dict["date_mise_a_jour"] = row_dict.get("date_mise_a_jour") or datetime.utcnow()
-        row_dict["date_naissance"] = row_dict.get("date_naissance")
+        bilans = []
+        for row in rows:
+            row_dict = dict(row)
 
-        return ProfilMedecinOut(**row_dict)
+            # Valeurs par défaut propres
+            row_dict["patient_nom_complet"] = row_dict.get("patient_nom_complet", "—")
+            row_dict["type"] = row_dict.get("type", "—")
+            row_dict["statut"] = row_dict.get("statut", "BROUILLON")
+            row_dict["age"] = int(row_dict["age"]) if row_dict.get("age") is not None else None
+
+            bilans.append(BilanBiologiqueList(**row_dict))
+
+        return bilans
 
     except Exception as e:
-        print("ERREUR :", e)
-        raise HTTPException(status_code=500, detail="Erreur lors de la modification du profil")
+        print("=== ERREUR SQL DANS GET BILANS ===")
+        print("Message :", str(e))
+        print("Requête SQL finale :")
+        print(sql_str)
+        print("Paramètres :", params)
+        # On renvoie une liste vide pour éviter crash de validation FastAPI
+        return []
