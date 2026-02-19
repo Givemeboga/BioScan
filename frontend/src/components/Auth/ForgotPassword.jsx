@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios'; // <-- ajoute axios
 import './ForgotPassword.css';
 import logoLocal from '../../assets/logo bioscan1.png';
 
@@ -28,13 +29,21 @@ export default function ForgotPassword() {
 
     setSending(true);
     try {
-      // TODO: remplacer par appel API réel pour demander le reset
-      // await api.requestPasswordReset({ email });
-      await new Promise((r) => setTimeout(r, 900)); // simulation
+      const response = await axios.post('http://127.0.0.1:8000/auth/forgot-password', {
+        email: email
+      });
 
-      setStatusMessage(`Un e-mail de réinitialisation a été envoyé à ${email}.`);
+      // Affiche le message renvoyé par le backend
+      setStatusMessage(response.data.message);
+
     } catch (err) {
-      setError('Impossible d\'envoyer l\'email pour le moment. Réessayez plus tard.');
+      if (err.response) {
+        // Erreur renvoyée par FastAPI
+        setError(err.response.data.detail || 'Erreur côté serveur.');
+      } else {
+        // Problème réseau ou autre
+        setError('Impossible de contacter le serveur. Réessayez plus tard.');
+      }
     } finally {
       setSending(false);
     }
@@ -47,7 +56,7 @@ export default function ForgotPassword() {
 
         <h2 className="auth-title">Mot de passe oublié</h2>
         <p className="subtitle">
-          Entrez l'adresse email associée à votre compte. Nous vous enverrons un lien pour réinitialiser votre mot de passe.
+          Entrez l'adresse email associée à votre compte. Nous vous enverrons un nouveau mot de passe temporaire.
         </p>
 
         {statusMessage ? (
@@ -75,7 +84,7 @@ export default function ForgotPassword() {
             </div>
 
             <button type="submit" className="btn-primary" disabled={sending}>
-              {sending ? 'Envoi en cours...' : 'Envoyer le lien de réinitialisation'}
+              {sending ? 'Envoi en cours...' : 'Envoyer le nouveau mot de passe'}
             </button>
 
             <div className="divider">OU</div>

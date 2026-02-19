@@ -6,23 +6,37 @@ import logoLocal from '../../assets/logo bioscan1.png';
 export default function OtpVerification() {
   const location = useLocation();
   const navigate = useNavigate();
-  const email = location.state?.email || '';
+
+  // Récupérer l'email depuis location.state ou localStorage
+  const email =
+    location.state?.email || localStorage.getItem('email_register') || '';
 
   const [otp, setOtp] = useState(new Array(6).fill(''));
   const [timeLeft, setTimeLeft] = useState(120);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const inputRefs = useRef([]);
 
+  // Timer OTP
   useEffect(() => {
     if (timeLeft <= 0) return;
     const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft]);
 
+  // Envoi automatique OTP au montage
+  useEffect(() => {
+    if (!email) return;
+    sendOtp();
+  }, [email]);
+
+  // Helper focus
   const focusInput = (index) => {
     const el = inputRefs.current[index];
     if (el && typeof el.focus === 'function') el.focus();
   };
 
+  // Gestion saisie OTP
   const handleChange = (index, value) => {
     const cleaned = value.replace(/\D/g, '');
     const char = cleaned.slice(-1);
@@ -64,6 +78,58 @@ export default function OtpVerification() {
     focusInput(focusIndex);
   };
 
+  // ------------------------
+  // Appel API
+  // ------------------------
+  const sendOtp = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('http://localhost:8000/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, raison: 'Inscription' })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail || "Impossible d'envoyer le code OTP.");
+      }
+      setTimeLeft(120);
+      alert('Code OTP envoyé à ' + email);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtp = async (code) => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('http://localhost:8000/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Code OTP invalide.');
+
+      // OTP correct → naviguer vers 2FA ou tableau de bord
+      alert('Code validé !');
+      localStorage.removeItem('email_register'); // Nettoyer
+      navigate('/2fa-setup', { state: { email } });
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ------------------------
+  // Form submit
+  // ------------------------
   const handleSubmit = (e) => {
     e.preventDefault();
     const code = otp.join('');
@@ -71,19 +137,18 @@ export default function OtpVerification() {
       alert('Veuillez entrer le code complet.');
       return;
     }
-    // TODO: appeler API pour vérifier l'OTP réel
-    // Si vérification OK → proposer 2FA (optionnel)
-    navigate('/2fa-setup', { state: { email } });
+    verifyOtp(code);
   };
 
   const handleResend = () => {
     setOtp(new Array(6).fill(''));
-    setTimeLeft(120);
+    sendOtp();
     focusInput(0);
-    // TODO: appeler endpoint pour renvoyer OTP
-    alert('Nouveau code envoyé (simulation).');
   };
 
+  // ------------------------
+  // Render
+  // ------------------------
   return (
     <div className="auth-container">
       <div className="auth-card">
@@ -93,6 +158,8 @@ export default function OtpVerification() {
           Entrez le code à 6 chiffres envoyé à<br />
           <strong>{email || 'votre adresse'}</strong>
         </p>
+
+        {error && <p className="error-text">{error}</p>}
 
         <form onSubmit={handleSubmit}>
           <div className="otp-container" onPaste={handlePaste}>
@@ -108,12 +175,17 @@ export default function OtpVerification() {
                 onChange={(e) => handleChange(i, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, i)}
                 autoFocus={i === 0}
+                disabled={loading}
               />
             ))}
           </div>
 
-          <button type="submit" className="btn-primary" disabled={otp.join('').length !== otp.length}>
-            Vérifier le code
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={loading || otp.join('').length !== otp.length}
+          >
+            {loading ? 'Vérification...' : 'Vérifier le code'}
           </button>
         </form>
 
@@ -121,7 +193,9 @@ export default function OtpVerification() {
           {timeLeft > 0 ? (
             <p>Renvoyer le code dans <strong>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2,'0')}</strong></p>
           ) : (
-            <button className="resend-btn" onClick={handleResend}>Renvoyer le code</button>
+            <button className="resend-btn" onClick={handleResend} disabled={loading}>
+              {loading ? 'Envoi...' : 'Renvoyer le code'}
+            </button>
           )}
         </div>
 

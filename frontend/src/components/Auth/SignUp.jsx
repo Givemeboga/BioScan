@@ -62,13 +62,48 @@ export default function SignUp() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      // Appel API possible ici
-      navigate('/otp', { state: { email: formData.email } });
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!validateForm()) return;
+
+  try {
+    const payload = {
+      nom: formData.firstName + " " + formData.lastName,
+      email: formData.email,
+      telephone: formData.phone,
+      adresse: formData.address,
+      date_naissance: formData.dob,
+      password: formData.password,
+      confirm_password: formData.confirmPassword
+    };
+
+    const response = await fetch("http://localhost:8000/api/auth/register/patient", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || "Erreur serveur");
     }
-  };
+
+    // ✅ Stocker l'email dans le localStorage
+    localStorage.setItem('email_register', formData.email);
+
+    // SUCCESS
+    alert("Inscription réussie !");
+    navigate('/otp'); // pas besoin de passer par state, la page OTP prendra l'email depuis localStorage
+
+  } catch (err) {
+    alert(err.message);
+  }
+};
+
+
+
 
   const handleGoogleSignUp = () => {
     alert("Inscription avec Google (à implémenter).");
