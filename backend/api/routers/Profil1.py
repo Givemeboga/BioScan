@@ -4,6 +4,7 @@ from database import get_db
 from models.utilisateur import Utilisateur, get_password_hash, get_user_by_email
 from schemas.utilisateur import UserCreate, UserResponse
 from models.patient import Patient
+from models.role import Role   # ✅ importer Role
 
 router = APIRouter(prefix="/auth", tags=["Authentification"])
 
@@ -18,10 +19,16 @@ def register_patient(user: UserCreate, db: Session = Depends(get_db)):
     if get_user_by_email(db, user.email):
         raise HTTPException(status_code=400, detail="Email déjà utilisé")
 
-    # Hash mot de passe (troncature à 72 caractères pour bcrypt)
+    # 🔹 récupérer role PATIENT depuis la BD
+    role_patient = db.query(Role).filter(Role.nom == "Patient").first()
+
+    if not role_patient:
+        raise HTTPException(status_code=500, detail="Role Patient introuvable en base")
+
+    # Hash mot de passe
     hashed_password = get_password_hash(user.password)
 
-    # Création utilisateur avec role par défaut "PATIENT"
+    # 🔹 Création utilisateur avec role_id
     new_user = Utilisateur(
         nom_utilisateur=user.nom,
         email=user.email,
@@ -30,7 +37,7 @@ def register_patient(user: UserCreate, db: Session = Depends(get_db)):
         adresse=user.adresse,
         date_naissance=user.date_naissance,
         statut="ACTIVE",
-        role="Patient"  # ✅ important !
+        role_id=role_patient.role_id   # ✅ clé étrangère
     )
 
     try:
@@ -38,7 +45,7 @@ def register_patient(user: UserCreate, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(new_user)
 
-        # Création patient liée
+        # Création patient lié
         new_patient = Patient(utilisateur_id=new_user.utilisateur_id)
         db.add(new_patient)
         db.commit()
