@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 import os
 
-DATABASE_URL = "postgresql://postgres:MotDePasse123@localhost:5432/bioscan_db"
+DATABASE_URL = "postgresql://postgres:00000000@localhost:5432/bioscan_db"
 
 engine = create_engine(
     DATABASE_URL,

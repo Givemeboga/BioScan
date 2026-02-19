@@ -59,6 +59,21 @@
 .auth-form input:focus {
   border-color: #00bfff;
 }
+.error-message {
+  color: #e74c3c;
+  background-color: #fdecea;
+  border: 1px solid #f5c6cb;
+  padding: 8px 12px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.error-icon {
+  margin-right: 6px;
+}
 
 /* Eye password */
 .password-group .eye {

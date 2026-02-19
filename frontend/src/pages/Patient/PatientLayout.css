@@ -1,0 +1,257 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+/* Layout Container */
+.patient-layout-wrapper {
+  font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
+}
+
+.patient-layout-wrapper * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.patient-layout-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fbff 0%, #f0f4fa 100%);
+  display: flex;
+}
+
+/* Sidebar */
+.patient-sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+  padding: 28px 20px;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.patient-sidebar-header {
+  margin-bottom: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.patient-sidebar-logo {
+  width: 180px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Navigation */
+.patient-nav-menu {
+  flex: 1;
+}
+
+.patient-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.patient-nav-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.patient-nav-item.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.patient-nav-item-bottom {
+  margin-top: auto;
+}
+
+/* Main Content */
+.patient-main-content {
+  flex: 1;
+  padding: 32px 40px;
+}
+
+/* Header */
+.patient-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 36px;
+  background: white;
+  padding: 16px 28px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.patient-search-container {
+  flex: 1;
+  max-width: 400px;
+  position: relative;
+}
+
+.patient-search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.patient-search-input {
+  width: 100%;
+  padding: 12px 16px 12px 48px;
+  border: 2px solid #f3f4f6;
+  border-radius: 12px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+  font-family: 'Outfit', sans-serif;
+}
+
+.patient-search-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.patient-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.patient-notification-icon {
+  position: relative;
+  cursor: pointer;
+}
+
+.patient-notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  background: #ef4444;
+  border-radius: 50%;
+  font-size: 10px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: 2px solid white;
+}
+
+/* User Menu */
+.patient-user-menu-container {
+  position: relative;
+}
+
+.patient-user-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.patient-user-menu-trigger:hover,
+.patient-user-menu-trigger.active {
+  background: #f9fafb;
+}
+
+.patient-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #3b82f6;
+}
+
+.patient-user-name {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.patient-chevron {
+  transition: transform 0.3s ease;
+}
+
+.patient-chevron.rotated {
+  transform: rotate(90deg);
+}
+
+.patient-user-dropdown {
+  position: absolute;
+  top: 60px;
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  min-width: 200px;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.patient-dropdown-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #1f2937;
+  transition: background 0.2s ease;
+  text-decoration: none;
+}
+
+.patient-dropdown-item:hover {
+  background: #f9fafb;
+}
+
+.patient-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.patient-dropdown-item.logout {
+  color: #ef4444;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .patient-layout-container {
+    flex-direction: column;
+  }
+  
+  .patient-sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+  
+  .patient-main-content {
+    padding: 20px;
+  }
+  
+  .patient-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .patient-search-container {
+    max-width: 100%;
+  }
+}

@@ -3,73 +3,73 @@ import './Users.css';
 
 const initialUsers = [
   {
-    id: 1,
-    nom: 'Yosra Ben Ahmed',
+    utilisateur_id: 1,
+    nom_utilisateur: 'Yosra Ben Ahmed',
     email: 'yosra.benahmed@bioscan.tn',
     telephone: '+216 20 123 456',
     role: 'ADMIN',
-    status: 'ACTIVE',
-    dateCreation: '2025-11-12',
+    statut: 'ACTIVE',
+    date_generation: '2025-11-12',
   },
   {
-    id: 2,
-    nom: 'Ahmed Trabelsi',
+    utilisateur_id: 2,
+    nom_utilisateur: 'Ahmed Trabelsi',
     email: 'ahmed.trabelsi@bioscan.tn',
     telephone: '+216 22 654 321',
     role: 'MEDECIN',
-    status: 'ACTIVE',
-    dateCreation: '2025-12-04',
+    statut: 'ACTIVE',
+    date_generation: '2025-12-04',
   },
   {
-    id: 3,
-    nom: 'Ines Gharbi',
+    utilisateur_id: 3,
+    nom_utilisateur: 'Ines Gharbi',
     email: 'ines.gharbi@bioscan.tn',
     telephone: '+216 27 987 321',
     role: 'TECHNICIEN',
-    status: 'INACTIVE',
-    dateCreation: '2026-01-19',
+    statut: 'INACTIVE',
+    date_generation: '2026-01-19',
   },
   {
-    id: 4,
-    nom: 'Sami Haddad',
+    utilisateur_id: 4,
+    nom_utilisateur: 'Sami Haddad',
     email: 'sami.haddad@bioscan.tn',
     telephone: '+216 24 456 778',
     role: 'MEDECIN',
-    status: 'ACTIVE',
-    dateCreation: '2025-10-28',
+    statut: 'ACTIVE',
+    date_generation: '2025-10-28',
   },
   {
-    id: 5,
-    nom: 'Leila Mansour',
+    utilisateur_id: 5,
+    nom_utilisateur: 'Leila Mansour',
     email: 'leila.mansour@bioscan.tn',
     telephone: '+216 29 220 990',
     role: 'TECHNICIEN',
-    status: 'ACTIVE',
-    dateCreation: '2025-09-14',
+    statut: 'ACTIVE',
+    date_generation: '2025-09-14',
   },
 ];
 
 const roles = ['TOUS', 'ADMIN', 'MEDECIN', 'TECHNICIEN'];
-const statuses = ['TOUS', 'ACTIVE', 'INACTIVE'];
+const statuts = ['TOUS', 'ACTIVE', 'INACTIVE'];
 
 export default function AdminUsers() {
   const [users, setUsers] = useState(initialUsers);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('TOUS');
-  const [statusFilter, setStatusFilter] = useState('TOUS');
+  const [statutFilter, setStatutFilter] = useState('TOUS');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkRole, setBulkRole] = useState('MEDECIN');
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
       const matchesSearch =
-        user.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.nom_utilisateur.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesRole = roleFilter === 'TOUS' || user.role === roleFilter;
-      const matchesStatus = statusFilter === 'TOUS' || user.status === statusFilter;
-      return matchesSearch && matchesRole && matchesStatus;
+      const matchesStatut = statutFilter === 'TOUS' || user.statut === statutFilter;
+      return matchesSearch && matchesRole && matchesStatut;
     });
-  }, [users, searchTerm, roleFilter, statusFilter]);
+  }, [users, searchTerm, roleFilter, statutFilter]);
 
   const allFilteredSelected =
     filteredUsers.length > 0 &&
@@ -98,19 +98,19 @@ export default function AdminUsers() {
     setSelectedIds(next);
   };
 
-  const updateUserStatus = (id, status) => {
-    setUsers((prev) => prev.map((user) => (user.id === id ? { ...user, status } : user)));
+  const updateUserStatut = (utilisateur_id, statut) => {
+    setUsers((prev) => prev.map((user) => (user.utilisateur_id === utilisateur_id ? { ...user, statut } : user)));
   };
 
-  const applyBulkStatus = (status) => {
+  const applyBulkStatut = (statut) => {
     setUsers((prev) =>
-      prev.map((user) => (selectedIds.has(user.id) ? { ...user, status } : user))
+      prev.map((user) => (selectedIds.has(user.utilisateur_id) ? { ...user, statut } : user))
     );
   };
 
   const applyBulkRole = () => {
     setUsers((prev) =>
-      prev.map((user) => (selectedIds.has(user.id) ? { ...user, role: bulkRole } : user))
+      prev.map((user) => (selectedIds.has(user.utilisateur_id) ? { ...user, role: bulkRole } : user))
     );
   };
 
@@ -151,15 +151,15 @@ export default function AdminUsers() {
           </div>
 
           <div className="field-group">
-            <label htmlFor="status">Statut</label>
+            <label htmlFor="statut">Statut</label>
             <select
-              id="status"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
+              id="statut"
+              value={statutFilter}
+              onChange={(event) => setStatutFilter(event.target.value)}
             >
-              {statuses.map((status) => (
-                <option key={status} value={status}>
-                  {status}
+              {statuts.map((statut) => (
+                <option key={statut} value={statut}>
+                  {statut}
                 </option>
               ))}
             </select>
@@ -171,10 +171,10 @@ export default function AdminUsers() {
             <strong>{selectedCount}</strong> selectionne(s)
           </div>
           <div className="bulk-actions">
-            <button className="btn-ghost" onClick={() => applyBulkStatus('ACTIVE')}>
+            <button className="btn-ghost" onClick={() => applyBulkStatut('ACTIVE')}>
               Activer
             </button>
-            <button className="btn-ghost" onClick={() => applyBulkStatus('INACTIVE')}>
+            <button className="btn-ghost" onClick={() => applyBulkStatut('INACTIVE')}>
               Desactiver
             </button>
             <div className="bulk-role">
@@ -217,49 +217,49 @@ export default function AdminUsers() {
                 <th>Téléphone</th>
                 <th>Rôle</th>
                 <th>Statut (ACTIVE / INACTIVE)</th>
-                <th>Date création</th>
+                <th>Date génération</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map((user) => (
-                <tr key={user.id}>
+                <tr key={user.utilisateur_id}>
                   <td>
                     <input
                       type="checkbox"
-                      checked={selectedIds.has(user.id)}
-                      onChange={() => toggleSelectUser(user.id)}
-                      aria-label={`Selectionner ${user.nom}`}
+                      checked={selectedIds.has(user.utilisateur_id)}
+                      onChange={() => toggleSelectUser(user.utilisateur_id)}
+                      aria-label={`Selectionner ${user.nom_utilisateur}`}
                     />
                   </td>
-                  <td className="cell-strong">{user.nom}</td>
+                  <td className="cell-strong">{user.nom_utilisateur}</td>
                   <td>{user.email}</td>
                   <td>{user.telephone}</td>
                   <td>
                     <span className={`pill pill-${user.role.toLowerCase()}`}>{user.role}</span>
                   </td>
                   <td>
-                    <span className={`status ${user.status === 'ACTIVE' ? 'active' : 'inactive'}`}>
-                      {user.status}
+                    <span className={`status ${user.statut === 'ACTIVE' ? 'active' : 'inactive'}`}>
+                      {user.statut}
                     </span>
                   </td>
-                  <td>{user.dateCreation}</td>
+                  <td>{user.date_generation}</td>
                   <td>
                     <div className="action-group">
                       <button className="action-btn">Edit</button>
                       <button
-                        className={`action-btn ${user.status === 'ACTIVE' ? 'action-warn' : 'action-ok'}`}
+                        className={`action-btn ${user.statut === 'ACTIVE' ? 'action-warn' : 'action-ok'}`}
                         onClick={() =>
-                          updateUserStatus(user.id, user.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')
+                          updateUserStatut(user.utilisateur_id, user.statut === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')
                         }
                       >
-                        {user.status === 'ACTIVE' ? 'Disable' : 'Activate'}
+                        {user.statut === 'ACTIVE' ? 'Disable' : 'Activate'}
                       </button>
                       <button className="action-btn action-outline">Reset password</button>
                     </div>
                     <div className="action-group secondary">
                       <button className="action-btn action-outline">Force reset</button>
-                      <button className="action-btn action-danger" onClick={() => updateUserStatus(user.id, 'INACTIVE')}>
+                      <button className="action-btn action-danger" onClick={() => updateUserStatut(user.utilisateur_id, 'INACTIVE')}>
                         Lock account
                       </button>
                       <button className="action-btn action-outline">Login history</button>

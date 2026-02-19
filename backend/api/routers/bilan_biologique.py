@@ -6,6 +6,7 @@ from typing import List
 from database import get_db
 from schemas.bilan import BilanBiologiqueList
 
+
 router = APIRouter(
     prefix="/bilans-biologiques",
     tags=["bilans-biologiques"]
