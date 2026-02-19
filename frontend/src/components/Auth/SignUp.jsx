@@ -78,11 +78,12 @@ const handleSubmit = async (e) => {
       confirm_password: formData.confirmPassword
     };
 
-    const response = await fetch("http://localhost:8000/api/auth/register/patient", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+const response = await fetch("http://localhost:8000/api/profil1/auth/register/patient", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(payload)
+});
+
 
     const data = await response.json();
 

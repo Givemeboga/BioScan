@@ -29,7 +29,7 @@ export default function ForgotPassword() {
 
     setSending(true);
     try {
-      const response = await axios.post('http://127.0.0.1:8000/auth/forgot-password', {
+      const response = await axios.post('http://127.0.0.1:8000/api/auth/forgot-password', {
         email: email
       });
 
