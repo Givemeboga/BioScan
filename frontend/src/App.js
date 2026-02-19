@@ -23,7 +23,7 @@ import TwoFactorSetup from "./components/Auth/TwoFactorSetup";
 // Pages technicien
 import TechnicienDashboard from "./pages/technicien/Dashboard";
 import UploadFiles from "./pages/technicien/UploadFiles";
-import FilesList from "./pages/technicien/FilesList"; // si existant
+import FilesList from "./pages/technicien/FilesList";
 
 // Pages médecin
 import TableauDeBord from "./pages/MedecinBiologiste/TableauDeBord";
@@ -34,11 +34,23 @@ import ParametresMedecin from "./pages/MedecinBiologiste/Parametres";
 import ProfilMedecin from "./pages/MedecinBiologiste/ProfilMedecin";
 import NotificationMedecin from "./pages/MedecinBiologiste/Notification";
 
+// Pages patient
+import VisiteurPage from "./pages/Patient/HomePage";
+import PatientDashboard from "./pages/Patient/PatientDashboard";
+
+// Import Patient Components
+import PatientLayout from "./pages/Patient/PatientLayout";
+import DashboardHome from "./pages/Patient/DashboardHome";
+import MesBilans from "./pages/Patient/MesBilans";
+import Historique from "./pages/Patient/Historique";
+import Parametres from "./pages/Patient/Parametres";
+import Profil from "./pages/Patient/Profil";
+import Notifications from "./pages/Patient/Notifications";
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* Routes publiques */}
         <Route path="/" element={<Welcome />} />
         <Route path="/sign-in" element={<AuthCard />} />
@@ -72,7 +84,7 @@ function App() {
           <Route path="notifications" element={<div style={{ padding: 40 }}><h2>Notifications</h2><p>Page à créer</p></div>} />
         </Route>
 
-        {/* === Routes technicien (layout parent) : garder UNE seule déclaration === */}
+        {/* === Routes technicien (layout parent) === */}
         <Route path="/technicien" element={<TechnicienLayout />}>
           <Route index element={<TechnicienDashboard />} />
           <Route path="tableau" element={<TechnicienDashboard />} />
@@ -80,10 +92,24 @@ function App() {
           <Route path="files" element={<FilesList />} />
         </Route>
 
+        {/* === Routes patient standalone === */}
+        <Route path="/patient/visiteur" element={<VisiteurPage />} />
+        <Route path="/patient/Home" element={<PatientDashboard />} />
+
+        {/* === Routes patient avec layout === */}
+        <Route path="/patient" element={<PatientLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardHome />} />
+          <Route path="mes-bilans" element={<MesBilans />} />
+          <Route path="historique" element={<Historique />} />
+          <Route path="parametres" element={<Parametres />} />
+          <Route path="profil" element={<Profil />} />
+          <Route path="notifications" element={<Notifications />} />
+        </Route>
+
         {/* Fallbacks */}
         <Route path="/404" element={<div style={{ padding: 40, textAlign: "center" }}><h1>404</h1><p>Page non trouvée</p></div>} />
         <Route path="*" element={<Navigate to="/" replace />} />
-
       </Routes>
     </BrowserRouter>
   );
