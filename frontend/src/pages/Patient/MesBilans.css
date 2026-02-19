@@ -1,0 +1,209 @@
+/* Mes Bilans Styles */
+.mes-bilans {
+  animation: slideIn 0.5s ease-out;
+}
+
+/* Welcome Card */
+.mes-bilans-welcome-card {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.mes-bilans-welcome-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.mes-bilans-welcome-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0c4a6e;
+}
+
+.mes-bilans-welcome-emoji {
+  font-size: 28px;
+}
+
+.mes-bilans-welcome-subtitle {
+  color: #0369a1;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* Bilans List */
+.mes-bilans-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Bilan Card */
+.mes-bilans-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.mes-bilans-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.mes-bilans-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.mes-bilans-card-title-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mes-bilans-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.mes-bilans-card-date {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.mes-bilans-card-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Status Badges */
+.mes-bilans-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.mes-bilans-status-badge.badge-valid {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.mes-bilans-status-badge.badge-pending {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.mes-bilans-status-badge.badge-rejected {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+/* Download Button */
+.mes-bilans-btn-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  font-family: 'Outfit', sans-serif;
+}
+
+.mes-bilans-btn-download:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+/* Card Details */
+.mes-bilans-card-details {
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 12px;
+  margin-top: 16px;
+}
+
+.mes-bilans-detail-item {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.mes-bilans-detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.mes-bilans-detail-item strong {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* Alert Boxes */
+.mes-bilans-card-alert {
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.mes-bilans-card-alert.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.mes-bilans-card-alert.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mes-bilans-card-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .mes-bilans-card-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .mes-bilans-btn-download {
+    width: 100%;
+    justify-content: center;
+  }
+}
