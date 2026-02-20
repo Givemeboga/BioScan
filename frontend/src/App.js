@@ -52,7 +52,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Routes publiques */}
-        <Route path="/" element={<Welcome />} />
+        <Route path="/d" element={<Welcome />} />
         <Route path="/sign-in" element={<AuthCard />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/otp" element={<OtpVerification />} />
@@ -93,7 +93,7 @@ function App() {
         </Route>
 
         {/* === Routes patient standalone === */}
-        <Route path="/patient/visiteur" element={<VisiteurPage />} />
+        <Route path="/" element={<VisiteurPage />} />
         <Route path="/patient/Home" element={<PatientDashboard />} />
 
         {/* === Routes patient avec layout === */}

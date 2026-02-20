@@ -1,106 +1,54 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
+import { reportsService } from '../../services/adminService';
 import './Reports.css';
 
-const mockReports = [
-  {
-    id: 1,
-    type: 'MEDICAL',
-    titre: 'Rapport biologique - Patient #142',
-    medecin: 'Dr. Ahmed Trabelsi',
-    medecinId: 2,
-    patient: 'Mohammed Aziz',
-    patientId: 142,
-    statut: 'VALIDE',
-    dateCreation: '2026-02-10',
-    dateValidation: '2026-02-10',
-  },
-  {
-    id: 2,
-    type: 'ANOMALIE',
-    titre: 'Anomalie glycémie - Patient #89',
-    medecin: 'Dr. Sami Haddad',
-    medecinId: 4,
-    patient: 'Fatma Ben Ali',
-    patientId: 89,
-    statut: 'VALIDE',
-    dateCreation: '2026-02-09',
-    dateValidation: '2026-02-09',
-  },
-  {
-    id: 3,
-    type: 'MEDICAL',
-    titre: 'Analyse hématologique - Patient #203',
-    medecin: 'Dr. Ahmed Trabelsi',
-    medecinId: 2,
-    patient: 'Karim Jlidi',
-    patientId: 203,
-    statut: 'EN_COURS',
-    dateCreation: '2026-02-11',
-    dateValidation: null,
-  },
-  {
-    id: 4,
-    type: 'ANOMALIE',
-    titre: 'Valeurs hépatiques élevées - Patient #178',
-    medecin: 'Dr. Leila Ben Youssef',
-    medecinId: 7,
-    patient: 'Amira Mansour',
-    patientId: 178,
-    statut: 'REJETE',
-    dateCreation: '2026-02-08',
-    dateValidation: '2026-02-09',
-  },
-  {
-    id: 5,
-    type: 'MEDICAL',
-    titre: 'Bilan rénal complet - Patient #91',
-    medecin: 'Dr. Karim Hamdi',
-    medecinId: 9,
-    patient: 'Youssef Gharbi',
-    patientId: 91,
-    statut: 'VALIDE',
-    dateCreation: '2026-02-07',
-    dateValidation: '2026-02-08',
-  },
-  {
-    id: 6,
-    type: 'MEDICAL',
-    titre: 'Analyse microbiologique - Patient #156',
-    medecin: 'Dr. Sami Haddad',
-    medecinId: 4,
-    patient: 'Ines Trabelsi',
-    patientId: 156,
-    statut: 'EN_COURS',
-    dateCreation: '2026-02-11',
-    dateValidation: null,
-  },
-];
-
-const statusOptions = ['TOUS', 'BROUILLON', 'EN_COURS', 'VALIDE', 'REJETE', 'ARCHIVE'];
+const statusOptions = ['TOUS', 'VALIDE', 'EN_COURS', 'REJETE'];
 const typeOptions = ['TOUS', 'MEDICAL', 'ANOMALIE'];
-const medecins = [
-  'TOUS',
-  'Dr. Ahmed Trabelsi',
-  'Dr. Sami Haddad',
-  'Dr. Leila Ben Youssef',
-  'Dr. Karim Hamdi',
-];
 
 export default function AdminReports() {
-  const [reports] = useState(mockReports);
+  const [reports, setReports] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statutFilter, setStatutFilter] = useState('TOUS');
+  const [statusFilter, setStatusFilter] = useState('TOUS');
   const [typeFilter, setTypeFilter] = useState('TOUS');
   const [medecinFilter, setMedecinFilter] = useState('TOUS');
   const [dateFilter, setDateFilter] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadReports = async () => {
+      try {
+        setLoading(true);
+        const data = await reportsService.getReports();
+        setReports(data || []);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading reports:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadReports();
+  }, []);
+
+  // Get unique medecins for filter
+  const medecins = useMemo(() => {
+    const uniqueMedecins = new Set(['TOUS']);
+    reports.forEach((r) => {
+      if (r.medecin) uniqueMedecins.add(r.medecin);
+    });
+    return Array.from(uniqueMedecins);
+  }, [reports]);
 
   const stats = useMemo(() => {
     const totalMedical = reports.filter((r) => r.type === 'MEDICAL').length;
     const totalAnomalie = reports.filter((r) => r.type === 'ANOMALIE').length;
-    const valides = reports.filter((r) => r.statut === 'VALIDE').length;
-    const enCours = reports.filter((r) => r.statut === 'EN_COURS').length;
-    const rejetes = reports.filter((r) => r.statut === 'REJETE').length;
+    const valides = reports.filter((r) => r.status === 'VALIDE').length;
+    const enCours = reports.filter((r) => r.status === 'EN_COURS').length;
+    const rejetes = reports.filter((r) => r.status === 'REJETE').length;
 
     return { totalMedical, totalAnomalie, valides, enCours, rejetes };
   }, [reports]);
@@ -108,17 +56,17 @@ export default function AdminReports() {
   const filteredReports = useMemo(() => {
     return reports.filter((report) => {
       const matchesSearch =
-        report.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        report.medecin.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatut = statutFilter === 'TOUS' || report.statut === statutFilter;
+        (report.titre?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
+        (report.patient?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
+        (report.medecin?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false);
+      const matchesStatus = statusFilter === 'TOUS' || report.status === statusFilter;
       const matchesType = typeFilter === 'TOUS' || report.type === typeFilter;
       const matchesMedecin = medecinFilter === 'TOUS' || report.medecin === medecinFilter;
       const matchesDate = !dateFilter || report.dateCreation === dateFilter;
 
-      return matchesSearch && matchesStatut && matchesType && matchesMedecin && matchesDate;
+      return matchesSearch && matchesStatus && matchesType && matchesMedecin && matchesDate;
     });
-  }, [reports, searchTerm, statutFilter, typeFilter, medecinFilter, dateFilter]);
+  }, [reports, searchTerm, statusFilter, typeFilter, medecinFilter, dateFilter]);
 
   const barData = {
     labels: ['Validés', 'En cours', 'Rejetés'],
@@ -164,6 +112,28 @@ export default function AdminReports() {
     link.click();
     document.body.removeChild(link);
   };
+
+  if (loading) {
+    return (
+      <div className="admin-reports-page">
+        <header className="reports-header">
+          <h1>Rapports système</h1>
+        </header>
+        <p style={{ padding: '20px' }}>Chargement des données...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin-reports-page">
+        <header className="reports-header">
+          <h1>Rapports système</h1>
+        </header>
+        <p style={{ padding: '20px', color: 'red' }}>Erreur: {error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-reports-page">
@@ -243,11 +213,11 @@ export default function AdminReports() {
           </div>
 
           <div className="field-group">
-            <label htmlFor="statut">Statut</label>
-            <select id="statut" value={statutFilter} onChange={(e) => setStatutFilter(e.target.value)}>
-              {statusOptions.map((statut) => (
-                <option key={statut} value={statut}>
-                  {statut}
+            <label htmlFor="status">Statut</label>
+            <select id="status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              {statusOptions.map((status) => (
+                <option key={status} value={status}>
+                  {status}
                 </option>
               ))}
             </select>
@@ -299,27 +269,27 @@ export default function AdminReports() {
                 <tr key={report.id}>
                   <td className="cell-strong">#{report.id}</td>
                   <td>
-                    <span className={`pill pill-${report.type.toLowerCase()}`}>{report.type}</span>
+                    <span className={`pill pill-${(report.type || 'unknown').toLowerCase()}`}>{report.type || 'N/A'}</span>
                   </td>
-                  <td>{report.titre}</td>
-                  <td>{report.medecin}</td>
+                  <td>{report.titre || 'N/A'}</td>
+                  <td>{report.medecin || 'N/A'}</td>
                   <td>
-                    {report.patient} <span className="patient-id">#{report.patientId}</span>
+                    {report.patient || 'N/A'} <span className="patient-id">#{report.patientId || '—'}</span>
                   </td>
                   <td>
                     <span
                       className={`status ${
-                        report.statut === 'VALIDE'
+                        (report.status || '').toUpperCase() === 'VALIDE'
                           ? 'valide'
-                          : report.statut === 'EN_COURS'
+                          : (report.status || '').toUpperCase() === 'EN_COURS'
                           ? 'en-cours'
                           : 'rejete'
                       }`}
                     >
-                      {report.statut}
+                      {report.status || 'N/A'}
                     </span>
                   </td>
-                  <td>{report.dateCreation}</td>
+                  <td>{report.dateCreation || '—'}</td>
                   <td>{report.dateValidation || '—'}</td>
                 </tr>
               ))}
