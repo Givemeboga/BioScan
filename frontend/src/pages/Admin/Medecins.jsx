@@ -1,81 +1,120 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { medecinsService, usersService } from '../../services/adminService';
 import './Medecins.css';
 
-const initialMedecins = [
-  {
-    medecin_id: 1,
-    nom: 'Dr. Ahmed Trabelsi',
-    specialite: 'Biologiste',
-    email: 'ahmed.trabelsi@bioscan.tn',
-    telephone: '+216 22 654 321',
-    utilisateur_id: 2,
-    rapportsValides: 284,
-    statut: 'ACTIVE',
-    date_generation: '2025-12-04',
-    derniereActivite: '2026-02-10 14:32',
-  },
-  {
-    medecin_id: 2,
-    nom: 'Dr. Sami Haddad',
-    specialite: 'Hematologie',
-    email: 'sami.haddad@bioscan.tn',
-    telephone: '+216 24 456 778',
-    utilisateur_id: 4,
-    rapportsValides: 512,
-    statut: 'ACTIVE',
-    date_generation: '2025-10-28',
-    derniereActivite: '2026-02-11 09:15',
-  },
-  {
-    medecin_id: 3,
-    nom: 'Dr. Leila Ben Youssef',
-    specialite: 'Microbiologie',
-    email: 'leila.benyoussef@bioscan.tn',
-    telephone: '+216 29 876 543',
-    utilisateur_id: 7,
-    rapportsValides: 198,
-    statut: 'INACTIVE',
-    date_generation: '2025-11-20',
-    derniereActivite: '2026-01-30 16:40',
-  },
-  {
-    medecin_id: 4,
-    nom: 'Dr. Karim Hamdi',
-    specialite: 'Biochimie',
-    email: 'karim.hamdi@bioscan.tn',
-    telephone: '+216 27 345 678',
-    utilisateur_id: 9,
-    rapportsValides: 421,
-    statut: 'ACTIVE',
-    date_generation: '2025-09-15',
-    derniereActivite: '2026-02-10 18:20',
-  },
-];
-
-const statuts = ['TOUS', 'ACTIVE', 'INACTIVE'];
+const statuses = ['TOUS', 'ACTIVE', 'SUSPENDED'];
 
 export default function AdminMedecins() {
-  const [medecins, setMedecins] = useState(initialMedecins);
+  const [medecins, setMedecins] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statutFilter, setStatutFilter] = useState('TOUS');
+  const [statusFilter, setStatusFilter] = useState('TOUS');
   const [selectedId, setSelectedId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newMedecin, setNewMedecin] = useState({
+    nom: '',
+    email: '',
+    telephone: '',
+    specialite: '',
+    motDePasse: '',
+  });
+
+  useEffect(() => {
+    const loadMedecins = async () => {
+      try {
+        setLoading(true);
+        const data = await medecinsService.getMedecins();
+        setMedecins(data || []);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading medecins:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMedecins();
+  }, []);
 
   const filteredMedecins = useMemo(() => {
     return medecins.filter((medecin) => {
       const matchesSearch =
-        medecin.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        medecin.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        medecin.specialite.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatut = statutFilter === 'TOUS' || medecin.statut === statutFilter;
-      return matchesSearch && matchesStatut;
+        (medecin.nom?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
+        (medecin.email?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
+        (medecin.specialite?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false);
+      const matchesStatus = statusFilter === 'TOUS' || medecin.status === statusFilter;
+      return matchesSearch && matchesStatus;
     });
-  }, [medecins, searchTerm, statutFilter]);
+  }, [medecins, searchTerm, statusFilter]);
 
-  const updateMedecinStatut = (medecin_id, statut) => {
-    setMedecins((prev) => prev.map((m) => (m.medecin_id === medecin_id ? { ...m, statut } : m)));
+  const updateMedecinStatus = async (id, status) => {
+    try {
+      await medecinsService.updateMedecinStatus(id, status);
+      setMedecins((prev) => prev.map((m) => (m.id === id ? { ...m, status } : m)));
+    } catch (err) {
+      console.error('Error updating medecin status:', err);
+      setError(err.message);
+    }
   };
 
-  const selectedMedecin = selectedId ? medecins.find((m) => m.medecin_id === selectedId) : null;
+  const handleCreateMedecin = async (e) => {
+    e.preventDefault();
+    try {
+      // First create the user
+      const userData = {
+        nom: newMedecin.nom,
+        email: newMedecin.email,
+        telephone: newMedecin.telephone,
+        role: 'MEDECIN',
+        status: 'ACTIVE',
+        motDePasse: newMedecin.motDePasse,
+      };
+      const createdUser = await usersService.createUser(userData);
+      
+      // Then create the medecin with the user ID
+      const medecinData = {
+        utilisateur_id: createdUser.utilisateur_id ?? createdUser.id,
+        nom: newMedecin.nom,
+        email: newMedecin.email,
+        telephone: newMedecin.telephone,
+        specialite: newMedecin.specialite,
+      };
+      const createdMedecin = await medecinsService.createMedecin(medecinData);
+      setMedecins((prev) => [...prev, createdMedecin]);
+      setShowAddModal(false);
+      setNewMedecin({ nom: '', email: '', telephone: '', specialite: '', motDePasse: '' });
+      setError(null);
+    } catch (err) {
+      console.error('Error creating medecin:', err);
+      setError(err.message);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="admin-medecins-page">
+        <header className="medecins-header">
+          <h1>Gestion des médecins</h1>
+        </header>
+        <p style={{ padding: '20px' }}>Chargement des données...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin-medecins-page">
+        <header className="medecins-header">
+          <h1>Gestion des médecins</h1>
+        </header>
+        <p style={{ padding: '20px', color: 'red' }}>Erreur: {error}</p>
+      </div>
+    );
+  }
+
+  const selectedMedecin = selectedId ? medecins.find((m) => m.id === selectedId) : null;
 
   return (
     <div className="admin-medecins-page">
@@ -84,8 +123,73 @@ export default function AdminMedecins() {
           <h1>Gestion des médecins</h1>
           <p>Suivi des médecins biologistes et de leur performance.</p>
         </div>
-        <button className="btn-primary">Ajouter un médecin</button>
+        <button className="btn-primary" onClick={() => setShowAddModal(true)}>Ajouter un médecin</button>
       </header>
+
+      {showAddModal && (
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Ajouter un nouveau médecin</h2>
+              <button className="modal-close" onClick={() => setShowAddModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleCreateMedecin} className="modal-form">
+              <div className="form-group">
+                <label>Nom complet</label>
+                <input
+                  type="text"
+                  required
+                  value={newMedecin.nom}
+                  onChange={(e) => setNewMedecin({ ...newMedecin, nom: e.target.value })}
+                  placeholder="Ex: Dr. Jean Dupont"
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  required
+                  value={newMedecin.email}
+                  onChange={(e) => setNewMedecin({ ...newMedecin, email: e.target.value })}
+                  placeholder="Ex: jean@example.com"
+                />
+              </div>
+              <div className="form-group">
+                <label>Téléphone</label>
+                <input
+                  type="tel"
+                  value={newMedecin.telephone}
+                  onChange={(e) => setNewMedecin({ ...newMedecin, telephone: e.target.value })}
+                  placeholder="Ex: +216 XX XXX XXX"
+                />
+              </div>
+              <div className="form-group">
+                <label>Spécialité</label>
+                <input
+                  type="text"
+                  value={newMedecin.specialite}
+                  onChange={(e) => setNewMedecin({ ...newMedecin, specialite: e.target.value })}
+                  placeholder="Ex: Biologie Clinique"
+                />
+              </div>
+              <div className="form-group">
+                <label>Mot de passe</label>
+                <input
+                  type="password"
+                  required
+                  value={newMedecin.motDePasse}
+                  onChange={(e) => setNewMedecin({ ...newMedecin, motDePasse: e.target.value })}
+                  placeholder="Saisir un mot de passe"
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-ghost" onClick={() => setShowAddModal(false)}>Annuler</button>
+                <button type="submit" className="btn-primary">Créer le médecin</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="medecins-layout">
         <section className="medecins-main">
@@ -103,11 +207,11 @@ export default function AdminMedecins() {
               </div>
 
               <div className="field-group">
-                <label htmlFor="statut">Statut</label>
-                <select id="statut" value={statutFilter} onChange={(e) => setStatutFilter(e.target.value)}>
-                  {statuts.map((statut) => (
-                    <option key={statut} value={statut}>
-                      {statut}
+                <label htmlFor="status">Statut</label>
+                <select id="status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                  {statuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
                     </option>
                   ))}
                 </select>
@@ -118,18 +222,18 @@ export default function AdminMedecins() {
           <div className="medecins-grid">
             {filteredMedecins.map((medecin) => (
               <div
-                key={medecin.medecin_id}
-                className={`medecin-card ${selectedId === medecin.medecin_id ? 'selected' : ''}`}
-                onClick={() => setSelectedId(medecin.medecin_id)}
+                key={medecin.id}
+                className={`medecin-card ${selectedId === medecin.id ? 'selected' : ''}`}
+                onClick={() => setSelectedId(medecin.id)}
               >
                 <div className="medecin-header">
-                  <div className="medecin-avatar">{medecin.nom[4]}</div>
+                  <div className="medecin-avatar">{(medecin.nom || 'M')[0]}</div>
                   <div className="medecin-info">
-                    <h3>{medecin.nom}</h3>
-                    <p className="specialite">{medecin.specialite}</p>
+                    <h3>{medecin.nom || 'Sans nom'}</h3>
+                    <p className="specialite">{medecin.specialite || 'N/A'}</p>
                   </div>
-                  <span className={`status ${medecin.statut === 'ACTIVE' ? 'active' : 'inactive'}`}>
-                    {medecin.statut}
+                  <span className={`status ${(medecin.status || '').toLowerCase() === 'active' ? 'active' : 'suspended'}`}>
+                    {medecin.status || 'N/A'}
                   </span>
                 </div>
 
@@ -140,7 +244,7 @@ export default function AdminMedecins() {
                   </div>
                   <div className="stat-item">
                     <span className="stat-label">Utilisateur ID</span>
-                    <span className="stat-value">#{medecin.utilisateur_id}</span>
+                    <span className="stat-value">#{medecin.utilisateurId}</span>
                   </div>
                 </div>
 
@@ -150,7 +254,7 @@ export default function AdminMedecins() {
                 </div>
 
                 <div className="medecin-footer">
-                  <span className="date-info">Inscrit le {medecin.date_generation}</span>
+                  <span className="date-info">Inscrit le {medecin.dateInscription}</span>
                 </div>
               </div>
             ))}
@@ -190,7 +294,7 @@ export default function AdminMedecins() {
               </div>
               <div className="info-row">
                 <span className="label">Utilisateur lié</span>
-                <span className="value">#{selectedMedecin.utilisateur_id}</span>
+                <span className="value">#{selectedMedecin.utilisateurId}</span>
               </div>
             </div>
 
@@ -206,7 +310,7 @@ export default function AdminMedecins() {
               </div>
               <div className="perf-stat">
                 <span className="perf-label">Date inscription</span>
-                <span className="perf-value">{selectedMedecin.date_generation}</span>
+                <span className="perf-value">{selectedMedecin.dateInscription}</span>
               </div>
             </div>
 
@@ -217,15 +321,15 @@ export default function AdminMedecins() {
                 <button className="action-btn action-outline">Voir statistiques</button>
                 <button className="action-btn action-outline">Activité log</button>
                 <button
-                  className={`action-btn ${selectedMedecin.statut === 'ACTIVE' ? 'action-warn' : 'action-ok'}`}
+                  className={`action-btn ${selectedMedecin.status === 'ACTIVE' ? 'action-warn' : 'action-ok'}`}
                   onClick={() =>
-                    updateMedecinStatut(
-                      selectedMedecin.medecin_id,
-                      selectedMedecin.statut === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
+                    updateMedecinStatus(
+                      selectedMedecin.id,
+                      selectedMedecin.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'
                     )
                   }
                 >
-                  {selectedMedecin.statut === 'ACTIVE' ? 'Désactiver' : 'Activer'}
+                  {selectedMedecin.status === 'ACTIVE' ? 'Suspendre' : 'Activer'}
                 </button>
               </div>
             </div>

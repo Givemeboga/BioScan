@@ -1,97 +1,117 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { techniciensService, usersService } from '../../services/adminService';
 import './Techniciens.css';
 
-const initialTechniciens = [
-  {
-    technicien_id: 1,
-    nom: 'Ines Gharbi',
-    departement: 'Laboratoire Central',
-    email: 'ines.gharbi@bioscan.tn',
-    telephone: '+216 27 987 321',
-    utilisateur_id: 3,
-    bilansTraites: 1247,
-    analysesIA: 892,
-    rapportsCrees: 1103,
-    statut: 'ACTIVE',
-    date_generation: '2026-01-19',
-    derniereActivite: '2026-02-11 10:45',
-    tempsTraitementMoyen: '8.4 min',
-    bilansEnAttente: 12,
-  },
-  {
-    technicien_id: 2,
-    nom: 'Leila Mansour',
-    departement: 'Hematologie',
-    email: 'leila.mansour@bioscan.tn',
-    telephone: '+216 29 220 990',
-    utilisateur_id: 5,
-    bilansTraites: 2134,
-    analysesIA: 1876,
-    rapportsCrees: 2089,
-    statut: 'ACTIVE',
-    date_generation: '2025-09-14',
-    derniereActivite: '2026-02-11 11:20',
-    tempsTraitementMoyen: '6.8 min',
-    bilansEnAttente: 5,
-  },
-  {
-    technicien_id: 3,
-    nom: 'Fares Ben Ali',
-    departement: 'Biochimie',
-    email: 'fares.benali@bioscan.tn',
-    telephone: '+216 26 543 789',
-    utilisateur_id: 8,
-    bilansTraites: 987,
-    analysesIA: 654,
-    rapportsCrees: 912,
-    statut: 'ACTIVE',
-    date_generation: '2025-12-01',
-    derniereActivite: '2026-02-11 09:30',
-    tempsTraitementMoyen: '9.2 min',
-    bilansEnAttente: 18,
-  },
-  {
-    technicien_id: 4,
-    nom: 'Amira Jlidi',
-    departement: 'Microbiologie',
-    email: 'amira.jlidi@bioscan.tn',
-    telephone: '+216 28 765 432',
-    utilisateur_id: 11,
-    bilansTraites: 756,
-    analysesIA: 521,
-    rapportsCrees: 698,
-    statut: 'INACTIVE',
-    date_generation: '2025-11-10',
-    derniereActivite: '2026-02-05 14:15',
-    tempsTraitementMoyen: '11.5 min',
-    bilansEnAttente: 0,
-  },
-];
-
-const statuts = ['TOUS', 'ACTIVE', 'INACTIVE'];
+const statuses = ['TOUS', 'ACTIVE', 'SUSPENDED'];
 
 export default function AdminTechniciens() {
-  const [techniciens, setTechniciens] = useState(initialTechniciens);
+  const [techniciens, setTechniciens] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statutFilter, setStatutFilter] = useState('TOUS');
+  const [statusFilter, setStatusFilter] = useState('TOUS');
   const [selectedId, setSelectedId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newTechnicien, setNewTechnicien] = useState({
+    nom: '',
+    email: '',
+    telephone: '',
+    departement: '',
+  });
+
+  useEffect(() => {
+    const loadTechniciens = async () => {
+      try {
+        setLoading(true);
+        const data = await techniciensService.getTechniciens();
+        setTechniciens(data || []);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading techniciens:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTechniciens();
+  }, []);
 
   const filteredTechniciens = useMemo(() => {
     return techniciens.filter((tech) => {
       const matchesSearch =
-        tech.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tech.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        tech.departement.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatut = statutFilter === 'TOUS' || tech.statut === statutFilter;
-      return matchesSearch && matchesStatut;
+        (tech.nom?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
+        (tech.email?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
+        (tech.departement?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false);
+      const matchesStatus = statusFilter === 'TOUS' || tech.status === statusFilter;
+      return matchesSearch && matchesStatus;
     });
-  }, [techniciens, searchTerm, statutFilter]);
+  }, [techniciens, searchTerm, statusFilter]);
 
-  const updateTechnicienStatut = (technicien_id, statut) => {
-    setTechniciens((prev) => prev.map((t) => (t.technicien_id === technicien_id ? { ...t, statut } : t)));
+  const updateTechnicienStatus = async (id, status) => {
+    try {
+      await techniciensService.updateTechnicienStatus(id, status);
+      setTechniciens((prev) => prev.map((t) => (t.id === id ? { ...t, status } : t)));
+    } catch (err) {
+      console.error('Error updating technicien status:', err);
+      setError(err.message);
+    }
   };
 
-  const selectedTechnicien = selectedId ? techniciens.find((t) => t.technicien_id === selectedId) : null;
+  const handleCreateTechnicien = async (e) => {
+    e.preventDefault();
+    try {
+      // First create the user
+      const userData = {
+        nom: newTechnicien.nom,
+        email: newTechnicien.email,
+        telephone: newTechnicien.telephone,
+        role: 'TECHNICIEN',
+      };
+      const createdUser = await usersService.createUser(userData);
+      
+      // Then create the technicien with the user ID
+      const technicienData = {
+        utilisateurId: createdUser.id,
+        nom: newTechnicien.nom,
+        email: newTechnicien.email,
+        telephone: newTechnicien.telephone,
+        departement: newTechnicien.departement,
+      };
+      const createdTechnicien = await techniciensService.createTechnicien(technicienData);
+      setTechniciens((prev) => [...prev, createdTechnicien]);
+      setShowAddModal(false);
+      setNewTechnicien({ nom: '', email: '', telephone: '', departement: '' });
+      setError(null);
+    } catch (err) {
+      console.error('Error creating technicien:', err);
+      setError(err.message);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="admin-techniciens-page">
+        <header className="techniciens-header">
+          <h1>Gestion des techniciens</h1>
+        </header>
+        <p style={{ padding: '20px' }}>Chargement des données...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin-techniciens-page">
+        <header className="techniciens-header">
+          <h1>Gestion des techniciens</h1>
+        </header>
+        <p style={{ padding: '20px', color: 'red' }}>Erreur: {error}</p>
+      </div>
+    );
+  }
+
+  const selectedTechnicien = selectedId ? techniciens.find((t) => t.id === selectedId) : null;
 
   return (
     <div className="admin-techniciens-page">
@@ -100,8 +120,63 @@ export default function AdminTechniciens() {
           <h1>Gestion des techniciens</h1>
           <p>Suivi des techniciens de laboratoire et de leur performance.</p>
         </div>
-        <button className="btn-primary">Ajouter un technicien</button>
+        <button className="btn-primary" onClick={() => setShowAddModal(true)}>Ajouter un technicien</button>
       </header>
+
+      {showAddModal && (
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Ajouter un nouveau technicien</h2>
+              <button className="modal-close" onClick={() => setShowAddModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleCreateTechnicien} className="modal-form">
+              <div className="form-group">
+                <label>Nom complet</label>
+                <input
+                  type="text"
+                  required
+                  value={newTechnicien.nom}
+                  onChange={(e) => setNewTechnicien({ ...newTechnicien, nom: e.target.value })}
+                  placeholder="Ex: Jean Dupont"
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  required
+                  value={newTechnicien.email}
+                  onChange={(e) => setNewTechnicien({ ...newTechnicien, email: e.target.value })}
+                  placeholder="Ex: jean@example.com"
+                />
+              </div>
+              <div className="form-group">
+                <label>Téléphone</label>
+                <input
+                  type="tel"
+                  value={newTechnicien.telephone}
+                  onChange={(e) => setNewTechnicien({ ...newTechnicien, telephone: e.target.value })}
+                  placeholder="Ex: +216 XX XXX XXX"
+                />
+              </div>
+              <div className="form-group">
+                <label>Département</label>
+                <input
+                  type="text"
+                  value={newTechnicien.departement}
+                  onChange={(e) => setNewTechnicien({ ...newTechnicien, departement: e.target.value })}
+                  placeholder="Ex: Laboratoire Central"
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-ghost" onClick={() => setShowAddModal(false)}>Annuler</button>
+                <button type="submit" className="btn-primary">Créer le technicien</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="techniciens-layout">
         <section className="techniciens-main">
@@ -119,11 +194,11 @@ export default function AdminTechniciens() {
               </div>
 
               <div className="field-group">
-                <label htmlFor="statut">Statut</label>
-                <select id="statut" value={statutFilter} onChange={(e) => setStatutFilter(e.target.value)}>
-                  {statuts.map((statut) => (
-                    <option key={statut} value={statut}>
-                      {statut}
+                <label htmlFor="status">Statut</label>
+                <select id="status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                  {statuses.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
                     </option>
                   ))}
                 </select>
@@ -134,18 +209,18 @@ export default function AdminTechniciens() {
           <div className="techniciens-grid">
             {filteredTechniciens.map((tech) => (
               <div
-                key={tech.technicien_id}
-                className={`technicien-card ${selectedId === tech.technicien_id ? 'selected' : ''}`}
-                onClick={() => setSelectedId(tech.technicien_id)}
+                key={tech.id}
+                className={`technicien-card ${selectedId === tech.id ? 'selected' : ''}`}
+                onClick={() => setSelectedId(tech.id)}
               >
                 <div className="technicien-header">
-                  <div className="technicien-avatar">{tech.nom[0]}</div>
+                  <div className="technicien-avatar">{(tech.nom || 'T')[0]}</div>
                   <div className="technicien-info">
-                    <h3>{tech.nom}</h3>
-                    <p className="departement">{tech.departement}</p>
+                    <h3>{tech.nom || 'Sans nom'}</h3>
+                    <p className="departement">{tech.departement || 'N/A'}</p>
                   </div>
-                  <span className={`status ${tech.statut === 'ACTIVE' ? 'active' : 'inactive'}`}>
-                    {tech.statut}
+                  <span className={`status ${(tech.status || '').toLowerCase() === 'active' ? 'active' : 'suspended'}`}>
+                    {tech.status || 'N/A'}
                   </span>
                 </div>
 
@@ -181,7 +256,7 @@ export default function AdminTechniciens() {
                 </div>
 
                 <div className="technicien-footer">
-                  <span className="date-info">Inscrit le {tech.date_generation}</span>
+                  <span className="date-info">Inscrit le {tech.dateInscription}</span>
                 </div>
               </div>
             ))}
@@ -221,7 +296,7 @@ export default function AdminTechniciens() {
               </div>
               <div className="info-row">
                 <span className="label">Utilisateur lié</span>
-                <span className="value">#{selectedTechnicien.utilisateur_id}</span>
+                <span className="value">#{selectedTechnicien.utilisateurId}</span>
               </div>
             </div>
 
@@ -257,7 +332,7 @@ export default function AdminTechniciens() {
               </div>
               <div className="perf-stat">
                 <span className="perf-label">Date inscription</span>
-                <span className="perf-value">{selectedTechnicien.date_generation}</span>
+                <span className="perf-value">{selectedTechnicien.dateInscription}</span>
               </div>
             </div>
 
@@ -268,15 +343,15 @@ export default function AdminTechniciens() {
                 <button className="action-btn action-outline">Voir statistiques détaillées</button>
                 <button className="action-btn action-outline">Activité log</button>
                 <button
-                  className={`action-btn ${selectedTechnicien.statut === 'ACTIVE' ? 'action-warn' : 'action-ok'}`}
+                  className={`action-btn ${selectedTechnicien.status === 'ACTIVE' ? 'action-warn' : 'action-ok'}`}
                   onClick={() =>
-                    updateTechnicienStatut(
-                      selectedTechnicien.technicien_id,
-                      selectedTechnicien.statut === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
+                    updateTechnicienStatus(
+                      selectedTechnicien.id,
+                      selectedTechnicien.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'
                     )
                   }
                 >
-                  {selectedTechnicien.statut === 'ACTIVE' ? 'Désactiver' : 'Activer'}
+                  {selectedTechnicien.status === 'ACTIVE' ? 'Suspendre' : 'Activer'}
                 </button>
               </div>
             </div>

@@ -1,75 +1,57 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { usersService } from '../../services/adminService';
 import './Users.css';
 
-const initialUsers = [
-  {
-    utilisateur_id: 1,
-    nom_utilisateur: 'Yosra Ben Ahmed',
-    email: 'yosra.benahmed@bioscan.tn',
-    telephone: '+216 20 123 456',
-    role: 'ADMIN',
-    statut: 'ACTIVE',
-    date_generation: '2025-11-12',
-  },
-  {
-    utilisateur_id: 2,
-    nom_utilisateur: 'Ahmed Trabelsi',
-    email: 'ahmed.trabelsi@bioscan.tn',
-    telephone: '+216 22 654 321',
-    role: 'MEDECIN',
-    statut: 'ACTIVE',
-    date_generation: '2025-12-04',
-  },
-  {
-    utilisateur_id: 3,
-    nom_utilisateur: 'Ines Gharbi',
-    email: 'ines.gharbi@bioscan.tn',
-    telephone: '+216 27 987 321',
-    role: 'TECHNICIEN',
-    statut: 'INACTIVE',
-    date_generation: '2026-01-19',
-  },
-  {
-    utilisateur_id: 4,
-    nom_utilisateur: 'Sami Haddad',
-    email: 'sami.haddad@bioscan.tn',
-    telephone: '+216 24 456 778',
-    role: 'MEDECIN',
-    statut: 'ACTIVE',
-    date_generation: '2025-10-28',
-  },
-  {
-    utilisateur_id: 5,
-    nom_utilisateur: 'Leila Mansour',
-    email: 'leila.mansour@bioscan.tn',
-    telephone: '+216 29 220 990',
-    role: 'TECHNICIEN',
-    statut: 'ACTIVE',
-    date_generation: '2025-09-14',
-  },
-];
-
 const roles = ['TOUS', 'ADMIN', 'MEDECIN', 'TECHNICIEN'];
-const statuts = ['TOUS', 'ACTIVE', 'INACTIVE'];
+const statuses = ['TOUS', 'ACTIVE', 'INACTIVE'];
 
 export default function AdminUsers() {
-  const [users, setUsers] = useState(initialUsers);
+  const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('TOUS');
-  const [statutFilter, setStatutFilter] = useState('TOUS');
+  const [statusFilter, setStatusFilter] = useState('TOUS');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkRole, setBulkRole] = useState('MEDECIN');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newUser, setNewUser] = useState({
+    nom: '',
+    email: '',
+    telephone: '',
+    role: 'MEDECIN',
+    status: 'ACTIVE',
+    motDePasse: '',
+  });
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setLoading(true);
+        const data = await usersService.getUsers();
+        setUsers(data || []);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading users:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUsers();
+  }, []);
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
       const matchesSearch =
-        user.nom_utilisateur.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase());
+        (user.nom?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
+        (user.email?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false);
       const matchesRole = roleFilter === 'TOUS' || user.role === roleFilter;
-      const matchesStatut = statutFilter === 'TOUS' || user.statut === statutFilter;
-      return matchesSearch && matchesRole && matchesStatut;
+      const matchesStatus = statusFilter === 'TOUS' || user.status === statusFilter;
+      return matchesSearch && matchesRole && matchesStatus;
     });
-  }, [users, searchTerm, roleFilter, statutFilter]);
+  }, [users, searchTerm, roleFilter, statusFilter]);
 
   const allFilteredSelected =
     filteredUsers.length > 0 &&
@@ -98,21 +80,94 @@ export default function AdminUsers() {
     setSelectedIds(next);
   };
 
-  const updateUserStatut = (utilisateur_id, statut) => {
-    setUsers((prev) => prev.map((user) => (user.utilisateur_id === utilisateur_id ? { ...user, statut } : user)));
+  const updateUserStatus = async (id, status) => {
+    try {
+      await usersService.updateUserStatus(id, status);
+      setUsers((prev) => prev.map((user) => (user.id === id ? { ...user, status } : user)));
+    } catch (err) {
+      console.error('Error updating user status:', err);
+      setError(err.message);
+    }
   };
 
-  const applyBulkStatut = (statut) => {
-    setUsers((prev) =>
-      prev.map((user) => (selectedIds.has(user.utilisateur_id) ? { ...user, statut } : user))
-    );
+  const applyBulkStatus = async (status) => {
+    try {
+      const selectedArray = Array.from(selectedIds);
+      for (const userId of selectedArray) {
+        await usersService.updateUserStatus(userId, status);
+      }
+      setUsers((prev) =>
+        prev.map((user) => (selectedIds.has(user.id) ? { ...user, status } : user))
+      );
+      setSelectedIds(new Set());
+    } catch (err) {
+      console.error('Error applying bulk status:', err);
+      setError(err.message);
+    }
   };
 
-  const applyBulkRole = () => {
-    setUsers((prev) =>
-      prev.map((user) => (selectedIds.has(user.utilisateur_id) ? { ...user, role: bulkRole } : user))
-    );
+  const applyBulkRole = async () => {
+    try {
+      const selectedArray = Array.from(selectedIds);
+      await usersService.bulkUpdateRole(selectedArray, bulkRole);
+      setUsers((prev) =>
+        prev.map((user) => (selectedIds.has(user.id) ? { ...user, role: bulkRole } : user))
+      );
+      setSelectedIds(new Set());
+    } catch (err) {
+      console.error('Error applying bulk role:', err);
+      setError(err.message);
+    }
   };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    try {
+      const createdUser = await usersService.createUser(newUser);
+      // Ensure role and status are preserved from the form in case backend doesn't return them
+      const userToAdd = {
+        ...createdUser,
+        role: createdUser.role || newUser.role,
+        status: createdUser.status || newUser.status,
+      };
+      setUsers((prev) => [...prev, userToAdd]);
+      setShowAddModal(false);
+      setNewUser({
+        nom: '',
+        email: '',
+        telephone: '',
+        role: 'MEDECIN',
+        status: 'ACTIVE',
+        motDePasse: '',
+      });
+      setError(null);
+    } catch (err) {
+      console.error('Error creating user:', err);
+      setError(err.message);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="admin-users-page">
+        <header className="users-header">
+          <h1>Gestion des utilisateurs</h1>
+        </header>
+        <p style={{ padding: '20px' }}>Chargement des données...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin-users-page">
+        <header className="users-header">
+          <h1>Gestion des utilisateurs</h1>
+        </header>
+        <p style={{ padding: '20px', color: 'red' }}>Erreur: {error}</p>
+      </div>
+    );
+  }
 
   const selectedCount = selectedIds.size;
 
@@ -123,8 +178,86 @@ export default function AdminUsers() {
           <h1>Gestion des utilisateurs</h1>
           <p>Suivi des comptes, rôles et sécurité de la plateforme.</p>
         </div>
-        <button className="btn-primary">Ajouter un utilisateur</button>
+        <button className="btn-primary" onClick={() => setShowAddModal(true)}>Ajouter un utilisateur</button>
       </header>
+
+      {showAddModal && (
+        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Ajouter un nouvel utilisateur</h2>
+              <button className="modal-close" onClick={() => setShowAddModal(false)}>✕</button>
+            </div>
+            <form onSubmit={handleCreateUser} className="modal-form">
+              <div className="form-group">
+                <label>Nom complet</label>
+                <input
+                  type="text"
+                  required
+                  value={newUser.nom}
+                  onChange={(e) => setNewUser({ ...newUser, nom: e.target.value })}
+                  placeholder="Ex: Jean Dupont"
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  required
+                  value={newUser.email}
+                  onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+                  placeholder="Ex: jean@example.com"
+                />
+              </div>
+              <div className="form-group">
+                <label>Téléphone</label>
+                <input
+                  type="tel"
+                  value={newUser.telephone}
+                  onChange={(e) => setNewUser({ ...newUser, telephone: e.target.value })}
+                  placeholder="Ex: +216 XX XXX XXX"
+                />
+              </div>
+              <div className="form-group">
+                <label>Rôle</label>
+                <select
+                  value={newUser.role}
+                  onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                >
+                  {roles.filter((r) => r !== 'TOUS').map((role) => (
+                    <option key={role} value={role}>{role}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Mot de passe</label>
+                <input
+                  type="password"
+                  required
+                  value={newUser.motDePasse}
+                  onChange={(e) => setNewUser({ ...newUser, motDePasse: e.target.value })}
+                  placeholder="Saisir un mot de passe"
+                />
+              </div>
+              <div className="form-group">
+                <label>Statut</label>
+                <select
+                  value={newUser.status}
+                  onChange={(e) => setNewUser({ ...newUser, status: e.target.value })}
+                >
+                  {statuses.filter((s) => s !== 'TOUS').map((status) => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-ghost" onClick={() => setShowAddModal(false)}>Annuler</button>
+                <button type="submit" className="btn-primary">Créer l'utilisateur</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <section className="filters-card">
         <div className="filters-row">
@@ -151,15 +284,15 @@ export default function AdminUsers() {
           </div>
 
           <div className="field-group">
-            <label htmlFor="statut">Statut</label>
+            <label htmlFor="status">Statut</label>
             <select
-              id="statut"
-              value={statutFilter}
-              onChange={(event) => setStatutFilter(event.target.value)}
+              id="status"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
             >
-              {statuts.map((statut) => (
-                <option key={statut} value={statut}>
-                  {statut}
+              {statuses.map((status) => (
+                <option key={status} value={status}>
+                  {status}
                 </option>
               ))}
             </select>
@@ -171,10 +304,10 @@ export default function AdminUsers() {
             <strong>{selectedCount}</strong> selectionne(s)
           </div>
           <div className="bulk-actions">
-            <button className="btn-ghost" onClick={() => applyBulkStatut('ACTIVE')}>
+            <button className="btn-ghost" onClick={() => applyBulkStatus('ACTIVE')}>
               Activer
             </button>
-            <button className="btn-ghost" onClick={() => applyBulkStatut('INACTIVE')}>
+            <button className="btn-ghost" onClick={() => applyBulkStatus('INACTIVE')}>
               Desactiver
             </button>
             <div className="bulk-role">
@@ -217,49 +350,49 @@ export default function AdminUsers() {
                 <th>Téléphone</th>
                 <th>Rôle</th>
                 <th>Statut (ACTIVE / INACTIVE)</th>
-                <th>Date génération</th>
+                <th>Date création</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map((user) => (
-                <tr key={user.utilisateur_id}>
+                <tr key={user.id}>
                   <td>
                     <input
                       type="checkbox"
-                      checked={selectedIds.has(user.utilisateur_id)}
-                      onChange={() => toggleSelectUser(user.utilisateur_id)}
-                      aria-label={`Selectionner ${user.nom_utilisateur}`}
+                      checked={selectedIds.has(user.id)}
+                      onChange={() => toggleSelectUser(user.id)}
+                      aria-label={`Selectionner ${user.nom}`}
                     />
                   </td>
-                  <td className="cell-strong">{user.nom_utilisateur}</td>
+                  <td className="cell-strong">{user.nom}</td>
                   <td>{user.email}</td>
                   <td>{user.telephone}</td>
                   <td>
-                    <span className={`pill pill-${user.role.toLowerCase()}`}>{user.role}</span>
+                    <span className={`pill pill-${(user.role || 'unknown').toLowerCase()}`}>{user.role || 'N/A'}</span>
                   </td>
                   <td>
-                    <span className={`status ${user.statut === 'ACTIVE' ? 'active' : 'inactive'}`}>
-                      {user.statut}
+                    <span className={`status ${(user.status || '').toLowerCase() === 'active' ? 'active' : 'inactive'}`}>
+                      {user.status || 'N/A'}
                     </span>
                   </td>
-                  <td>{user.date_generation}</td>
+                  <td>{user.dateCreation}</td>
                   <td>
                     <div className="action-group">
                       <button className="action-btn">Edit</button>
                       <button
-                        className={`action-btn ${user.statut === 'ACTIVE' ? 'action-warn' : 'action-ok'}`}
+                        className={`action-btn ${user.status === 'ACTIVE' ? 'action-warn' : 'action-ok'}`}
                         onClick={() =>
-                          updateUserStatut(user.utilisateur_id, user.statut === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')
+                          updateUserStatus(user.id, user.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')
                         }
                       >
-                        {user.statut === 'ACTIVE' ? 'Disable' : 'Activate'}
+                        {user.status === 'ACTIVE' ? 'Disable' : 'Activate'}
                       </button>
                       <button className="action-btn action-outline">Reset password</button>
                     </div>
                     <div className="action-group secondary">
                       <button className="action-btn action-outline">Force reset</button>
-                      <button className="action-btn action-danger" onClick={() => updateUserStatut(user.utilisateur_id, 'INACTIVE')}>
+                      <button className="action-btn action-danger" onClick={() => updateUserStatus(user.id, 'INACTIVE')}>
                         Lock account
                       </button>
                       <button className="action-btn action-outline">Login history</button>

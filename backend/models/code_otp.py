@@ -13,6 +13,7 @@ class StatutOTP(enum.Enum):
 
 class CodeOTP(Base):
     __tablename__ = "code_otp"
+    __table_args__ = {"schema": "bioscan"}
 
     otp_id = Column(BigInteger, primary_key=True, autoincrement=True)
     code_generer = Column(String(10), nullable=False)
@@ -20,7 +21,7 @@ class CodeOTP(Base):
     statut = Column(Enum(StatutOTP), default=StatutOTP.ACTIF)
     date_generation = Column(DateTime, default=datetime.datetime.utcnow)
 
-    utilisateur_id = Column(BigInteger, ForeignKey("utilisateur.utilisateur_id"), nullable=False)
+    utilisateur_id = Column(BigInteger, ForeignKey("bioscan.utilisateur.utilisateur_id"), nullable=False)
     utilisateur = relationship("Utilisateur", back_populates="otps")
 
     expiration = Column(DateTime, nullable=False)

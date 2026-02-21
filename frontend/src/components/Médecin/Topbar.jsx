@@ -12,20 +12,18 @@ export default function Topbar({ pageTitle = 'Tableau de bord', onToggleSidebar,
     navigate('/medecin-biologiste/profil'); 
   };
 
-  // 🔹 Récupération des infos du médecin depuis l'API
+  // 🔹 Récupération des infos du médecin depuis localStorage
   useEffect(() => {
-    const userId = 1; // ou récupère dynamiquement l'ID du médecin connecté
-    fetch(`http://127.0.0.1:8000/api/profil/${userId}`)
-      .then(res => res.json())
-      .then(data => {
-        setUser({
-          id: data.utilisateur_id,
-          name: data.nom_utilisateur,
-          role: data.statut, // ou spécialité si tu veux
-          avatar: null, // à remplacer si backend fournit l'avatar
-        });
-      })
-      .catch(err => console.error('Erreur chargement profil :', err));
+    const userId = localStorage.getItem('user_id');
+    const role = localStorage.getItem('role');
+    
+    // Utiliser les données stockées lors du login
+    setUser({
+      id: userId || '1',
+      name: 'Médecin', // Vous pouvez stocker le nom lors du login aussi
+      role: role || 'Médecin Biologiste',
+      avatar: null
+    });
   }, []);
 
   return (

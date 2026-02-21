@@ -1,13 +1,11 @@
 from sqlalchemy import Column, BigInteger, String, Text
-from sqlalchemy.orm import relationship
 from database import Base
+
 
 class Role(Base):
     __tablename__ = "role"
+    __table_args__ = {"schema": "bioscan"}
 
     role_id = Column(BigInteger, primary_key=True, index=True)
-    nom = Column(String(50), unique=True, nullable=False)
-    description = Column(Text)
-
-    # relation inverse
-    utilisateurs = relationship("Utilisateur", back_populates="role")
+    nom = Column(String(50), nullable=False)
+    description = Column(Text, nullable=True)

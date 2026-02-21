@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,32 +9,84 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
+import { dashboardService } from '../../services/adminService';
 import './Dashboard.css';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
 export default function AdminDashboard() {
-  const stats = {
-    utilisateurs: 382,
-    utilisateursActifs: 341,
-    documentsEnAttente: 12,
-    rapportsGeneres: 128,
-  };
+  const [stats, setStats] = useState({
+    utilisateurs: 0,
+    comptesActifs: 0,
+    signalements: 0,
+    rapportsGeneres: 0,
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [statusBreakdown, setStatusBreakdown] = useState({});
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [overview, monthly, status] = await Promise.all([
+          dashboardService.getOverview(),
+          dashboardService.getAccountsMonthly(),
+          dashboardService.getAccountStatus(),
+        ]);
+
+        setStats({
+          utilisateurs: overview.totalUsers || 0,
+          comptesActifs: overview.activeAccounts || 0,
+          signalements: overview.signalements || 0,
+          rapportsGeneres: overview.rapportsGeneres || 0,
+        });
+
+        setMonthlyData(monthly.monthly || []);
+        setStatusBreakdown(status.statusBreakdown || {});
+        setError(null);
+      } catch (err) {
+        console.error('Error loading dashboard data:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
 
   const barData = {
-    labels: ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin'],
+    labels: monthlyData.map(d => {
+      const date = new Date(d.month);
+      return date.toLocaleDateString('fr-TN', { month: 'short' });
+    }) || ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin'],
     datasets: [
       {
         label: 'Comptes crees',
-        data: [35, 48, 62, 54, 70, 81],
+        data: monthlyData.map(d => d.count) || [35, 48, 62, 54, 70, 81],
         backgroundColor: '#0ea5e9',
         borderRadius: 6,
       },
+    ],
+  };
+
+  const donutLabels = Object.keys(statusBreakdown).length > 0 
+    ? Object.keys(statusBreakdown)
+    : ['Actifs', 'En attente', 'Suspendus', 'Supprimes'];
+  
+  const donutValues = Object.keys(statusBreakdown).length > 0
+    ? Object.values(statusBreakdown)
+    : [71, 14, 9, 6];
+
+  const donutData = {
+    labels: donutLabels,
+    datasets: [
       {
-        label: 'Comptes desactives',
-        data: [4, 6, 9, 7, 5, 8],
-        backgroundColor: '#f59e0b',
-        borderRadius: 6,
+        data: donutValues,
+        backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ef4444'],
+        borderWidth: 1,
       },
     ],
   };
@@ -46,29 +98,40 @@ export default function AdminDashboard() {
     scales: { y: { beginAtZero: true } },
   };
 
-  const donutData = {
-    labels: ['ACTIVE', 'EN_COURS', 'VALIDE', 'REJETE'],
-    datasets: [
-      {
-        data: [71, 14, 9, 6],
-        backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ef4444'],
-        borderWidth: 1,
-      },
-    ],
-  };
-
   const donutOptions = {
     responsive: true,
     plugins: { legend: { position: 'bottom' } },
     cutout: '65%',
   };
 
+  if (loading) {
+    return (
+      <div className="admin-dashboard">
+        <header className="dashboard-header">
+          <h1>Tableau de bord admin</h1>
+        </header>
+        <p style={{ padding: '20px' }}>Chargement des données...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin-dashboard">
+        <header className="dashboard-header">
+          <h1>Tableau de bord admin</h1>
+        </header>
+        <p style={{ padding: '20px', color: 'red' }}>Erreur: {error}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="admin-dashboard">
       <header className="dashboard-header">
         <div>
           <h1>Tableau de bord admin</h1>
-          <p>Vue d'ensemble des opérations - {new Date().toLocaleDateString('fr-TN')}</p>
+          <p>Vue d'ensemble des operations - {new Date().toLocaleDateString('fr-TN')}</p>
         </div>
         <button className="btn-refresh">Actualiser</button>
       </header>
@@ -85,16 +148,16 @@ export default function AdminDashboard() {
         <div className="stat-card success">
           <div className="stat-icon">✅</div>
           <div className="stat-content">
-            <h3>Utilisateurs actifs</h3>
-            <div className="stat-value">{stats.utilisateursActifs}</div>
+            <h3>Comptes actifs</h3>
+            <div className="stat-value">{stats.comptesActifs}</div>
           </div>
         </div>
 
         <div className="stat-card warning">
-          <div className="stat-icon">⏳</div>
+          <div className="stat-icon">🚩</div>
           <div className="stat-content">
-            <h3>Documents en attente</h3>
-            <div className="stat-value">{stats.documentsEnAttente}</div>
+            <h3>Signalements</h3>
+            <div className="stat-value">{stats.signalements}</div>
           </div>
         </div>
 

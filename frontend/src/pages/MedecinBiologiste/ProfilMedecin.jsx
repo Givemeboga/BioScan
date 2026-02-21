@@ -18,8 +18,20 @@ export default function ProfilMedecin() {
 
   // 🔹 Charger le profil depuis l'API au montage
   useEffect(() => {
+    // Utiliser localStorage comme fallback
+    const fallbackData = {
+      nom_utilisateur: localStorage.getItem('user_name') || 'Médecin',
+      statut: localStorage.getItem('role') || 'Médecin Biologiste',
+      telephone: localStorage.getItem('user_phone') || '',
+      email: localStorage.getItem('user_email') || '',
+      date_generation: new Date().toLocaleDateString(),
+    };
+
     fetch(`http://127.0.0.1:8000/api/profil/${userId}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Profil non trouvé');
+        return res.json();
+      })
       .then(data => {
         setProfil({
           nom_complet: data.nom_utilisateur,
@@ -35,7 +47,23 @@ export default function ProfilMedecin() {
           email: data.email,
         });
       })
-      .catch(err => console.error('Erreur GET profil:', err));
+      .catch(err => {
+        console.warn('Erreur GET profil, utilisation des données locales:', err);
+        // Utiliser les données en fallback
+        setProfil({
+          nom_complet: fallbackData.nom_utilisateur,
+          specialite: fallbackData.statut,
+          telephone: fallbackData.telephone,
+          email: fallbackData.email,
+          date_inscription: fallbackData.date_generation,
+        });
+        setFormData({
+          nom_complet: fallbackData.nom_utilisateur,
+          specialite: fallbackData.statut,
+          telephone: fallbackData.telephone,
+          email: fallbackData.email,
+        });
+      });
   }, [userId]);
 
   // 🔹 Changement des champs du formulaire
@@ -144,7 +172,7 @@ export default function ProfilMedecin() {
         <div className="profil-card">
           {/* Avatar */}
           <div className="profil-avatar">
-            <img src={displayedAvatar} alt="Photo de profil" className="avatar-img" />
+            <img src={displayedAvatar} alt="Profil médecin" className="avatar-img" />
             {editMode && (
               <>
                 <button type="button" className="btn-change-photo" onClick={triggerFileInput}>
