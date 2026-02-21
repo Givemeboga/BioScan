@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { usersService } from '../../services/adminService';
 import './Users.css';
 
-const roles = ['TOUS', 'ADMIN', 'MEDECIN', 'TECHNICIEN'];
+const roles = ['TOUS', 'Administrateur', 'Medecin', 'Technicien biologiste', 'Patient'];
 const statuses = ['TOUS', 'ACTIVE', 'INACTIVE'];
 
 export default function AdminUsers() {
@@ -11,7 +11,7 @@ export default function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState('TOUS');
   const [statusFilter, setStatusFilter] = useState('TOUS');
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const [bulkRole, setBulkRole] = useState('MEDECIN');
+  const [bulkRole, setBulkRole] = useState('Medecin');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -19,7 +19,7 @@ export default function AdminUsers() {
     nom: '',
     email: '',
     telephone: '',
-    role: 'MEDECIN',
+    role: 'Medecin',
     status: 'ACTIVE',
     motDePasse: '',
   });
@@ -136,7 +136,7 @@ export default function AdminUsers() {
         nom: '',
         email: '',
         telephone: '',
-        role: 'MEDECIN',
+        role: 'Medecin',
         status: 'ACTIVE',
         motDePasse: '',
       });
