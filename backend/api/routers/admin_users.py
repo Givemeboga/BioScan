@@ -7,6 +7,10 @@ from schemas.user import UserCreate, UserRead, UserUpdate
 from sqlalchemy.exc import SQLAlchemyError
 from models.utilisateur import Utilisateur, get_user_by_email, get_password_hash
 from models.role import Role
+from models.medecin import MedecinBiologiste
+from models.technicien import TechnicienBiologiste
+from models.administrateur import Administrateur
+from models.patient import Patient
 import logging
 import datetime
 
@@ -124,6 +128,28 @@ async def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
         db.add(user)
         db.commit()
         db.refresh(user)
+        
+        # Add user to role-specific table based on role
+        if user_in.role:
+            role_name_lower = user_in.role.lower()
+            try:
+                if 'medecin' in role_name_lower:
+                    medecin = MedecinBiologiste(utilisateur_id=user.utilisateur_id)
+                    db.add(medecin)
+                elif 'technicien' in role_name_lower:
+                    technicien = TechnicienBiologiste(utilisateur_id=user.utilisateur_id)
+                    db.add(technicien)
+                elif 'administrateur' in role_name_lower or 'admin' in role_name_lower:
+                    admin = Administrateur(utilisateur_id=user.utilisateur_id)
+                    db.add(admin)
+                elif 'patient' in role_name_lower:
+                    patient = Patient(utilisateur_id=user.utilisateur_id, actif=True)
+                    db.add(patient)
+                db.commit()
+            except Exception as exc:
+                logger.warning(f"Failed to add user to role table: {exc}")
+                # Don't fail the entire operation if role table insertion fails
+                db.rollback()
     except HTTPException:
         raise
     except SQLAlchemyError as exc:

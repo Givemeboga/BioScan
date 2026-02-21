@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { techniciensService, usersService } from '../../services/adminService';
 import './Techniciens.css';
 
-const statuses = ['TOUS', 'ACTIVE', 'SUSPENDED'];
+const statuses = ['TOUS', 'ACTIVE', 'INACTIVE'];
 
 export default function AdminTechniciens() {
   const [techniciens, setTechniciens] = useState([]);
@@ -20,21 +20,33 @@ export default function AdminTechniciens() {
   });
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadTechniciens = async () => {
       try {
         setLoading(true);
         const data = await techniciensService.getTechniciens();
-        setTechniciens(data || []);
-        setError(null);
+        if (isMounted) {
+          setTechniciens(data || []);
+          setError(null);
+        }
       } catch (err) {
-        console.error('Error loading techniciens:', err);
-        setError(err.message);
+        if (isMounted) {
+          console.error('Error loading techniciens:', err);
+          setError(err.message);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadTechniciens();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filteredTechniciens = useMemo(() => {
@@ -61,24 +73,31 @@ export default function AdminTechniciens() {
   const handleCreateTechnicien = async (e) => {
     e.preventDefault();
     try {
-      // First create the user
+      // Create the user (technicien is automatically created in the backend)
       const userData = {
         nom: newTechnicien.nom,
         email: newTechnicien.email,
         telephone: newTechnicien.telephone,
-        role: 'TECHNICIEN',
+        role: 'Technicien biologiste',
+        status: 'ACTIVE',
+        motDePasse: newTechnicien.motDePasse || 'Password123!',
       };
       const createdUser = await usersService.createUser(userData);
       
-      // Then create the technicien with the user ID
-      const technicienData = {
-        utilisateurId: createdUser.id,
-        nom: newTechnicien.nom,
-        email: newTechnicien.email,
-        telephone: newTechnicien.telephone,
+      // Convert to technicien format for display
+      const createdTechnicien = {
+        id: createdUser.id,
+        nom: createdUser.nom,
+        email: createdUser.email,
+        telephone: createdUser.telephone,
         departement: newTechnicien.departement,
+        utilisateurId: createdUser.id,
+        rapportsValides: 0,
+        status: createdUser.status,
+        dateInscription: createdUser.dateCreation,
+        derniereActivite: null,
       };
-      const createdTechnicien = await techniciensService.createTechnicien(technicienData);
+      
       setTechniciens((prev) => [...prev, createdTechnicien]);
       setShowAddModal(false);
       setNewTechnicien({ nom: '', email: '', telephone: '', departement: '' });
