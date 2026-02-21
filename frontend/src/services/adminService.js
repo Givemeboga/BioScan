@@ -32,6 +32,14 @@ export const usersService = {
     return apiClient.patch(`/api/admin/users/${userId}/status`, { status });
   },
 
+  async resetUserPassword(userId) {
+    return apiClient.post(`/api/admin/users/${userId}/reset-password`);
+  },
+
+  async getLoginHistory(userId, limit = 20) {
+    return apiClient.get(`/api/admin/users/${userId}/login-history`, { limit });
+  },
+
   async bulkUpdateRole(userIds, newRole) {
     return apiClient.patch('/api/admin/users/bulk/role', {
       userIds,

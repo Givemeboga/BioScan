@@ -26,42 +26,42 @@ export default function AdminDashboard() {
   const [monthlyData, setMonthlyData] = useState([]);
   const [statusBreakdown, setStatusBreakdown] = useState({});
 
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [overview, monthly, status] = await Promise.all([
+        dashboardService.getOverview(),
+        dashboardService.getAccountsMonthly(),
+        dashboardService.getAccountStatus(),
+      ]);
+
+      setStats({
+        utilisateurs: overview.totalUsers || 0,
+        comptesActifs: overview.activeAccounts || 0,
+        signalements: overview.signalements || 0,
+        rapportsGeneres: overview.rapportsGeneres || 0,
+      });
+
+      setMonthlyData(monthly.monthly || []);
+      setStatusBreakdown(status.statusBreakdown || {});
+      setError(null);
+    } catch (err) {
+      console.error('Error loading dashboard data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        setLoading(true);
-        const [overview, monthly, status] = await Promise.all([
-          dashboardService.getOverview(),
-          dashboardService.getAccountsMonthly(),
-          dashboardService.getAccountStatus(),
-        ]);
-
-        setStats({
-          utilisateurs: overview.totalUsers || 0,
-          comptesActifs: overview.activeAccounts || 0,
-          signalements: overview.signalements || 0,
-          rapportsGeneres: overview.rapportsGeneres || 0,
-        });
-
-        setMonthlyData(monthly.monthly || []);
-        setStatusBreakdown(status.statusBreakdown || {});
-        setError(null);
-      } catch (err) {
-        console.error('Error loading dashboard data:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadDashboardData();
   }, []);
 
   const barData = {
     labels: monthlyData.map(d => {
       const date = new Date(d.month);
-      return date.toLocaleDateString('fr-TN', { month: 'short' });
-    }) || ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin'],
+      return `Semaine ${Math.ceil((date.getDate()) / 7)}`;
+    }) || ['Semaine 1', 'Semaine 2', 'Semaine 3', 'Semaine 4', 'Semaine 5', 'Semaine 6'],
     datasets: [
       {
         label: 'Comptes crees',
@@ -85,7 +85,7 @@ export default function AdminDashboard() {
     datasets: [
       {
         data: donutValues,
-        backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ef4444'],
+        backgroundColor: ['#ef4444', '#10b981', '#f59e0b', '#3b82f6'],
         borderWidth: 1,
       },
     ],
@@ -133,7 +133,9 @@ export default function AdminDashboard() {
           <h1>Tableau de bord admin</h1>
           <p>Vue d'ensemble des operations - {new Date().toLocaleDateString('fr-TN')}</p>
         </div>
-        <button className="btn-refresh">Actualiser</button>
+        <button className="btn-refresh" onClick={loadDashboardData} disabled={loading}>
+          {loading ? 'Chargement...' : 'Actualiser'}
+        </button>
       </header>
 
       <div className="stats-grid">
@@ -172,7 +174,7 @@ export default function AdminDashboard() {
 
       <div className="charts-grid">
         <div className="chart-card bar-chart">
-          <h3>Comptes par mois</h3>
+          <h3>Comptes par semaine</h3>
           <div className="chart-wrapper">
             <Bar data={barData} options={barOptions} />
           </div>
