@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
@@ -169,6 +169,8 @@ async def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(g
         if not role_id:
             raise HTTPException(status_code=400, detail=f"Role '{user_in.role}' not found")
         user.role_id = role_id
+    if user_in.status:
+        user.statut = user_in.status
     db.commit()
     db.refresh(user)
     logger.info("Updated user", extra={"user_id": int(user.utilisateur_id)})
@@ -196,14 +198,17 @@ async def delete_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/{user_id}/status", response_model=UserRead)
-async def patch_user_status(user_id: int, status: str, db: Session = Depends(get_db)):
+async def patch_user_status(user_id: int, status_data: dict = Body(...), db: Session = Depends(get_db)):
     user = db.query(Utilisateur).filter(Utilisateur.utilisateur_id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    user.statut = status
+    status_value = status_data.get("status")
+    if not status_value:
+        raise HTTPException(status_code=400, detail="Status is required")
+    user.statut = status_value
     db.commit()
     db.refresh(user)
-    logger.info("Updated user status", extra={"user_id": user_id, "status": status})
+    logger.info("Updated user status", extra={"user_id": user_id, "status": status_value})
     role_name = _get_role_name(db, user.role_id)
     return UserRead(
         id=int(user.utilisateur_id),
@@ -229,3 +234,65 @@ async def bulk_update_role(userIds: List[int], newRole: str, db: Session = Depen
     db.commit()
     logger.info("Bulk updated roles", extra={"user_count": len(users), "new_role": newRole})
     return {"updated": len(users)}
+
+
+@router.post("/{user_id}/reset-password", response_model=dict)
+async def reset_password(user_id: int, db: Session = Depends(get_db)):
+    """Reset user password to default: Password123!"""
+    user = db.query(Utilisateur).filter(Utilisateur.utilisateur_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    default_password = "Password123!"
+    user.mot_de_passe = get_password_hash(default_password)
+    db.commit()
+    logger.info("Reset password for user", extra={"user_id": user_id})
+    return {
+        "message": f"Password reset successfully. New password: {default_password}",
+        "default_password": default_password
+    }
+
+
+@router.get("/{user_id}/login-history", response_model=dict)
+async def get_user_login_history(
+    user_id: int,
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    """Get login history for a user from evenement_securite table"""
+    user = db.query(Utilisateur).filter(Utilisateur.utilisateur_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Query from evenement_securite table
+    from sqlalchemy import text
+    query_str = """
+        SELECT 
+            ip,
+            agent_utilisateur,
+            status,
+            type_evenement
+        FROM bioscan.evenement_securite
+        WHERE utilisateur_id = :user_id
+        ORDER BY evenement_id DESC
+        LIMIT :limit
+    """
+    
+    result = db.execute(text(query_str), {"user_id": user_id, "limit": limit})
+    rows = result.fetchall()
+    
+    history = []
+    for row in rows:
+        history.append({
+            "ip": row[0],
+            "user_agent": row[1],
+            "status": row[2],
+            "type": row[3]
+        })
+    
+    logger.info("Fetched login history", extra={"user_id": user_id, "count": len(history)})
+    return {
+        "user_id": user_id,
+        "user_name": user.nom_utilisateur,
+        "history": history
+    }
