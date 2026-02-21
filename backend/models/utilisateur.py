@@ -30,6 +30,9 @@ class Utilisateur(Base):
     date_mise_a_jour = Column(DateTime, nullable=True)
     
     role_id = Column(BigInteger, ForeignKey("bioscan.role.role_id"), nullable=True)
+    
+    # Relationship with Role table
+    role_obj = relationship("Role", foreign_keys=[role_id], viewonly=True)
 
     # Relation avec CodeOTP
     otps = relationship(

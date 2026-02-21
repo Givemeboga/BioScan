@@ -33,6 +33,11 @@ const handleSubmit = async (e) => {
     localStorage.setItem("token", res.data.access_token);
     localStorage.setItem("role", res.data.role);
     localStorage.setItem("user_id", res.data.user_id);
+    
+    // Stocker des données supplémentaires si disponibles
+    if (res.data.email) localStorage.setItem("user_email", res.data.email);
+    if (res.data.nom || res.data.name) localStorage.setItem("user_name", res.data.nom || res.data.name);
+    if (res.data.telephone || res.data.phone) localStorage.setItem("user_phone", res.data.telephone || res.data.phone);
 
     const role = res.data.role;
     if (role === "Medecin" || role === "Medecin biologiste") navigate("/medecin-biologiste/tableau");

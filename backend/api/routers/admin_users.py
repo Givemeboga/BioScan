@@ -1,15 +1,33 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List, Optional
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from database import get_db
 from schemas.user import UserCreate, UserRead, UserUpdate
 from sqlalchemy.exc import SQLAlchemyError
 from models.utilisateur import Utilisateur, get_user_by_email, get_password_hash
+from models.role import Role
 import logging
 import datetime
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/admin/users", tags=["Admin Users"])
+
+
+def _get_role_name(db: Session, role_id: int) -> Optional[str]:
+    """Helper to get role name from role_id"""
+    if not role_id:
+        return None
+    role = db.query(Role).filter(Role.role_id == role_id).first()
+    return role.nom if role else None
+
+
+def _get_role_id(db: Session, role_name: str) -> Optional[int]:
+    """Helper to get role_id from role name"""
+    if not role_name:
+        return None
+    role = db.query(Role).filter(Role.nom.ilike(role_name)).first()
+    return role.role_id if role else None
 
 
 def _paginate_query(query, page: int, limit: int):
@@ -33,22 +51,29 @@ async def list_users(
         like_q = f"%{search}%"
         query = query.filter((Utilisateur.nom_utilisateur.ilike(like_q)) | (Utilisateur.email.ilike(like_q)))
     if role:
-        # role is not currently stored on Utilisateur; skip or filter via join in future
-        pass
+        # Filter by role name
+        query = query.join(Role, Utilisateur.role_id == Role.role_id, isouter=True)
+        query = query.filter(Role.nom.ilike(role))
+    else:
+        query = query.join(Role, Utilisateur.role_id == Role.role_id, isouter=True)
+    
     if status:
         query = query.filter(Utilisateur.statut == status)
 
-    users = _paginate_query(query, page, limit).all()
+    # Apply pagination
+    offset = (page - 1) * limit
+    users = query.offset(offset).limit(limit).all()
     logger.info("Listed users", extra={"count": len(users), "page": page})
 
     result = []
     for u in users:
+        role_name = _get_role_name(db, u.role_id)
         result.append(UserRead(
             id=int(u.utilisateur_id),
             nom=u.nom_utilisateur,
             email=u.email,
             telephone=u.telephone,
-            role=None,
+            role=role_name,
             status=(str(u.statut) if u.statut is not None else None),
             dateCreation=(u.date_generation.isoformat() if u.date_generation else None),
         ))
@@ -76,12 +101,24 @@ async def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
                 status_code=400,
                 detail="Password too long for bcrypt (max 72 bytes)"
             )
+        
+        # Get role_id from role name
+        role_id = None
+        if user_in.role:
+            role_id = _get_role_id(db, user_in.role)
+            if not role_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Role '{user_in.role}' not found"
+                )
+        
         user = Utilisateur(
             nom_utilisateur=user_in.nom,
             email=str(user_in.email),
             mot_de_passe=get_password_hash(password_value),
             telephone=user_in.telephone,
             statut=status_value,
+            role_id=role_id,
             date_generation=now,
         )
         db.add(user)
@@ -104,12 +141,13 @@ async def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
             detail=f"Unexpected error while creating user: {exc}"
         )
     logger.info("Created user", extra={"user_id": int(user.utilisateur_id)})
+    role_name = _get_role_name(db, user.role_id)
     return UserRead(
         id=int(user.utilisateur_id),
         nom=user.nom_utilisateur,
         email=user.email,
         telephone=user.telephone,
-        role=user_in.role,
+        role=role_name,
         status=(str(user.statut) if user.statut is not None else None),
         dateCreation=(user.date_generation.isoformat() if user.date_generation else None),
     )
@@ -126,15 +164,21 @@ async def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(g
         user.email = str(user_in.email)
     if user_in.telephone:
         user.telephone = user_in.telephone
+    if user_in.role:
+        role_id = _get_role_id(db, user_in.role)
+        if not role_id:
+            raise HTTPException(status_code=400, detail=f"Role '{user_in.role}' not found")
+        user.role_id = role_id
     db.commit()
     db.refresh(user)
     logger.info("Updated user", extra={"user_id": int(user.utilisateur_id)})
+    role_name = _get_role_name(db, user.role_id)
     return UserRead(
         id=int(user.utilisateur_id),
         nom=user.nom_utilisateur,
         email=user.email,
         telephone=user.telephone,
-        role=None,
+        role=role_name,
         status=(str(user.statut) if user.statut is not None else None),
         dateCreation=(user.date_generation.isoformat() if user.date_generation else None),
     )
@@ -160,12 +204,13 @@ async def patch_user_status(user_id: int, status: str, db: Session = Depends(get
     db.commit()
     db.refresh(user)
     logger.info("Updated user status", extra={"user_id": user_id, "status": status})
+    role_name = _get_role_name(db, user.role_id)
     return UserRead(
         id=int(user.utilisateur_id),
         nom=user.nom_utilisateur,
         email=user.email,
         telephone=user.telephone,
-        role=None,
+        role=role_name,
         status=(str(user.statut) if user.statut is not None else None),
         dateCreation=(user.date_generation.isoformat() if user.date_generation else None),
     )
@@ -173,10 +218,14 @@ async def patch_user_status(user_id: int, status: str, db: Session = Depends(get
 
 @router.patch("/bulk/role", status_code=status.HTTP_200_OK)
 async def bulk_update_role(userIds: List[int], newRole: str, db: Session = Depends(get_db)):
+    # Get the role_id from role name
+    role_id = _get_role_id(db=db, role_name=newRole)
+    if not role_id:
+        raise HTTPException(status_code=400, detail=f"Role '{newRole}' not found")
+    
     users = db.query(Utilisateur).filter(Utilisateur.utilisateur_id.in_(userIds)).all()
     for u in users:
-        # Role field not stored on Utilisateur in current model; here for demonstration
-        pass
+        u.role_id = role_id
     db.commit()
-    logger.info("Bulk updated roles", extra={"user_count": len(users)})
+    logger.info("Bulk updated roles", extra={"user_count": len(users), "new_role": newRole})
     return {"updated": len(users)}

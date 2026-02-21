@@ -124,7 +124,13 @@ export default function AdminUsers() {
     e.preventDefault();
     try {
       const createdUser = await usersService.createUser(newUser);
-      setUsers((prev) => [...prev, createdUser]);
+      // Ensure role and status are preserved from the form in case backend doesn't return them
+      const userToAdd = {
+        ...createdUser,
+        role: createdUser.role || newUser.role,
+        status: createdUser.status || newUser.status,
+      };
+      setUsers((prev) => [...prev, userToAdd]);
       setShowAddModal(false);
       setNewUser({
         nom: '',

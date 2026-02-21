@@ -11,29 +11,18 @@ export default function Topbar({ pageTitle = 'Administration', onToggleSidebar, 
     navigate('/admin/profile'); 
   };
 
-  // 🔹 Récupération des infos de l'admin depuis l'API
+  // 🔹 Récupération des infos de l'admin depuis localStorage
   useEffect(() => {
-    const userId = 1; // ou récupère dynamiquement l'ID de l'admin connecté
-    fetch(`http://127.0.0.1:8000/api/profil/${userId}`)
-      .then(res => res.json())
-      .then(data => {
-        setUser({
-          id: data.utilisateur_id,
-          name: data.nom_utilisateur,
-          role: 'Administrateur',
-          avatar: null, // à remplacer si backend fournit l'avatar
-        });
-      })
-      .catch(err => {
-        console.error('Erreur chargement profil :', err);
-        // Fallback si l'API échoue
-        setUser({
-          id: 1,
-          name: 'Admin',
-          role: 'Administrateur',
-          avatar: null
-        });
-      });
+    const userId = localStorage.getItem('user_id');
+    const role = localStorage.getItem('role');
+    
+    // Utiliser les données stockées lors du login
+    setUser({
+      id: userId || '1',
+      name: 'Admin', // Vous pouvez stocker le nom lors du login aussi
+      role: role || 'Administrateur',
+      avatar: null
+    });
   }, []);
 
   return (
