@@ -31,6 +31,13 @@ CREATE TABLE utilisateur (
     date_generation TIMESTAMP,
     date_mise_a_jour TIMESTAMP
 );
+ALTER TABLE utilisateur
+ADD COLUMN role_id BIGINT;
+
+ALTER TABLE utilisateur
+ADD CONSTRAINT fk_user_role
+FOREIGN KEY (role_id)
+REFERENCES role(role_id);
 
 /* =========================
    SPECIALISATIONS UTILISATEUR
@@ -98,6 +105,11 @@ CREATE TABLE rapport_anomalie (
     medecin_id BIGINT REFERENCES medecin_biologiste(medecin_id)
 );
 
+    ALTER TABLE rapport_anomalie
+    ADD COLUMN bilan_id BIGINT
+    REFERENCES bilan_biologique(bilan_id)
+    ON DELETE CASCADE;
+
 /* =========================
    VALIDATION ANOMALIE
 ========================= */
@@ -154,6 +166,12 @@ CREATE TABLE role (
     nom VARCHAR(50),
     description TEXT
 );
+
+INSERT INTO role (nom, description) VALUES
+('Administrateur', 'Accès complet au système'),
+('Patient', 'Utilisateur patient'),
+('Technicien biologiste', 'Responsable analyses biologiques'),
+('Medecin', 'Médecin consultant');
 
 CREATE TABLE permissions (
     permission_id BIGSERIAL PRIMARY KEY,

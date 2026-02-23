@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="bioscan@localhost" uuid="3bb7447b-c7f8-44fe-ad34-13a1bc8edff2">
+    <data-source source="LOCAL" name="bioscan_db@localhost" uuid="83c6acac-791d-442c-8906-a4997bd3fcb1">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://localhost:5432/bioscan</jdbc-url>
+      <jdbc-url>jdbc:postgresql://localhost:5432/bioscan_db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

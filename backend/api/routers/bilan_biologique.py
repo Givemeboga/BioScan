@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query ,HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import List
-
+import os
 from database import get_db
 from schemas.bilan import BilanBiologiqueList
+from parsers.parser_factory import ParserFactory
+from medical_engine.analyzer import analyze_bilan
 
 router = APIRouter(
     prefix="/bilans-biologiques",
@@ -104,3 +106,48 @@ def get_bilans(
         print("Paramètres :", params)
         # On renvoie une liste vide pour éviter crash de validation FastAPI
         return []
+
+@router.post("/analyse/{bilan_id}")
+def analyse_bilan_route(bilan_id: int, db: Session = Depends(get_db)):
+
+    # 1️⃣ Récupérer le bilan
+    bilan = db.execute(
+        text("SELECT * FROM bilan_biologique WHERE bilan_id = :id"),
+        {"id": bilan_id}
+    ).mappings().first()
+
+    if not bilan:
+        raise HTTPException(status_code=404, detail="Bilan introuvable")
+
+    file_path = bilan["nom_fichier"]
+
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Fichier introuvable sur le serveur")
+
+    # 2️⃣ Parser automatiquement selon extension
+    parser = ParserFactory.get_parser(file_path)
+    extracted_data = parser.parse(file_path)
+
+    # 3️⃣ Analyse IA
+    anomalies = analyze_bilan(extracted_data)
+
+    # 4️⃣ Retour simple (sans notification comme demandé)
+    return {
+        "bilan_id": bilan_id,
+        "anomalies_detectees": anomalies
+    }
+from fastapi import UploadFile, File
+import shutil
+
+@router.post("/upload")
+async def upload_bilan(file: UploadFile = File(...)):
+
+    upload_folder = "uploads"
+    os.makedirs(upload_folder, exist_ok=True)
+
+    file_path = os.path.join(upload_folder, file.filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {"message": "Fichier uploadé", "file_path": file_path}
