@@ -25,14 +25,16 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
   const [monthlyData, setMonthlyData] = useState([]);
   const [statusBreakdown, setStatusBreakdown] = useState({});
+  const [recentActivities, setRecentActivities] = useState([]);
 
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [overview, monthly, status] = await Promise.all([
+      const [overview, monthly, status, activities] = await Promise.all([
         dashboardService.getOverview(),
         dashboardService.getAccountsMonthly(),
         dashboardService.getAccountStatus(),
+        dashboardService.getRecentActivities(10),
       ]);
 
       setStats({
@@ -44,6 +46,7 @@ export default function AdminDashboard() {
 
       setMonthlyData(monthly.monthly || []);
       setStatusBreakdown(status.statusBreakdown || {});
+      setRecentActivities(activities.activities || []);
       setError(null);
     } catch (err) {
       console.error('Error loading dashboard data:', err);
@@ -102,6 +105,35 @@ export default function AdminDashboard() {
     responsive: true,
     plugins: { legend: { position: 'bottom' } },
     cutout: '65%',
+  };
+
+  // Helper function to format time difference
+  const formatTimeAgo = (timestamp) => {
+    if (!timestamp) return 'Il y a peu';
+    
+    const now = new Date();
+    const eventTime = new Date(timestamp);
+    const diffMs = now - eventTime;
+    const diffMinutes = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMinutes < 1) return 'À l\'instant';
+    if (diffMinutes < 60) return `${diffMinutes} min`;
+    if (diffHours < 24) return `${diffHours}h ${diffMinutes % 60}min`;
+    return `${diffDays}j`;
+  };
+
+  // Helper function to get activity description
+  const getActivityDescription = (activity) => {
+    const types = {
+      'Connexion': `Connexion - ${activity.username}`,
+      'Deconnexion': `Déconnexion - ${activity.username}`,
+      'Creation_utilisateur': `Nouvel utilisateur créé - ${activity.username}`,
+      'Modification_utilisateur': `Utilisateur modifié - ${activity.username}`,
+      'Suppression_utilisateur': `Utilisateur supprimé - ${activity.username}`,
+    };
+    return types[activity.type] || `${activity.type} - ${activity.username}`;
   };
 
   if (loading) {
@@ -190,10 +222,16 @@ export default function AdminDashboard() {
         <div className="recent-activity">
           <h3>Activite recente</h3>
           <ul>
-            <li><span className="time">12 min</span> Nouveau medecin ajoute - ID #218</li>
-            <li><span className="time">36 min</span> Acces technicien approuve - ID #74</li>
-            <li><span className="time">1 h 10</span> Rapport mensuel exporte</li>
-            <li><span className="time">2 h</span> Parametres globaux mis a jour</li>
+            {recentActivities && recentActivities.length > 0 ? (
+              recentActivities.map((activity) => (
+                <li key={activity.id}>
+                  <span className="time">{formatTimeAgo(activity.timestamp)}</span>
+                  {getActivityDescription(activity)}
+                </li>
+              ))
+            ) : (
+              <li style={{ color: '#999', fontStyle: 'italic' }}>Aucune activité récente</li>
+            )}
           </ul>
         </div>
 

@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import './TwoFactorSetup.css';
 import logoLocal from '../../assets/logo bioscan1.png';
 
 export default function TwoFactorSetup() {
-  const location = useLocation();
   const navigate = useNavigate();
-  const email = location.state?.email || '';
 
   const [step, setStep] = useState('offer'); // offer | auth-app | sms | done
-  const [secret, setSecret] = useState('JBSWY3DPEHPK3PXP'); // placeholder secret (TOTP)
+  const [secret] = useState('JBSWY3DPEHPK3PXP'); // placeholder secret (TOTP)
   const [totpCode, setTotpCode] = useState('');
   const [smsCode, setSmsCode] = useState('');
   const [smsSent, setSmsSent] = useState(false);

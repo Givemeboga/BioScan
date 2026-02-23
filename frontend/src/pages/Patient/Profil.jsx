@@ -145,7 +145,7 @@ export default function Profil() {
             <div className="profil-photo-container">
               <img
                 src={previewUrl || currentPhotoUrl}
-                alt="Photo de profil"
+                alt="Profil"
                 className="profil-photo"
                 onError={(e) => { e.target.src = FALLBACK_PHOTO; }}
               />

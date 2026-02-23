@@ -1,0 +1,392 @@
+.admin-profile-container {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 20px;
+}
+
+.profile-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px 20px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.profile-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+}
+
+.profile-header p {
+  font-size: 16px;
+  opacity: 0.9;
+  margin: 0;
+  font-weight: 400;
+}
+
+.profile-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Main Profile Card */
+.profile-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin-bottom: 20px;
+  transition: box-shadow 0.3s ease;
+}
+
+.profile-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Card Header with Avatar */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 30px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.avatar-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.avatar-info {
+  margin: 0;
+}
+
+.avatar-info h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+}
+
+.avatar-info p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.role-badge.system-admin {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Profile Sections */
+.profile-section {
+  padding: 30px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title::before {
+  content: '';
+  width: 3px;
+  height: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.info-item label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.info-value {
+  font-size: 15px;
+  color: #1f2937;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+}
+
+.status-badge.active {
+  color: #10b981;
+  background-color: #ecfdf5;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.status-badge.active::before {
+  content: '●';
+  margin-right: 6px;
+}
+
+.status-badge.locked {
+  color: #ef4444;
+  background-color: #fef2f2;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.status-badge.locked::before {
+  content: '●';
+  margin-right: 6px;
+}
+
+.mfa-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+}
+
+.mfa-badge.enabled {
+  background-color: #ecfdf5;
+  color: #10b981;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.mfa-badge.enabled::before {
+  content: '✓';
+  margin-right: 6px;
+  font-weight: 700;
+}
+
+.mfa-badge.disabled {
+  background-color: #fef2f2;
+  color: #ef4444;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.mfa-badge.disabled::before {
+  content: '✕';
+  margin-right: 6px;
+  font-weight: 700;
+}
+
+.role-text {
+  color: #667eea !important;
+  font-weight: 600;
+}
+
+/* Card Divider */
+.card-divider {
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 0;
+}
+
+/* Info Box */
+.info-box {
+  display: flex;
+  gap: 16px;
+  background: #f0f4ff;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.info-box-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.info-box-content {
+  margin: 0;
+}
+
+.info-box-content h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e40af;
+  margin: 0 0 6px 0;
+}
+
+.info-box-content p {
+  font-size: 13px;
+  color: #1e3a8a;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .admin-profile-container {
+    padding: 12px;
+  }
+
+  .profile-header {
+    padding: 24px 16px;
+    margin-bottom: 20px;
+  }
+
+  .profile-header h1 {
+    font-size: 24px;
+  }
+
+  .profile-header p {
+    font-size: 14px;
+  }
+
+  .card-header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  .avatar-section {
+    gap: 12px;
+  }
+
+  .avatar-info h2 {
+    font-size: 18px;
+  }
+
+  .profile-section {
+    padding: 20px;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .section-title {
+    font-size: 12px;
+    margin: 0 0 16px 0;
+  }
+
+  .role-badge {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .info-box {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-header h1 {
+    font-size: 20px;
+  }
+
+  .card-header {
+    padding: 16px;
+  }
+
+  .avatar-info h2 {
+    font-size: 16px;
+  }
+
+  .profile-section {
+    padding: 16px;
+  }
+
+  .info-value {
+    font-size: 14px;
+  }
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.info-box {
+  animation: fadeIn 0.4s ease-out;
+}

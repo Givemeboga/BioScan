@@ -20,9 +20,9 @@ export default function BilanBiologiqueMedecin() {
   // ────────────────────────────────────────────────
   const API_BASE = 'http://127.0.0.1:8000';
   const MEDECIN_ID = 1; // ← Pour tester – à remplacer par l'ID réel du médecin connecté
-  const API_URL = `${API_BASE}/api/bilans-biologiques/patient/medecin?medecin_id=${MEDECIN_ID}`;
 
   useEffect(() => {
+    const API_URL = `${API_BASE}/api/bilans-biologiques/patient/medecin?medecin_id=${MEDECIN_ID}`;
     const fetchBilansMedecin = async () => {
       try {
         setLoading(true);

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './OtpVerification.css';
 import logoLocal from '../../assets/logo bioscan1.png';
@@ -24,11 +24,34 @@ export default function OtpVerification() {
     return () => clearInterval(timer);
   }, [timeLeft]);
 
+  // Appel API - wrapped in useCallback to prevent dependency issues
+  const sendOtp = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('http://localhost:8000/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, raison: 'Inscription' })
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail || "Impossible d'envoyer le code OTP.");
+      }
+      setTimeLeft(120);
+      alert('Code OTP envoyé à ' + email);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [email]);
+
   // Envoi automatique OTP au montage
   useEffect(() => {
     if (!email) return;
     sendOtp();
-  }, [email]);
+  }, [email, sendOtp]);
 
   // Helper focus
   const focusInput = (index) => {
@@ -76,31 +99,6 @@ export default function OtpVerification() {
     });
     const focusIndex = Math.min(digits.length, otp.length - 1);
     focusInput(focusIndex);
-  };
-
-  // ------------------------
-  // Appel API
-  // ------------------------
-  const sendOtp = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch('http://localhost:8000/auth/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, raison: 'Inscription' })
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.detail || "Impossible d'envoyer le code OTP.");
-      }
-      setTimeLeft(120);
-      alert('Code OTP envoyé à ' + email);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const verifyOtp = async (code) => {

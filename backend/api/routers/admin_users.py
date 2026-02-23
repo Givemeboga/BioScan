@@ -7,6 +7,7 @@ from schemas.user import UserCreate, UserRead, UserUpdate
 from sqlalchemy.exc import SQLAlchemyError
 from models.utilisateur import Utilisateur, get_user_by_email, get_password_hash
 from models.role import Role
+from models.evenement_securite import EvenementSecurite
 from models.medecin import MedecinBiologiste
 from models.technicien import TechnicienBiologiste
 from models.administrateur import Administrateur
@@ -39,6 +40,21 @@ def _paginate_query(query, page: int, limit: int):
         page = 1
     offset = (page - 1) * limit
     return query.offset(offset).limit(limit)
+
+
+def _log_event(db: Session, user_id: int, event_type: str, status_str: str = "SUCCESS"):
+    """Helper to log events to evenement_securite table using raw SQL"""
+    try:
+        from sqlalchemy import text
+        query = """
+            INSERT INTO bioscan.evenement_securite (utilisateur_id, type_evenement, status)
+            VALUES (:user_id, :event_type, :status)
+        """
+        db.execute(text(query), {"user_id": user_id, "event_type": event_type, "status": status_str})
+        db.commit()
+    except Exception as e:
+        logger.error(f"Failed to log event: {e}")
+        # Don't raise, just log the error silently
 
 
 @router.get("", response_model=List[UserRead])
@@ -82,6 +98,25 @@ async def list_users(
             dateCreation=(u.date_generation.isoformat() if u.date_generation else None),
         ))
     return result
+
+
+@router.get("/{user_id}", response_model=UserRead)
+async def get_user(user_id: int, db: Session = Depends(get_db)):
+    """Get a specific user by ID"""
+    user = db.query(Utilisateur).filter(Utilisateur.utilisateur_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    role_name = _get_role_name(db, user.role_id)
+    return UserRead(
+        id=int(user.utilisateur_id),
+        nom=user.nom_utilisateur,
+        email=user.email,
+        telephone=user.telephone,
+        role=role_name,
+        status=(str(user.statut) if user.statut is not None else None),
+        dateCreation=(user.date_generation.isoformat() if user.date_generation else None),
+    )
 
 
 @router.post("", response_model=UserRead, status_code=status.HTTP_201_CREATED)
@@ -128,6 +163,9 @@ async def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
         db.add(user)
         db.commit()
         db.refresh(user)
+        
+        # Log user creation event
+        _log_event(db, int(user.utilisateur_id), "Creation_utilisateur", "SUCCESS")
         
         # Add user to role-specific table based on role
         if user_in.role:
@@ -200,6 +238,8 @@ async def update_user(user_id: int, user_in: UserUpdate, db: Session = Depends(g
     db.commit()
     db.refresh(user)
     logger.info("Updated user", extra={"user_id": int(user.utilisateur_id)})
+    # Log the user update event
+    _log_event(db, int(user.utilisateur_id), "Modification_utilisateur", "SUCCESS")
     role_name = _get_role_name(db, user.role_id)
     return UserRead(
         id=int(user.utilisateur_id),
@@ -217,6 +257,8 @@ async def delete_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(Utilisateur).filter(Utilisateur.utilisateur_id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    # Log the user deletion event before deleting
+    _log_event(db, user_id, "Suppression_utilisateur", "SUCCESS")
     db.delete(user)
     db.commit()
     logger.info("Deleted user", extra={"user_id": user_id})
@@ -235,6 +277,8 @@ async def patch_user_status(user_id: int, status_data: dict = Body(...), db: Ses
     db.commit()
     db.refresh(user)
     logger.info("Updated user status", extra={"user_id": user_id, "status": status_value})
+    # Log the status change event
+    _log_event(db, user_id, f"Changement_statut", status_value)
     role_name = _get_role_name(db, user.role_id)
     return UserRead(
         id=int(user.utilisateur_id),
@@ -273,6 +317,8 @@ async def reset_password(user_id: int, db: Session = Depends(get_db)):
     user.mot_de_passe = get_password_hash(default_password)
     db.commit()
     logger.info("Reset password for user", extra={"user_id": user_id})
+    # Log the password reset event
+    _log_event(db, user_id, "Reinitialisation_motdepasse", "SUCCESS")
     return {
         "message": f"Password reset successfully. New password: {default_password}",
         "default_password": default_password

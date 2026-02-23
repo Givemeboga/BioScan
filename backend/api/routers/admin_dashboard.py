@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 from database import get_db
 from models.utilisateur import Utilisateur
 from models.report import RapportMedical
 import logging
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/admin/stats", tags=["Admin Dashboard"])
@@ -30,3 +31,47 @@ async def accounts_monthly(db: Session = Depends(get_db)):
 async def account_status(db: Session = Depends(get_db)):
     rows = db.query(Utilisateur.statut, func.count(Utilisateur.utilisateur_id)).group_by(Utilisateur.statut).all()
     return {"statusBreakdown": {str(r[0]): int(r[1]) for r in rows}}
+
+
+@router.get("/recent-activities")
+async def recent_activities(limit: int = Query(10, ge=1, le=50), db: Session = Depends(get_db)):
+    """Get recent system activities from evenement_securite table"""
+    try:
+        query = """
+            SELECT 
+                es.evenement_id,
+                es.utilisateur_id,
+                u.nom_utilisateur,
+                es.type_evenement,
+                NOW(),
+                u.role_id
+            FROM bioscan.evenement_securite es
+            JOIN bioscan.utilisateur u ON es.utilisateur_id = u.utilisateur_id
+            ORDER BY es.evenement_id DESC
+            LIMIT :limit
+        """
+        
+        result = db.execute(text(query), {"limit": limit})
+        rows = result.fetchall()
+        
+        activities = []
+        for row in rows:
+            evenement_id, user_id, nom_utilisateur, type_evenement, timestamp, role_id = row
+            
+            # Format the activity
+            activities.append({
+                "id": evenement_id,
+                "user_id": user_id,
+                "username": nom_utilisateur,
+                "type": type_evenement or "Connexion",
+                "timestamp": str(timestamp) if timestamp else None,
+                "role_id": role_id
+            })
+        
+        logger.info(f"Fetched {len(activities)} recent activities")
+        return {"activities": activities}
+    except Exception as e:
+        logger.error(f"Error fetching recent activities: {e}")
+        return {"activities": []}
+
+
