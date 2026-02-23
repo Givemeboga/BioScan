@@ -125,4 +125,8 @@ export const dashboardService = {
   async getAccountStatus() {
     return apiClient.get('/api/admin/stats/account-status');
   },
+
+  async getRecentActivities(limit = 10) {
+    return apiClient.get('/api/admin/stats/recent-activities', { limit });
+  },
 };
