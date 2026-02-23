@@ -26,16 +26,48 @@ async def list_techniciens(
     limit: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
-    query = db.query(TechnicienBiologiste)
+    from models.utilisateur import Utilisateur
+    from models.role import Role
+    
+    # Query users with "Technicien biologiste" role
+    query = db.query(Utilisateur).join(Role).filter(Role.nom == 'Technicien biologiste')
+    
     if search:
         like_q = f"%{search}%"
-        query = query.join(TechnicienBiologiste.utilisateur).filter(TechnicienBiologiste.utilisateur.has(TechnicienBiologiste.utilisateur.nom_utilisateur.ilike(like_q)))
+        query = query.filter(
+            Utilisateur.nom_utilisateur.ilike(like_q) |
+            Utilisateur.email.ilike(like_q)
+        )
+    
+    if status:
+        query = query.filter(Utilisateur.statut == status)
 
-    techniciens = _paginate_query(query, page, limit).all()
+    users = _paginate_query(query, page, limit).all()
     result = []
-    for t in techniciens:
-        utilisateur = getattr(t, 'utilisateur', None)
-        result.append(TechnicienRead(id=t.technicien_id, nom=utilisateur.nom_utilisateur if utilisateur else None, departement=None, email=utilisateur.email if utilisateur else None, telephone=utilisateur.telephone if utilisateur else None, utilisateurId=t.utilisateur_id))
+    
+    for u in users:
+        # Try to get corresponding technicien_biologiste record
+        technicien = db.query(TechnicienBiologiste).filter(
+            TechnicienBiologiste.utilisateur_id == u.utilisateur_id
+        ).first()
+        
+        result.append(TechnicienRead(
+            id=int(technicien.technicien_id) if technicien else int(u.utilisateur_id),
+            nom=u.nom_utilisateur,
+            departement=None,
+            email=u.email,
+            telephone=u.telephone,
+            utilisateurId=int(u.utilisateur_id),
+            bilansTraites=0,
+            analysesIA=0,
+            rapportsCrees=0,
+            status=str(u.statut) if u.statut else None,
+            dateInscription=u.date_generation if u.date_generation else None,
+            derniereActivite=u.date_derniere_connexion if u.date_derniere_connexion else None,
+            tempsTraitementMoyen=None,
+            bilansEnAttente=None
+        ))
+    
     logger.info("Listed techniciens", extra={"count": len(result)})
     return result
 
@@ -49,7 +81,22 @@ async def create_technicien(t_in: TechnicienCreate, db: Session = Depends(get_db
     db.refresh(tech)
     utilisateur = getattr(tech, 'utilisateur', None)
     logger.info("Created technicien", extra={"technicien_id": tech.technicien_id})
-    return TechnicienRead(id=tech.technicien_id, nom=utilisateur.nom_utilisateur if utilisateur else None, departement=t_in.departement, email=utilisateur.email if utilisateur else None, telephone=utilisateur.telephone if utilisateur else None, utilisateurId=tech.utilisateur_id)
+    return TechnicienRead(
+        id=int(tech.technicien_id),
+        nom=utilisateur.nom_utilisateur if utilisateur else None,
+        departement=t_in.departement,
+        email=utilisateur.email if utilisateur else None,
+        telephone=utilisateur.telephone if utilisateur else None,
+        utilisateurId=int(tech.utilisateur_id),
+        bilansTraites=0,
+        analysesIA=0,
+        rapportsCrees=0,
+        status=str(utilisateur.statut) if utilisateur and utilisateur.statut else None,
+        dateInscription=utilisateur.date_generation if utilisateur else None,
+        derniereActivite=utilisateur.date_derniere_connexion if utilisateur else None,
+        tempsTraitementMoyen=None,
+        bilansEnAttente=None
+    )
 
 
 @router.put("/{technicien_id}", response_model=TechnicienRead)
@@ -68,7 +115,22 @@ async def update_technicien(technicien_id: int, t_in: TechnicienUpdate, db: Sess
     db.commit()
     db.refresh(tech)
     utilisateur = getattr(tech, 'utilisateur', None)
-    return TechnicienRead(id=tech.technicien_id, nom=utilisateur.nom_utilisateur if utilisateur else None, departement=t_in.departement, email=utilisateur.email if utilisateur else None, telephone=utilisateur.telephone if utilisateur else None, utilisateurId=tech.utilisateur_id)
+    return TechnicienRead(
+        id=int(tech.technicien_id),
+        nom=utilisateur.nom_utilisateur if utilisateur else None,
+        departement=t_in.departement,
+        email=utilisateur.email if utilisateur else None,
+        telephone=utilisateur.telephone if utilisateur else None,
+        utilisateurId=int(tech.utilisateur_id),
+        bilansTraites=0,
+        analysesIA=0,
+        rapportsCrees=0,
+        status=str(utilisateur.statut) if utilisateur and utilisateur.statut else None,
+        dateInscription=utilisateur.date_generation if utilisateur else None,
+        derniereActivite=utilisateur.date_derniere_connexion if utilisateur else None,
+        tempsTraitementMoyen=None,
+        bilansEnAttente=None
+    )
 
 
 @router.delete("/{technicien_id}", status_code=status.HTTP_204_NO_CONTENT)

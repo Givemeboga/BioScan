@@ -1,0 +1,32 @@
+# Backend specific ignores
+.env
+test.db
+*.db
+check_*.py
+migrate_*.py
+test_*.py
+test_*.http
+
+# IDE
+.idea/
+.vscode/
+
+# Virtual Environment
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[codz]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+
+# Environment files
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
