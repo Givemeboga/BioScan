@@ -418,9 +418,9 @@ const HomePage = () => {
             <div>
               <h4>Support</h4>
               <ul>
-                <li><a href="#">FAQ</a></li>
-                <li><a href="#">Confidentialité</a></li>
-                <li><a href="#">Conditions</a></li>
+                <li><a href="#/">FAQ</a></li>
+                <li><a href="#/">Confidentialité</a></li>
+                <li><a href="#/">Conditions</a></li>
               </ul>
             </div>
           </div>

@@ -4,7 +4,6 @@ import './PatientDashboard.css';
 import logoFonce from '../../assets/logo foncé.png';
 
 export default function PatientDashboard() {
-  const [activeTab, setActiveTab] = useState('dashboard');
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   return (

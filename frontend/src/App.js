@@ -11,6 +11,7 @@ import AdminMedecins from "./pages/Admin/Medecins";
 import AdminTechniciens from "./pages/Admin/Techniciens";
 import AdminReports from "./pages/Admin/Reports";
 import AdminParametres from "./pages/Admin/Parametres";
+import AdminProfile from "./pages/Admin/AdminProfile";
 
 // Pages publiques / auth
 import Welcome from "./pages/Welcome";
@@ -80,7 +81,7 @@ function App() {
           <Route path="techniciens" element={<AdminTechniciens />} />
           <Route path="reports" element={<AdminReports />} />
           <Route path="parametres" element={<AdminParametres />} /> 
-          <Route path="profile" element={<div style={{ padding: 40 }}><h2>Profil Admin</h2><p>Page à créer</p></div>} />
+          <Route path="profile" element={<AdminProfile />} />
           <Route path="notifications" element={<div style={{ padding: 40 }}><h2>Notifications</h2><p>Page à créer</p></div>} />
         </Route>
 

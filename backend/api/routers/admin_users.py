@@ -96,6 +96,25 @@ async def list_users(
     return result
 
 
+@router.get("/{user_id}", response_model=UserRead)
+async def get_user(user_id: int, db: Session = Depends(get_db)):
+    """Get a specific user by ID"""
+    user = db.query(Utilisateur).filter(Utilisateur.utilisateur_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    role_name = _get_role_name(db, user.role_id)
+    return UserRead(
+        id=int(user.utilisateur_id),
+        nom=user.nom_utilisateur,
+        email=user.email,
+        telephone=user.telephone,
+        role=role_name,
+        status=(str(user.statut) if user.statut is not None else None),
+        dateCreation=(user.date_generation.isoformat() if user.date_generation else None),
+    )
+
+
 @router.post("", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 async def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
     try:
