@@ -28,6 +28,8 @@ class Utilisateur(Base):
     statut = Column(STATUT_USER, nullable=True)
     date_generation = Column(DateTime, default=datetime.datetime.utcnow)
     date_mise_a_jour = Column(DateTime, nullable=True)
+    photo_url = Column(String(500), nullable=True)
+    date_derniere_connexion = Column(DateTime, nullable=True)
     
     role_id = Column(BigInteger, ForeignKey("bioscan.role.role_id"), nullable=True)
     

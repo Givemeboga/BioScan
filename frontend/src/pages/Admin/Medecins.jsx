@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { medecinsService, usersService } from '../../services/adminService';
 import './Medecins.css';
 
-const statuses = ['TOUS', 'ACTIVE', 'SUSPENDED'];
+const statuses = ['TOUS', 'ACTIVE', 'INACTIVE'];
 
 export default function AdminMedecins() {
   const [medecins, setMedecins] = useState([]);
@@ -21,21 +21,33 @@ export default function AdminMedecins() {
   });
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadMedecins = async () => {
       try {
         setLoading(true);
         const data = await medecinsService.getMedecins();
-        setMedecins(data || []);
-        setError(null);
+        if (isMounted) {
+          setMedecins(data || []);
+          setError(null);
+        }
       } catch (err) {
-        console.error('Error loading medecins:', err);
-        setError(err.message);
+        if (isMounted) {
+          console.error('Error loading medecins:', err);
+          setError(err.message);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadMedecins();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filteredMedecins = useMemo(() => {
@@ -62,26 +74,31 @@ export default function AdminMedecins() {
   const handleCreateMedecin = async (e) => {
     e.preventDefault();
     try {
-      // First create the user
+      // Create the user (medecin is automatically created in the backend)
       const userData = {
         nom: newMedecin.nom,
         email: newMedecin.email,
         telephone: newMedecin.telephone,
-        role: 'MEDECIN',
+        role: 'Medecin',
         status: 'ACTIVE',
         motDePasse: newMedecin.motDePasse,
       };
       const createdUser = await usersService.createUser(userData);
       
-      // Then create the medecin with the user ID
-      const medecinData = {
-        utilisateur_id: createdUser.utilisateur_id ?? createdUser.id,
-        nom: newMedecin.nom,
-        email: newMedecin.email,
-        telephone: newMedecin.telephone,
+      // Convert to medecin format for display
+      const createdMedecin = {
+        id: createdUser.id,
+        nom: createdUser.nom,
+        email: createdUser.email,
+        telephone: createdUser.telephone,
         specialite: newMedecin.specialite,
+        utilisateurId: createdUser.id,
+        rapportsValides: 0,
+        status: createdUser.status,
+        dateInscription: createdUser.dateCreation,
+        derniereActivite: null,
       };
-      const createdMedecin = await medecinsService.createMedecin(medecinData);
+      
       setMedecins((prev) => [...prev, createdMedecin]);
       setShowAddModal(false);
       setNewMedecin({ nom: '', email: '', telephone: '', specialite: '', motDePasse: '' });

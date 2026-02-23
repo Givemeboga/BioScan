@@ -29,21 +29,33 @@ export default function AdminUsers() {
   });
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadUsers = async () => {
       try {
         setLoading(true);
         const data = await usersService.getUsers();
-        setUsers(data || []);
-        setError(null);
+        if (isMounted) {
+          setUsers(data || []);
+          setError(null);
+        }
       } catch (err) {
-        console.error('Error loading users:', err);
-        setError(err.message);
+        if (isMounted) {
+          console.error('Error loading users:', err);
+          setError(err.message);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     loadUsers();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filteredUsers = useMemo(() => {
@@ -202,6 +214,21 @@ export default function AdminUsers() {
       setError(err.message);
     } finally {
       setLoginHistoryLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId, userName) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer le compte de ${userName} ?\nCette action est irréversible.`)) {
+      return;
+    }
+    try {
+      await usersService.deleteUser(userId);
+      setUsers((prev) => prev.filter((user) => user.id !== userId));
+      alert(`Le compte de ${userName} a été supprimé avec succès.`);
+      setError(null);
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      setError(err.message);
     }
   };
 
@@ -555,8 +582,11 @@ export default function AdminUsers() {
                       </button>
                     </div>
                     <div className="action-group secondary">
-                      <button className="action-btn action-danger" onClick={() => updateUserStatus(user.id, 'INACTIVE')}>
-                        Lock account
+                      <button 
+                        className="action-btn action-danger" 
+                        onClick={() => handleDeleteUser(user.id, user.nom)}
+                      >
+                        Delete account
                       </button>
                       <button 
                         className="action-btn action-outline"
