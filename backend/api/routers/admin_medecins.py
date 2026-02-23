@@ -26,26 +26,44 @@ async def list_medecins(
     limit: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
-    query = db.query(MedecinBiologiste)
+    from models.utilisateur import Utilisateur
+    from models.role import Role
+    
+    # Query users with "Medecin" role
+    query = db.query(Utilisateur).join(Role).filter(Role.nom == 'Medecin')
+    
     if search:
         like_q = f"%{search}%"
-        # naive search via join on utilisateur if available
-        try:
-            query = query.join(MedecinBiologiste.utilisateur).filter(MedecinBiologiste.utilisateur.property.mapper.class_.nom_utilisateur.ilike(like_q))
-        except Exception:
-            # fallback: ignore join when relationship metadata isn't available
-            pass
+        query = query.filter(
+            Utilisateur.nom_utilisateur.ilike(like_q) |
+            Utilisateur.email.ilike(like_q)
+        )
+    
     if status:
-        # status not present on model directly
-        pass
+        query = query.filter(Utilisateur.statut == status)
 
-    medecins = _paginate_query(query, page, limit).all()
+    users = _paginate_query(query, page, limit).all()
     result = []
-    for m in medecins:
-        utilisateur = getattr(m, 'utilisateur', None)
-        nom = getattr(utilisateur, 'nom_utilisateur', None) if utilisateur else None
-        email = getattr(utilisateur, 'email', None) if utilisateur else None
-        result.append(MedecinRead(id=int(m.medecin_id), nom=nom, specialite=None, email=email, telephone=(getattr(utilisateur, 'telephone', None) if utilisateur else None), utilisateurId=(int(m.utilisateur_id) if m.utilisateur_id is not None else None), rapportsValides=0, status=None, dateInscription=None, derniereActivite=None))
+    
+    for u in users:
+        # Try to get corresponding medecin_biologiste record
+        medecin = db.query(MedecinBiologiste).filter(
+            MedecinBiologiste.utilisateur_id == u.utilisateur_id
+        ).first()
+        
+        result.append(MedecinRead(
+            id=int(medecin.medecin_id) if medecin else int(u.utilisateur_id),
+            nom=u.nom_utilisateur,
+            specialite=None,
+            email=u.email,
+            telephone=u.telephone,
+            utilisateurId=int(u.utilisateur_id),
+            rapportsValides=0,
+            status=str(u.statut) if u.statut else None,
+            dateInscription=u.date_generation if u.date_generation else None,
+            derniereActivite=u.date_derniere_connexion if u.date_derniere_connexion else None
+        ))
+    
     logger.info("Listed medecins", extra={"count": len(result)})
     return result
 
