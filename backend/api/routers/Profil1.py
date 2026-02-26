@@ -1,61 +1,109 @@
+# backend/api/routers/Profil1.py
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import text
 from sqlalchemy.orm import Session
+from pydantic import BaseModel, EmailStr
+from passlib.context import CryptContext
 from database import get_db
-from models.utilisateur import Utilisateur, get_password_hash, get_user_by_email
-from schemas.utilisateur import UserCreate, UserResponse
-from models.patient import Patient
-from models.role import Role   # ✅ importer Role
+from typing import Optional
+import logging
 
-router = APIRouter(prefix="/auth", tags=["Authentification"])
+logger      = logging.getLogger(__name__)
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-@router.post("/register/patient", response_model=UserResponse)
+router = APIRouter(tags=["Profil1"])
+
+
+class UserCreate(BaseModel):
+    nom:              str
+    email:            EmailStr
+    telephone:        Optional[str] = None
+    adresse:          Optional[str] = None
+    date_naissance:   Optional[str] = None   # ← pas de validation date future
+    password:         str
+    confirm_password: str
+
+
+class UserResponse(BaseModel):
+    id:    int
+    nom:   str
+    email: str
+
+
+# ── POST /api/profil1/register/patient ───────────────────────
+@router.post("/register/patient", response_model=UserResponse, status_code=201)
 def register_patient(user: UserCreate, db: Session = Depends(get_db)):
 
-    # Vérifier mot de passe
     if user.password != user.confirm_password:
-        raise HTTPException(status_code=400, detail="Les mots de passe ne correspondent pas")
+        raise HTTPException(status_code=400, detail="Les mots de passe ne correspondent pas.")
+    if len(user.password) < 8:
+        raise HTTPException(status_code=400, detail="Mot de passe trop court (minimum 8 caractères).")
 
-    # Vérifier email existant
-    if get_user_by_email(db, user.email):
-        raise HTTPException(status_code=400, detail="Email déjà utilisé")
+    # Email déjà utilisé ?
+    existing = db.execute(
+        text("SELECT utilisateur_id FROM utilisateur WHERE LOWER(email) = LOWER(:email)"),
+        {"email": user.email.strip()}
+    ).mappings().first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email déjà utilisé.")
 
-    # 🔹 récupérer role PATIENT depuis la BD
-    role_patient = db.query(Role).filter(Role.nom == "Patient").first()
+    # Récupérer role_id Patient
+    role = db.execute(
+        text("SELECT role_id FROM role WHERE LOWER(nom) = 'patient'")
+    ).mappings().first()
+    if not role:
+        raise HTTPException(status_code=500, detail="Rôle 'Patient' introuvable.")
 
-    if not role_patient:
-        raise HTTPException(status_code=500, detail="Role Patient introuvable en base")
-
-    # Hash mot de passe
-    hashed_password = get_password_hash(user.password)
-
-    # 🔹 Création utilisateur avec role_id
-    new_user = Utilisateur(
-        nom_utilisateur=user.nom,
-        email=user.email,
-        mot_de_passe=hashed_password,
-        telephone=user.telephone,
-        adresse=user.adresse,
-        date_naissance=user.date_naissance,
-        statut="ACTIVE",
-        role_id=role_patient.role_id   # ✅ clé étrangère
-    )
+    hashed = pwd_context.hash(user.password)
 
     try:
-        db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
+        result = db.execute(text("""
+            INSERT INTO utilisateur
+                (nom_utilisateur, email, mot_de_passe, telephone, adresse,
+                 date_naissance, statut, role_id, date_generation, date_mise_a_jour)
+            VALUES
+                (:nom, :email, :pwd, :tel, :adr,
+                 :dob, 'ACTIVE', :role_id, NOW(), NOW())
+            RETURNING utilisateur_id, nom_utilisateur, email
+        """), {
+            "nom":     user.nom.strip(),
+            "email":   user.email.strip().lower(),
+            "pwd":     hashed,
+            "tel":     user.telephone,
+            "adr":     user.adresse,
+            "dob":     user.date_naissance or None,
+            "role_id": role["role_id"],
+        })
+        new_user = result.mappings().first()
 
-        # Création patient lié
-        new_patient = Patient(utilisateur_id=new_user.utilisateur_id)
-        db.add(new_patient)
+        db.execute(
+            text("INSERT INTO patient (utilisateur_id) VALUES (:uid)"),
+            {"uid": new_user["utilisateur_id"]}
+        )
         db.commit()
 
-    except Exception:
+        logger.info("[register] user_id=%s créé", new_user["utilisateur_id"])
+        return UserResponse(
+            id=new_user["utilisateur_id"],
+            nom=new_user["nom_utilisateur"],
+            email=new_user["email"],
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Erreur lors de l'inscription")
+        logger.error("[register] Erreur: %s", e)
+        raise HTTPException(status_code=500, detail=f"Erreur inscription : {str(e)}")
 
-    return UserResponse(
-        id=new_user.utilisateur_id,
-        nom=new_user.nom_utilisateur,
-        email=new_user.email
-    )
+
+# ── GET /api/profil1/profil/{user_id} ────────────────────────
+@router.get("/profil/{user_id}", response_model=UserResponse)
+def get_profil(user_id: int, db: Session = Depends(get_db)):
+    row = db.execute(
+        text("SELECT utilisateur_id, nom_utilisateur, email FROM utilisateur WHERE utilisateur_id = :uid"),
+        {"uid": user_id}
+    ).mappings().first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Utilisateur introuvable.")
+    return UserResponse(id=row["utilisateur_id"], nom=row["nom_utilisateur"] or "", email=row["email"])

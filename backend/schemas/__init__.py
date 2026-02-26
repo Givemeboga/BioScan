@@ -1,16 +1,28 @@
-# schemas/__init__.py
+# backend/schemas/__init__.py
 
-# Option 1 : tout commenter temporairement (le plus simple pour débloquer)
-# from .bilan import (
-#     BilanBiologiqueBase,
-#     BilanBiologiqueCreate,
-#     BilanBiologiqueUpdate,
-#     BilanBiologiqueOut,
-#     BilanBiologiqueList,
-# )
-
-# Option 2 : importer seulement ce qui existe vraiment maintenant
 from .bilan import (
     BilanBiologiqueList,
-    BilanBiologiqueOut,
+    BilanBiologiqueOut,      # alias de BilanBiologiqueDetail
+    BilanBiologiqueCreate,
+    BilanBiologiqueUpdate,
+    BilanDashboardStats,
+)
+
+from .profil import (
+    ProfilPatientOut,
+    ProfilPatientUpdate,
+    ProfilMedecinOut,
+    ProfilMedecinUpdate,
+)
+
+from .Notification import (
+    NotificationOut,
+
+)
+
+from .dashboard_patient import (
+    DashboardPatientOut,
+    DashboardStatsPatient,
+    BilanRecent,
+    MonthlyCount,
 )
