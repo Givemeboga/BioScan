@@ -4,11 +4,11 @@ import './Sidebar.css';
 import logo from '../../assets/Capture d’écran 2026-02-05 215037.png';
 
 const navItems = [
-  { to: '/medecin-biologiste/tableau',        label: 'Tableau de bord',    icon: 'home'    },
-  { to: '/medecin-biologiste/bilan',          label: 'Bilans biologiques', icon: 'lab'     },
-  { to: '/medecin-biologiste/rapportAnomalie',label: 'Rapport anomalie',   icon: 'alert'   },
-  { to: '/medecin-biologiste/rapportMédicale',label: 'Rapports médicaux',  icon: 'report'  },
-  { to: '/medecin-biologiste/parametres',     label: 'Paramètres',         icon: 'settings'},
+  { to: '/medecin-biologiste/tableau',           label: 'Tableau de bord',     icon: 'home'     },
+  { to: '/medecin-biologiste/bilan',    label: 'Bilans biologiques',  icon: 'lab'      },
+  { to: '/medecin-biologiste/rapportAnomalie',    label: 'Rapport anomalie',    icon: 'alert'    },
+  { to: '/medecin-biologiste/rapportMédicale',   label: 'Rapports médicaux',   icon: 'report'   },
+  { to: '/medecin-biologiste/parametres',          label: 'Paramètres',          icon: 'settings' },
 ];
 
 function NavIcon({ name }) {
@@ -36,20 +36,15 @@ function NavIcon({ name }) {
 export default function Sidebar({ collapsed = false, onClose }) {
   const navigate = useNavigate();
 
-  const handleLogoClick = () => {
-    navigate('/dashboard');     // ou la route que tu veux
-    onClose?.();                // ferme uniquement sur clic logo
-  };
-
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
         <div
           className="logo-wrapper"
-          onClick={handleLogoClick}
+          onClick={() => navigate('/dashboard')}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && handleLogoClick()}
+          onKeyDown={(e) => e.key === 'Enter' && navigate('/dashboard')}
         >
           <div className="logo-circle">
             <img src={logo} alt="BioScan Logo" className="logo-img" />
@@ -63,8 +58,8 @@ export default function Sidebar({ collapsed = false, onClose }) {
             key={item.to}
             to={item.to}
             className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
-            end
-            // onClick={onClose} → on SUPPRIME cette ligne
+            end   // ← suffit pour la plupart des cas (surtout important pour /dashboard)
+            onClick={onClose}
           >
             <div className="icon-wrapper">
               <NavIcon name={item.icon} />
@@ -77,7 +72,7 @@ export default function Sidebar({ collapsed = false, onClose }) {
       <div className="sidebar-footer">
         <button
           className="logout-btn"
-          onClick={() => navigate('/sign-in')}
+          onClick={() => navigate('/sign-in')} // ou '/login' selon ton choix
         >
           <div className="icon-wrapper">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

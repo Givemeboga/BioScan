@@ -1,146 +1,148 @@
-// src/pages/auth/AuthCard.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './auth.css';
-import logoLocal  from '../../assets/logo bioscan1.png';
+import logoLocal from '../../assets/logo bioscan1.png';
 import logogoogle from '../../assets/google.png';
-
-const API_BASE = 'http://localhost:8000';
-
-// ── Correspondance rôle → route ────────────────────────────────
-// Correspond exactement aux noms dans la table role :
-// Administrateur, Patient, Technicien biologiste, Medecin
-const ROLE_ROUTES = {
-  'patient':               '/patient',
-  'administrateur':        '/admin',
-  'medecin':               '/medecin-biologiste/tableau',
-  'medecin biologiste':    '/medecin-biologiste/tableau',
-  'technicien biologiste': '/technicien',
-  'technicien':            '/technicien',
-};
-
-function getRouteForRole(role = '') {
-  const key = role.trim().toLowerCase();
-  console.log('[AuthCard] role reçu =', JSON.stringify(role), '| key =', key);
-  return ROLE_ROUTES[key] ?? '/';
-}
 
 export default function AuthCard({ title, subtitle }) {
   const [showPassword, setShowPassword] = useState(false);
-  const [email,        setEmail]        = useState('');
-  const [password,     setPassword]     = useState('');
-  const [error,        setError]        = useState('');
-  const [loading,      setLoading]      = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError('');
+  setLoading(true);
 
-    try {
-      const { data } = await axios.post(
-        `${API_BASE}/api/auth/login`,
-        { email: email.trim(), password: password.trim() },
-        { headers: { 'Content-Type': 'application/json' } }
-      );
+  console.log("LOGIN CLICKED", email, password);
 
-      const { access_token, role, user_id } = data;
+  try {
+    const res = await axios.post(
+      "http://127.0.0.1:8000/api/auth/login",  // <- URL propre
+      { email: email.trim(), password: password.trim() },
+      { headers: { "Content-Type": "application/json" } }
+    );
 
-      console.log('[AuthCard] login OK → role=', role, 'user_id=', user_id);
+    console.log("SERVER RESPONSE:", res.data);
 
-      localStorage.setItem('token',           access_token);
-      localStorage.setItem('access_token',    access_token);
-      localStorage.setItem('role',            role);
-      localStorage.setItem('user_id',         String(user_id));
+    // Stockage du token et navigation
+    localStorage.setItem("token", res.data.access_token);
+    localStorage.setItem("role", res.data.role);
+    localStorage.setItem("user_id", res.data.user_id);
+    
+    // Stocker des données supplémentaires si disponibles
+    if (res.data.email) localStorage.setItem("user_email", res.data.email);
+    if (res.data.nom || res.data.name) localStorage.setItem("user_name", res.data.nom || res.data.name);
+    if (res.data.telephone || res.data.phone) localStorage.setItem("user_phone", res.data.telephone || res.data.phone);
 
-      // Récupérer le nom (optionnel)
-      try {
-        const profilRes = await axios.get(
-          `${API_BASE}/api/patient/profil/me`,
-          { headers: { Authorization: `Bearer ${access_token}` } }
-        );
-        const nom = profilRes.data?.nom_utilisateur || email.split('@')[0];
-        localStorage.setItem('nom_utilisateur', nom);
-      } catch {
-        localStorage.setItem('nom_utilisateur', email.split('@')[0]);
-      }
+    const role = res.data.role;
+    if (role === "Medecin" || role === "Medecin biologiste") navigate("/medecin-biologiste/tableau");
+    else if (role === "Technicien" || role === "Technicien biologiste") navigate("/technicien");
+    else if (role === "Administrateur") navigate("/admin");
+    else if (role === "Patient") navigate("/patient");
+    else navigate("/");
 
-      navigate(getRouteForRole(role));
+  } catch (err) {
+    console.error("LOGIN ERROR FULL:", err);
+    if (err.response) setError(err.response.data?.detail || "Erreur serveur");
+    else if (err.request) setError("Serveur inaccessible");
+    else setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
-    } catch (err) {
-      console.error('LOGIN ERROR:', err);
-      if (err.response) {
-        const { status, data: d } = err.response;
-        if      (status === 401) setError(d?.detail || 'Email ou mot de passe incorrect.');
-        else if (status === 403) setError(d?.detail || 'Compte inactif.');
-        else if (status === 500) setError('Erreur serveur. Réessayez plus tard.');
-        else                     setError(d?.detail || `Erreur (${status}).`);
-      } else {
-        setError('Impossible de contacter le serveur.');
-      }
-    } finally {
-      setLoading(false);
-    }
+
+
+  const handleGoogleLogin = () => {
+    alert("Connexion avec Google...");
   };
+
+  const goToForgotPassword = () => navigate('/forgot-password');
+  const goToSignUp = () => navigate('/signup');
 
   return (
     <div className="auth-container">
       <div className="auth-card">
+
         <img src={logoLocal} alt="BioScan" className="logo-img" />
-        {title    && <h2 className="auth-title">{title}</h2>}
+
+        {title && <h2 className="auth-title">{title}</h2>}
         {subtitle && <p className="subtitle">{subtitle}</p>}
 
-        <form className="auth-form" onSubmit={handleSubmit} noValidate>
+        <form className="auth-form" onSubmit={handleSubmit}>
 
+          {/* EMAIL */}
           <div className="form-group">
-            <input type="email" placeholder="Email" required autoComplete="email"
+            <input
+              type="email"
+              placeholder="Email"
+              required
               value={email}
-              onChange={(e) => { setEmail(e.target.value); setError(''); }} />
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError('');
+              }}
+            />
           </div>
 
+          {/* PASSWORD */}
           <div className="form-group password-group">
-            <input type={showPassword ? 'text' : 'password'} placeholder="Mot de passe"
-              required autoComplete="current-password"
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Mot de passe"
+              required
               value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(''); }} />
-            <span className="eye" role="button"
-              onClick={() => setShowPassword(v => !v)}>
+              onChange={(e) => {
+                setPassword(e.target.value);
+                setError('');
+              }}
+            />
+            <span
+              className="eye"
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+            >
               {showPassword ? '🙈' : '👁'}
             </span>
           </div>
 
+          {/* Affichage des erreurs */}
           {error && (
-            <div className="error-message" role="alert">
-              <span className="error-icon">⚠️</span> {error}
+            <div className="error-message">
+              <span className="error-icon">⚠️</span>
+              <span>{error}</span>
             </div>
           )}
 
-          <p className="forgot-password" role="button"
-            onClick={() => navigate('/forgot-password')}>
+          <p className="forgot-password" onClick={goToForgotPassword}>
             Mot de passe oublié ?
           </p>
 
           <button className="btn-primary" type="submit" disabled={loading}>
-            {loading ? 'Connexion…' : 'Se connecter'}
+            {loading ? "Connexion..." : "Se connecter"}
           </button>
 
           <div className="divider">OU</div>
 
-          <button type="button" className="btn-google"
-            onClick={() => alert('Connexion avec Google bientôt disponible…')}>
-            <img src={logogoogle} alt="Google" className="google-icon" />
+          <button type="button" className="btn-google" onClick={handleGoogleLogin}>
+            <img src={logogoogle} alt="Logo Google" className="google-icon" />
             Se connecter avec Google
           </button>
+
         </form>
 
         <p className="signup-text">
           Pas encore de compte ?{' '}
-          <span className="signup-link" role="button" onClick={() => navigate('/signup')}>
+          <span className="signup-link" onClick={goToSignUp}>
             S'inscrire
           </span>
         </p>
+
       </div>
     </div>
   );

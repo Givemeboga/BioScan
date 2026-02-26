@@ -33,7 +33,7 @@ import RapportAnomalie from "./pages/MedecinBiologiste/RapportAnomalie";
 import RapportMedicale from "./pages/MedecinBiologiste/RapportMedical";
 import ParametresMedecin from "./pages/MedecinBiologiste/Parametres";
 import ProfilMedecin from "./pages/MedecinBiologiste/ProfilMedecin";
-import NotificationMedecin from "./pages/MedecinBiologiste/NotificationsMedecin";
+import NotificationMedecin from "./pages/MedecinBiologiste/Notification";
 
 // Pages patient
 import VisiteurPage from "./pages/Patient/HomePage";
@@ -43,7 +43,7 @@ import PatientDashboard from "./pages/Patient/PatientDashboard";
 import PatientLayout from "./pages/Patient/PatientLayout";
 import DashboardHome from "./pages/Patient/DashboardHome";
 import MesBilans from "./pages/Patient/MesBilans";
-import Rapport from "./pages/Patient/MesRapports";
+import Historique from "./pages/Patient/Historique";
 import Parametres from "./pages/Patient/Parametres";
 import Profil from "./pages/Patient/Profil";
 import Notifications from "./pages/Patient/Notifications";
@@ -53,7 +53,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Routes publiques */}
-        <Route path="/f" element={<Welcome />} />
+        <Route path="/d" element={<Welcome />} />
         <Route path="/sign-in" element={<AuthCard />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/otp" element={<OtpVerification />} />
@@ -70,9 +70,6 @@ function App() {
           <Route path="/medecin-biologiste/profil" element={<ProfilMedecin />} /> 
           <Route path="/medecin-biologiste/notifications" element={<NotificationMedecin />} />
           <Route path="/medecin-biologiste/rapportMédicale" element={<RapportMedicale />} /> 
-          <Route path=" /medecin-biologiste/notifications" element={<NotificationMedecin/>} /> 
-
-         
         </Route>
 
         {/* === Routes admin (layout parent) === */}
@@ -105,7 +102,7 @@ function App() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<DashboardHome />} />
           <Route path="mes-bilans" element={<MesBilans />} />
-          <Route path="rapport" element={<Rapport />} />
+          <Route path="historique" element={<Historique />} />
           <Route path="parametres" element={<Parametres />} />
           <Route path="profil" element={<Profil />} />
           <Route path="notifications" element={<Notifications />} />
