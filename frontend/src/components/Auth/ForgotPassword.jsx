@@ -1,47 +1,48 @@
-// src/pages/auth/ForgotPassword.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import axios from 'axios'; // <-- ajoute axios
 import './ForgotPassword.css';
 import logoLocal from '../../assets/logo bioscan1.png';
 
-// ✅ Même origine que AuthCard — localhost pas 127.0.0.1
-const API_BASE = 'http://localhost:8000';
-
 export default function ForgotPassword() {
   const navigate = useNavigate();
-  const [email,         setEmail]         = useState('');
-  const [error,         setError]         = useState('');
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
-  const [sending,       setSending]       = useState(false);
+  const [sending, setSending] = useState(false);
 
-  const validateEmail = (v) => /\S+@\S+\.\S+/.test(v);
+  const validateEmail = (value) => /\S+@\S+\.\S+/.test(value);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setStatusMessage('');
 
-    if (!email.trim())          { setError("L'email est requis.");  return; }
-    if (!validateEmail(email))  { setError('Email invalide.');      return; }
+    if (!email) {
+      setError("L'email est requis.");
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError('Email invalide.');
+      return;
+    }
 
     setSending(true);
     try {
-      const { data } = await axios.post(
-        `${API_BASE}/api/auth/forgot-password`,
-        { email: email.trim() },
-        { headers: { 'Content-Type': 'application/json' } }
-      );
-      setStatusMessage(data.message);
+      const response = await axios.post('http://127.0.0.1:8000/api/auth/forgot-password', {
+        email: email
+      });
+
+      // Affiche le message renvoyé par le backend
+      setStatusMessage(response.data.message);
+
     } catch (err) {
       if (err.response) {
-        const status = err.response.status;
-        const detail = err.response.data?.detail;
-        if      (status === 404) setError("Aucun compte associé à cet email.");
-        else if (status === 500) setError(detail || "Erreur serveur. Réessayez plus tard.");
-        else                     setError(detail || `Erreur inattendue (${status}).`);
+        // Erreur renvoyée par FastAPI
+        setError(err.response.data.detail || 'Erreur côté serveur.');
       } else {
-        setError('Impossible de contacter le serveur. Vérifiez que le backend est démarré.');
+        // Problème réseau ou autre
+        setError('Impossible de contacter le serveur. Réessayez plus tard.');
       }
     } finally {
       setSending(false);
@@ -55,7 +56,7 @@ export default function ForgotPassword() {
 
         <h2 className="auth-title">Mot de passe oublié</h2>
         <p className="subtitle">
-          Entrez votre email. Nous vous enverrons un nouveau mot de passe temporaire.
+          Entrez l'adresse email associée à votre compte. Nous vous enverrons un nouveau mot de passe temporaire.
         </p>
 
         {statusMessage ? (
@@ -75,10 +76,9 @@ export default function ForgotPassword() {
                 name="email"
                 placeholder="Email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                onChange={(e) => setEmail(e.target.value)}
                 className={error ? 'input-error' : ''}
                 disabled={sending}
-                autoComplete="email"
               />
               {error && <span className="error-text">{error}</span>}
             </div>
@@ -90,10 +90,7 @@ export default function ForgotPassword() {
             <div className="divider">OU</div>
 
             <p className="login-text">
-              Retour ?{' '}
-              <span className="login-link" onClick={() => navigate('/sign-in')} role="button">
-                Se connecter
-              </span>
+              Retour ? <span className="login-link" onClick={() => navigate('/sign-in')}>Se connecter</span>
             </p>
           </form>
         )}

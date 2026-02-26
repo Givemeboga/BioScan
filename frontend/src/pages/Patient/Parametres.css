@@ -1,10 +1,9 @@
-/* ── Parametres.css ─────────────────────────────────────────── */
-
+/* Parametres Styles */
 .parametres {
   animation: slideIn 0.5s ease-out;
 }
 
-/* ── Welcome Card ────────────────────────────────────────────── */
+/* Welcome Card */
 .parametres-welcome-card {
   background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
   border: 1px solid #bae6fd;
@@ -37,7 +36,7 @@
   font-weight: 500;
 }
 
-/* ── Card ────────────────────────────────────────────────────── */
+/* Card */
 .parametres-card {
   background: white;
   border-radius: 16px;
@@ -56,40 +55,7 @@
   gap: 10px;
 }
 
-/* ── Loading ─────────────────────────────────────────────────── */
-.parametres-loading {
-  text-align: center;
-  padding: 60px 20px;
-  color: #6b7280;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-/* ── Messages succès / erreur ────────────────────────────────── */
-.parametres-message {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 16px;
-}
-
-.parametres-message.success {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #15803d;
-}
-
-.parametres-message.error {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
-}
-
-/* ── Form Grid ───────────────────────────────────────────────── */
+/* Form Grid */
 .parametres-form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -119,7 +85,6 @@
   display: inline;
 }
 
-/* ── Input standard ──────────────────────────────────────────── */
 .parametres-input {
   width: 100%;
   padding: 12px 16px;
@@ -129,7 +94,6 @@
   outline: none;
   transition: all 0.3s ease;
   font-family: 'Outfit', sans-serif;
-  box-sizing: border-box;
 }
 
 .parametres-input:focus {
@@ -137,42 +101,34 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* ── Input mot de passe avec bouton œil ──────────────────────── */
-.parametres-input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.parametres-input-wrap .parametres-input {
-  padding-right: 44px;
-}
-
-.parametres-eye-btn {
-  position: absolute;
-  right: 12px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #9ca3af;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  transition: color 0.2s ease;
-}
-
-.parametres-eye-btn:hover {
-  color: #3b82f6;
-}
-
-/* ── Security Section ────────────────────────────────────────── */
+/* Security Section */
 .parametres-security-section {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* ── Checkboxes ──────────────────────────────────────────────── */
+.parametres-btn-secondary {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  font-family: 'Outfit', sans-serif;
+  width: fit-content;
+}
+
+.parametres-btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+/* Checkboxes */
 .parametres-checkboxes {
   display: flex;
   flex-direction: column;
@@ -195,7 +151,7 @@
   accent-color: #3b82f6;
 }
 
-/* ── Bouton primaire (bleu) ──────────────────────────────────── */
+/* Primary Button */
 .parametres-btn-primary {
   display: flex;
   align-items: center;
@@ -215,77 +171,12 @@
   font-family: 'Outfit', sans-serif;
 }
 
-.parametres-btn-primary:hover:not(:disabled) {
+.parametres-btn-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
-.parametres-btn-primary:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* ── Bouton secondaire (violet) ──────────────────────────────── */
-.parametres-btn-secondary {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 10px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-  font-family: 'Outfit', sans-serif;
-  width: fit-content;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.parametres-btn-secondary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
-}
-
-/* ── Bouton Annuler ──────────────────────────────────────────── */
-.parametres-btn-cancel {
-  padding: 12px 24px;
-  border-radius: 10px;
-  border: 2px solid #e5e7eb;
-  background: white;
-  color: #6b7280;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: 'Outfit', sans-serif;
-  white-space: nowrap;
-}
-
-.parametres-btn-cancel:hover {
-  border-color: #d1d5db;
-  background: #f9fafb;
-  color: #374151;
-}
-
-/* ── Barre d'actions (Annuler + Confirmer) ───────────────────── */
-.parametres-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.parametres-actions .parametres-btn-primary {
-  width: auto;
-  flex: 1;
-}
-
-/* ── Animation ───────────────────────────────────────────────── */
+/* Animation */
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -297,23 +188,9 @@
   }
 }
 
-/* ── Responsive ──────────────────────────────────────────────── */
+/* Responsive */
 @media (max-width: 768px) {
   .parametres-form-grid {
     grid-template-columns: 1fr;
-  }
-
-  .parametres-welcome-title {
-    font-size: 22px;
-  }
-
-  .parametres-actions {
-    flex-direction: column;
-  }
-
-  .parametres-actions .parametres-btn-cancel,
-  .parametres-actions .parametres-btn-primary {
-    width: 100%;
-    flex: none;
   }
 }

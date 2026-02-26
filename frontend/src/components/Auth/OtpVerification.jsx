@@ -1,143 +1,138 @@
-// src/pages/auth/OtpVerification.jsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './OtpVerification.css';
 import logoLocal from '../../assets/logo bioscan1.png';
 
-// ✅ URL correcte → /api (prefix main.py) + /auth (prefix router) + /send-otp ou /verify-otp
-const API_BASE = 'http://localhost:8000/api/auth';
-
 export default function OtpVerification() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ Récupération email depuis navigation ou localStorage
+  // Récupérer l'email depuis location.state ou localStorage
   const email =
-    location.state?.email ||
-    localStorage.getItem('email_register') ||
-    '';
+    location.state?.email || localStorage.getItem('email_register') || '';
 
-  const [otp,      setOtp]      = useState(new Array(6).fill(''));
+  const [otp, setOtp] = useState(new Array(6).fill(''));
   const [timeLeft, setTimeLeft] = useState(120);
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState('');
-  const [sent,     setSent]     = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const inputRefs = useRef([]);
 
-  // ── Timer countdown ──────────────────────────────────────────
+  // Timer OTP
   useEffect(() => {
     if (timeLeft <= 0) return;
-    const id = setInterval(() => setTimeLeft(t => t - 1), 1000);
-    return () => clearInterval(id);
+    const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
+    return () => clearInterval(timer);
   }, [timeLeft]);
 
-  const focusInput = (i) => inputRefs.current[i]?.focus();
-
-  // ── Envoyer OTP ──────────────────────────────────────────────
+  // Appel API - wrapped in useCallback to prevent dependency issues
   const sendOtp = useCallback(async () => {
-    if (!email) {
-      setError("Email introuvable. Retournez à l'inscription.");
-      return;
-    }
     setLoading(true);
     setError('');
-    setSent(false);
     try {
-      const res = await fetch(`${API_BASE}/send-otp`, {
-        method:  'POST',
+      const res = await fetch('http://localhost:8000/auth/send-otp', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ email, raison: 'Inscription' }),
+        body: JSON.stringify({ email, raison: 'Inscription' })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Impossible d'envoyer le code OTP.");
-      setTimeLeft(120);
-      setSent(true);
-    } catch (err) {
-      // ✅ Gestion erreur réseau / CORS
-      if (err instanceof TypeError) {
-        setError('Erreur réseau. Vérifiez que le serveur backend est lancé sur le port 8000.');
-      } else {
-        setError(err.message);
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.detail || "Impossible d'envoyer le code OTP.");
       }
+      setTimeLeft(120);
+      alert('Code OTP envoyé à ' + email);
+    } catch (err) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   }, [email]);
 
-  // ✅ Envoi automatique au montage du composant
-  useEffect(() => { sendOtp(); }, [sendOtp]);
+  // Envoi automatique OTP au montage
+  useEffect(() => {
+    if (!email) return;
+    sendOtp();
+  }, [email, sendOtp]);
 
-  // ── Gestion des inputs ───────────────────────────────────────
+  // Helper focus
+  const focusInput = (index) => {
+    const el = inputRefs.current[index];
+    if (el && typeof el.focus === 'function') el.focus();
+  };
+
+  // Gestion saisie OTP
   const handleChange = (index, value) => {
-    const char = value.replace(/\D/g, '').slice(-1);
-    setOtp(prev => { const n = [...prev]; n[index] = char; return n; });
-    if (char && index < 5) focusInput(index + 1);
+    const cleaned = value.replace(/\D/g, '');
+    const char = cleaned.slice(-1);
+    setOtp(prev => {
+      const next = [...prev];
+      next[index] = char;
+      return next;
+    });
+    if (char !== '' && index < otp.length - 1) focusInput(index + 1);
   };
 
   const handleKeyDown = (e, index) => {
-    if (e.key === 'Backspace') {
+    const key = e.key;
+    if (key === 'Backspace') {
       if (otp[index]) {
-        setOtp(prev => { const n = [...prev]; n[index] = ''; return n; });
+        setOtp(prev => { const n=[...prev]; n[index]=''; return n; });
       } else if (index > 0) {
         focusInput(index - 1);
-        setOtp(prev => { const n = [...prev]; n[index - 1] = ''; return n; });
+        setOtp(prev => { const n=[...prev]; n[index - 1]=''; return n; });
       }
       return;
     }
-    if (e.key === 'ArrowLeft'  && index > 0) { e.preventDefault(); focusInput(index - 1); }
-    if (e.key === 'ArrowRight' && index < 5) { e.preventDefault(); focusInput(index + 1); }
-    // Bloquer les caractères non-numériques
-    if (!/^\d$/.test(e.key) && e.key.length === 1) e.preventDefault();
+    if (key === 'ArrowLeft' && index > 0) { e.preventDefault(); focusInput(index - 1); return; }
+    if (key === 'ArrowRight' && index < otp.length - 1) { e.preventDefault(); focusInput(index + 1); return; }
+    if (!/^\d$/.test(key) && key.length === 1) e.preventDefault();
   };
 
   const handlePaste = (e) => {
     e.preventDefault();
-    const digits = (e.clipboardData.getData('text') || '')
-      .replace(/\D/g, '').slice(0, 6).split('');
-    if (!digits.length) return;
+    const pasted = e.clipboardData.getData('text') || '';
+    const digits = pasted.replace(/\D/g, '').slice(0, otp.length).split('');
+    if (digits.length === 0) return;
     setOtp(prev => {
-      const n = [...prev];
-      digits.forEach((d, i) => { n[i] = d; });
-      return n;
+      const next = [...prev];
+      for (let i = 0; i < digits.length; i++) next[i] = digits[i];
+      return next;
     });
-    focusInput(Math.min(digits.length, 5));
+    const focusIndex = Math.min(digits.length, otp.length - 1);
+    focusInput(focusIndex);
   };
 
-  // ── Vérifier OTP ─────────────────────────────────────────────
   const verifyOtp = async (code) => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${API_BASE}/verify-otp`, {
-        method:  'POST',
+      const res = await fetch('http://localhost:8000/auth/verify-otp', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // ✅ champ "otp" — correspond au modèle VerifyOtpRequest backend
-        body:    JSON.stringify({ email, otp: code }),
+        body: JSON.stringify({ email, code })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Code OTP invalide.');
 
-      // ✅ Nettoyage localStorage + redirection
-      localStorage.removeItem('email_register');
-      navigate('/sign-in', { replace: true });
+      // OTP correct → naviguer vers 2FA ou tableau de bord
+      alert('Code validé !');
+      localStorage.removeItem('email_register'); // Nettoyer
+      navigate('/2fa-setup', { state: { email } });
 
     } catch (err) {
-      // ✅ Gestion erreur réseau / CORS
-      if (err instanceof TypeError) {
-        setError('Erreur réseau ou CORS. Assurez-vous que le backend autorise localhost:3000.');
-      } else {
-        setError(err.message);
-      }
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  // ------------------------
+  // Form submit
+  // ------------------------
   const handleSubmit = (e) => {
     e.preventDefault();
     const code = otp.join('');
-    if (code.length !== 6) {
-      setError('Veuillez entrer les 6 chiffres.');
+    if (code.length !== otp.length) {
+      alert('Veuillez entrer le code complet.');
       return;
     }
     verifyOtp(code);
@@ -145,13 +140,13 @@ export default function OtpVerification() {
 
   const handleResend = () => {
     setOtp(new Array(6).fill(''));
-    setError('');
-    setSent(false);
     sendOtp();
-    setTimeout(() => focusInput(0), 100);
+    focusInput(0);
   };
 
-  // ── Rendu ─────────────────────────────────────────────────────
+  // ------------------------
+  // Render
+  // ------------------------
   return (
     <div className="auth-container">
       <div className="auth-card">
@@ -162,19 +157,7 @@ export default function OtpVerification() {
           <strong>{email || 'votre adresse'}</strong>
         </p>
 
-        {/* ✅ Message succès envoi */}
-        {sent && !error && (
-          <p style={{ color: '#16a34a', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
-            ✅ Code envoyé à {email}
-          </p>
-        )}
-
-        {/* ✅ Message d'erreur */}
-        {error && (
-          <p className="error-text" style={{ color: '#dc2626', marginBottom: '0.5rem' }}>
-            ⚠️ {error}
-          </p>
-        )}
+        {error && <p className="error-text">{error}</p>}
 
         <form onSubmit={handleSubmit}>
           <div className="otp-container" onPaste={handlePaste}>
@@ -198,22 +181,15 @@ export default function OtpVerification() {
           <button
             type="submit"
             className="btn-primary"
-            disabled={loading || otp.join('').length !== 6}
-            style={{ marginTop: '1rem' }}
+            disabled={loading || otp.join('').length !== otp.length}
           >
             {loading ? 'Vérification...' : 'Vérifier le code'}
           </button>
         </form>
 
-        {/* ✅ Timer ou bouton renvoyer */}
-        <div className="resend-section" style={{ marginTop: '1rem', textAlign: 'center' }}>
+        <div className="resend-section">
           {timeLeft > 0 ? (
-            <p style={{ fontSize: '0.85rem', color: '#6b7280' }}>
-              Renvoyer dans{' '}
-              <strong>
-                {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
-              </strong>
-            </p>
+            <p>Renvoyer le code dans <strong>{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2,'0')}</strong></p>
           ) : (
             <button className="resend-btn" onClick={handleResend} disabled={loading}>
               {loading ? 'Envoi...' : 'Renvoyer le code'}
@@ -221,12 +197,7 @@ export default function OtpVerification() {
           )}
         </div>
 
-        <p
-          style={{ cursor: 'pointer', marginTop: '1rem', fontSize: '0.85rem', color: '#6b7280' }}
-          onClick={() => navigate(-1)}
-        >
-          ← Retour à l'inscription
-        </p>
+        <p className="back-link" onClick={() => navigate(-1)}>← Retour à l'inscription</p>
       </div>
     </div>
   );

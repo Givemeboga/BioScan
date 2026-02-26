@@ -1,445 +1,269 @@
 // src/pages/MedecinBiologiste/ProfilMedecin.jsx
 import React, { useState, useRef, useEffect } from 'react';
+import medecinAvatar from '../../assets/médécin.png';
 import './ProfilMedecin.css';
 
-const API = 'http://127.0.0.1:8000';
-
-// ── Construit l'URL complète de la photo ──────────────────────
-const buildPhotoUrl = (photoUrl) => {
-  if (!photoUrl) return null;
-  if (photoUrl.startsWith('http')) return photoUrl;
-  const path = photoUrl.startsWith('/') ? photoUrl : `/media/avatars/${photoUrl}`;
-  return `${API}${path}`;
-};
-
-// ── Token ─────────────────────────────────────────────────────
-const getToken = () =>
-  localStorage.getItem('token') ||
-  localStorage.getItem('access_token') ||
-  sessionStorage.getItem('token') ||
-  null;
-
-function DefaultAvatar() {
-  return (
-    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="pm-default-svg">
-      <circle cx="50" cy="50" r="50" fill="#dbeafe"/>
-      <circle cx="50" cy="36" r="16" fill="#93c5fd"/>
-      <path d="M15 85c0-19.33 15.67-35 35-35s35 15.67 35 35" fill="#93c5fd"/>
-    </svg>
-  );
-}
-
 export default function ProfilMedecin() {
-  const [previewUrl,      setPreviewUrl]      = useState(null);
-  const [avatarUrl,       setAvatarUrl]       = useState(null);
-  const [saving,          setSaving]          = useState(false);
-  const [uploadingPhoto,  setUploadingPhoto]  = useState(false);
-  const [toast,           setToast]           = useState(null);
-  const [passwordError,   setPasswordError]   = useState('');
-  const [fetchError,      setFetchError]      = useState(null);
+  const [editMode, setEditMode] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const fileInputRef = useRef(null);
 
-  const [formData, setFormData] = useState({
-    prenom:           '',
-    nom:              '',
-    specialite:       '',
-    telephone:        '',
-    email:            '',
-    current_password: '',
-    new_password:     '',
-    confirm_password: '',
-  });
+  const userId = 1; // ID utilisateur connecté (à remplacer dynamiquement si tu as auth)
 
-  const showToast = (msg, type = 'success') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3500);
-  };
+  // Données profil
+  const [profil, setProfil] = useState(null);
+  const [formData, setFormData] = useState({});
+  const [passwordData, setPasswordData] = useState({ current: '', new: '', confirm: '' });
+  const [passwordError, setPasswordError] = useState('');
 
-  // ── GET profil au montage ────────────────────────────────────
+  // 🔹 Charger le profil depuis l'API au montage
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      setFetchError('Vous devez être connecté.');
-      return;
-    }
+    // Utiliser localStorage comme fallback
+    const fallbackData = {
+      nom_utilisateur: localStorage.getItem('user_name') || 'Médecin',
+      statut: localStorage.getItem('role') || 'Médecin Biologiste',
+      telephone: localStorage.getItem('user_phone') || '',
+      email: localStorage.getItem('user_email') || '',
+      date_generation: new Date().toLocaleDateString(),
+    };
 
-    fetch(`${API}/api/profil/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(r => {
-        if (!r.ok) throw new Error(`Erreur ${r.status}`);
-        return r.json();
+    fetch(`http://127.0.0.1:8000/api/profil/${userId}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Profil non trouvé');
+        return res.json();
       })
       .then(data => {
-        const parts = (data.nom_utilisateur || '').trim().split(' ');
-        setFormData(prev => ({
-          ...prev,
-          prenom:    parts[0] || '',
-          nom:       parts.slice(1).join(' ') || '',
-          specialite: data.statut    || '',
-          telephone:  data.telephone || '',
-          email:      data.email     || '',
-        }));
-        // ✅ Utilise buildPhotoUrl pour reconstruire l'URL correcte
-        setAvatarUrl(buildPhotoUrl(data.photo_url));
+        setProfil({
+          nom_complet: data.nom_utilisateur,
+          specialite: data.statut,
+          telephone: data.telephone,
+          email: data.email,
+          date_inscription: data.date_generation,
+        });
+        setFormData({
+          nom_complet: data.nom_utilisateur,
+          specialite: data.statut,
+          telephone: data.telephone,
+          email: data.email,
+        });
       })
       .catch(err => {
-        console.error('[ProfilMedecin] Erreur chargement :', err);
-        setFetchError('Impossible de charger le profil.');
-        showToast('Impossible de charger le profil.', 'error');
+        console.warn('Erreur GET profil, utilisation des données locales:', err);
+        // Utiliser les données en fallback
+        setProfil({
+          nom_complet: fallbackData.nom_utilisateur,
+          specialite: fallbackData.statut,
+          telephone: fallbackData.telephone,
+          email: fallbackData.email,
+          date_inscription: fallbackData.date_generation,
+        });
+        setFormData({
+          nom_complet: fallbackData.nom_utilisateur,
+          specialite: fallbackData.statut,
+          telephone: fallbackData.telephone,
+          email: fallbackData.email,
+        });
       });
-  }, []);
+  }, [userId]);
 
-  // ── Handlers formulaire ──────────────────────────────────────
+  // 🔹 Changement des champs du formulaire
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (['new_password', 'confirm_password'].includes(name)) setPasswordError('');
   };
 
-  // ── Upload photo → POST /api/profil/me/photo ─────────────────
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      showToast('Image invalide (JPG, PNG, WEBP…)', 'error');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('La photo ne doit pas dépasser 5 Mo.', 'error');
-      return;
-    }
-
-    // Aperçu local immédiat
-    const localUrl = URL.createObjectURL(file);
-    setPreviewUrl(localUrl);
-    setUploadingPhoto(true);
-
-    const form = new FormData();
-    form.append('file', file, file.name);
-
-    try {
-      const token = getToken();
-      const res = await fetch(`${API}/api/profil/me/photo`, {
-        method:  'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body:    form,
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.detail || 'Erreur upload photo');
-      }
-
-      const data = await res.json();
-      // ✅ Reconstruit l'URL depuis la réponse backend
-      const newUrl = buildPhotoUrl(data.photo_url);
-      setAvatarUrl(newUrl);
-      // Libère le blob local car on a maintenant l'URL serveur
-      URL.revokeObjectURL(localUrl);
-      setPreviewUrl(null);
-      showToast('Photo mise à jour !');
-    } catch (err) {
-      console.error('[ProfilMedecin] Erreur upload :', err);
-      showToast(err.message, 'error');
-      // Annule l'aperçu en cas d'erreur
-      URL.revokeObjectURL(localUrl);
-      setPreviewUrl(null);
-    } finally {
-      setUploadingPhoto(false);
-      // Reset input pour permettre de re-sélectionner le même fichier
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  // ── Soumission formulaire → PUT /api/profil/me ───────────────
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // 🔹 Changement mot de passe
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({ ...prev, [name]: value }));
     setPasswordError('');
+  };
 
-    if (formData.new_password || formData.confirm_password) {
-      if (formData.new_password !== formData.confirm_password) {
-        setPasswordError('Les mots de passe ne correspondent pas.');
+  // 🔹 Changement de l'image
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setPreviewUrl(URL.createObjectURL(file));
+    } else {
+      alert('Veuillez sélectionner une image valide (JPG, PNG, etc.)');
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  // 🔹 Soumission du formulaire (PUT)
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    // Validation mot de passe
+    if (passwordData.new || passwordData.confirm) {
+      if (passwordData.new !== passwordData.confirm) {
+        setPasswordError('Les nouveaux mots de passe ne correspondent pas');
         return;
       }
-      if (formData.new_password.length < 8) {
-        setPasswordError('Minimum 8 caractères requis.');
+      if (passwordData.new.length < 8) {
+        setPasswordError('Le mot de passe doit contenir au moins 8 caractères');
         return;
       }
     }
-
-    setSaving(true);
 
     const payload = {
-      nom_utilisateur: `${formData.prenom} ${formData.nom}`.trim(),
-      email:     formData.email     || null,
-      telephone: formData.telephone || null,
-      statut:    formData.specialite || null,
-      ...(formData.new_password ? { mot_de_passe: formData.new_password } : {}),
+      nom_utilisateur: formData.nom_complet,
+      email: formData.email,
+      telephone: formData.telephone,
+      statut: formData.specialite,
+      ...(passwordData.new ? { mot_de_passe: passwordData.new } : {}),
     };
 
-    try {
-      const token = getToken();
-      const res = await fetch(`${API}/api/profil/me`, {
-        method:  'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization:  `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.detail || `Erreur ${res.status}`);
-      }
-
-      const data = await res.json();
-      // Mise à jour de l'affichage avec les données fraîches du serveur
-      const parts = (data.nom_utilisateur || '').trim().split(' ');
-      setFormData(prev => ({
-        ...prev,
-        prenom:           parts[0] || '',
-        nom:              parts.slice(1).join(' ') || '',
-        specialite:       data.statut    || '',
-        telephone:        data.telephone || '',
-        email:            data.email     || '',
-        current_password: '',
-        new_password:     '',
-        confirm_password: '',
-      }));
-      if (data.photo_url) setAvatarUrl(buildPhotoUrl(data.photo_url));
-      showToast('Profil mis à jour avec succès !');
-
-    } catch (err) {
-      console.error('[ProfilMedecin] Erreur PUT :', err);
-      showToast(err.message, 'error');
-    } finally {
-      setSaving(false);
-    }
+    fetch(`http://127.0.0.1:8000/api/profil/${userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Erreur lors de la mise à jour du profil');
+        return res.json();
+      })
+      .then(data => {
+        alert('Profil mis à jour avec succès !');
+        setProfil({
+          nom_complet: data.nom_utilisateur,
+          specialite: data.statut,
+          telephone: data.telephone,
+          email: data.email,
+          date_inscription: data.date_generation,
+        });
+        setFormData({
+          nom_complet: data.nom_utilisateur,
+          specialite: data.statut,
+          telephone: data.telephone,
+          email: data.email,
+        });
+        setEditMode(false);
+        setPreviewUrl(null);
+        setPasswordData({ current: '', new: '', confirm: '' });
+        setPasswordError('');
+      })
+      .catch(err => alert(err.message));
   };
 
-  // Avatar affiché : prévisualisation > URL serveur > défaut
-  const displaySrc = previewUrl || avatarUrl;
+  const handleCancel = () => {
+    setFormData({ ...profil });
+    setPreviewUrl(null);
+    setPasswordData({ current: '', new: '', confirm: '' });
+    setPasswordError('');
+    setEditMode(false);
+  };
+
+  if (!profil) return <div>Chargement du profil...</div>;
+
+  const displayedAvatar = previewUrl || medecinAvatar;
 
   return (
-    <div className="pm-page">
+    <div className="profil-medecin-page">
+      <div className="page-header">
+        <h1>Mon Profil</h1>
+        <p>Gestion de vos informations personnelles et de sécurité</p>
+      </div>
 
-      {/* ── Toast ── */}
-      {toast && (
-        <div className={`pm-toast pm-toast--${toast.type}`}>
-          {toast.type === 'success'
-            ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          }
-          {toast.msg}
-        </div>
-      )}
-
-      {/* ── Erreur chargement ── */}
-      {fetchError && (
-        <div className="pm-fetch-error">{fetchError}</div>
-      )}
-
-      <div className="pm-card">
-
-        {/* ════ COLONNE GAUCHE ════ */}
-        <div className="pm-left">
-          <div className="pm-left-top" />
-
-          <div className="pm-avatar-section">
-            <div
-              className="pm-avatar-wrap"
-              onClick={() => !uploadingPhoto && fileInputRef.current?.click()}
-              title="Changer la photo"
-            >
-              {displaySrc
-                ? <img
-                    src={displaySrc}
-                    alt="avatar"
-                    className="pm-avatar-img"
-                    onError={(e) => { e.target.style.display = 'none'; }}
-                  />
-                : <DefaultAvatar />
-              }
-              <div className="pm-avatar-overlay">
-                {uploadingPhoto
-                  ? <span className="pm-spinner-sm" />
-                  : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-                      <circle cx="12" cy="13" r="4"/>
-                    </svg>
-                }
-              </div>
-            </div>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/gif,image/webp"
-              onChange={handleFileChange}
-              style={{ display: 'none' }}
-            />
-
-            <p className="pm-left-name">
-              Dr. {formData.prenom} {formData.nom}
-            </p>
-            <p className="pm-left-role">
-              {formData.specialite || 'Médecin Biologiste'}
-            </p>
-
-            <button
-              type="button"
-              className="pm-photo-btn"
-              onClick={() => !uploadingPhoto && fileInputRef.current?.click()}
-              disabled={uploadingPhoto}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-                <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
-              {uploadingPhoto ? 'Upload…' : 'Changer la photo'}
-            </button>
+      <div className="profil-container">
+        <div className="profil-card">
+          {/* Avatar */}
+          <div className="profil-avatar">
+            <img src={displayedAvatar} alt="Profil médecin" className="avatar-img" />
+            {editMode && (
+              <>
+                <button type="button" className="btn-change-photo" onClick={triggerFileInput}>
+                  Changer la photo
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+              </>
+            )}
           </div>
 
-          {/* Infos rapides */}
-          <div className="pm-left-info">
-            {formData.email && (
-              <div className="pm-info-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
-                <span>{formData.email}</span>
-              </div>
-            )}
-            {formData.telephone && (
-              <div className="pm-info-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-                  <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.01 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.17 6.17l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
-                </svg>
-                <span>{formData.telephone}</span>
-              </div>
+          {/* Infos profil */}
+          <div className="profil-info">
+            {editMode ? (
+              <form onSubmit={handleSubmit} className="profil-form">
+                <div className="form-section">
+                  <h3>Informations personnelles</h3>
+
+                  <div className="form-group">
+                    <label>Nom complet</label>
+                    <input type="text" name="nom_complet" value={formData.nom_complet || ''} onChange={handleChange} required />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Spécialité</label>
+                    <input type="text" name="specialite" value={formData.specialite || ''} onChange={handleChange} />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Téléphone</label>
+                    <input type="tel" name="telephone" value={formData.telephone || ''} onChange={handleChange} />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" value={formData.email || ''} onChange={handleChange} required />
+                  </div>
+                </div>
+
+                <div className="form-section password-section">
+                  <h3>Changer le mot de passe</h3>
+                  <p className="help-text">(Laissez vide si vous ne souhaitez pas modifier le mot de passe)</p>
+
+                  <div className="form-group">
+                    <label>Mot de passe actuel</label>
+                    <input type="password" name="current" value={passwordData.current} onChange={handlePasswordChange} autoComplete="current-password" />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Nouveau mot de passe</label>
+                    <input type="password" name="new" value={passwordData.new} onChange={handlePasswordChange} autoComplete="new-password" />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Confirmer le nouveau mot de passe</label>
+                    <input type="password" name="confirm" value={passwordData.confirm} onChange={handlePasswordChange} autoComplete="new-password" />
+                  </div>
+
+                  {passwordError && <div className="error-message">{passwordError}</div>}
+                </div>
+
+                <div className="form-actions">
+                  <button type="submit" className="btn btn-primary">Enregistrer</button>
+                  <button type="button" className="btn btn-secondary" onClick={handleCancel}>Annuler</button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <h2>Dr. {profil.nom_complet}</h2>
+                <p className="specialite">{profil.specialite}</p>
+
+                <div className="info-grid">
+                  <div className="info-item"><span className="label">Email :</span> <span>{profil.email}</span></div>
+                  <div className="info-item"><span className="label">Téléphone :</span> <span>{profil.telephone}</span></div>
+                  <div className="info-item"><span className="label">Inscription :</span> <span>{new Date(profil.date_inscription).toLocaleDateString('fr-TN')}</span></div>
+                </div>
+
+                <div className="profil-actions">
+                  <button className="btn btn-edit" onClick={() => setEditMode(true)}>Modifier mon profil</button>
+                </div>
+              </>
             )}
           </div>
         </div>
 
-        {/* ════ COLONNE DROITE ════ */}
-        <div className="pm-right">
-          <h2 className="pm-title">Mon Profil</h2>
-          <p className="pm-subtitle">Gérez vos informations personnelles et votre sécurité</p>
-
-          <form onSubmit={handleSubmit}>
-
-            {/* ── Informations personnelles ── */}
-            <div className="pm-section-label">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15">
-                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-              Informations personnelles
-            </div>
-
-            <div className="pm-row">
-              <div className="pm-field">
-                <label>PRÉNOM</label>
-                <input type="text" name="prenom"
-                  value={formData.prenom} onChange={handleChange}
-                  placeholder="Prénom" />
-              </div>
-              <div className="pm-field">
-                <label>NOM</label>
-                <input type="text" name="nom"
-                  value={formData.nom} onChange={handleChange}
-                  placeholder="Nom" />
-              </div>
-            </div>
-
-            <div className="pm-row">
-              <div className="pm-field">
-                <label>SPÉCIALITÉ</label>
-                <input type="text" name="specialite"
-                  value={formData.specialite} onChange={handleChange}
-                  placeholder="Ex : Médecin Biologiste" />
-              </div>
-              <div className="pm-field">
-                <label>TÉLÉPHONE</label>
-                <input type="tel" name="telephone"
-                  value={formData.telephone} onChange={handleChange}
-                  placeholder="+216 XX XXX XXX" />
-              </div>
-            </div>
-
-            <div className="pm-row pm-row--full">
-              <div className="pm-field">
-                <label>ADRESSE EMAIL</label>
-                <input type="email" name="email"
-                  value={formData.email} onChange={handleChange}
-                  placeholder="votre@email.com" required />
-              </div>
-            </div>
-
-            {/* ── Sécurité ── */}
-            <div className="pm-section-label pm-section-label--mt">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="15" height="15">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0110 0v4"/>
-              </svg>
-              Sécurité
-            </div>
-            <p className="pm-hint">Laissez vide si vous ne souhaitez pas modifier le mot de passe.</p>
-
-            <div className="pm-row">
-              <div className="pm-field">
-                <label>MOT DE PASSE ACTUEL</label>
-                <input type="password" name="current_password"
-                  value={formData.current_password} onChange={handleChange}
-                  placeholder="••••••••" autoComplete="current-password" />
-              </div>
-              <div className="pm-field">
-                <label>NOUVEAU MOT DE PASSE</label>
-                <input type="password" name="new_password"
-                  value={formData.new_password} onChange={handleChange}
-                  placeholder="Min. 8 caractères" autoComplete="new-password" />
-              </div>
-            </div>
-
-            <div className="pm-row pm-row--full">
-              <div className="pm-field">
-                <label>CONFIRMER LE MOT DE PASSE</label>
-                <input type="password" name="confirm_password"
-                  value={formData.confirm_password} onChange={handleChange}
-                  placeholder="••••••••" autoComplete="new-password" />
-              </div>
-            </div>
-
-            {passwordError && (
-              <div className="pm-error">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                {passwordError}
-              </div>
-            )}
-
-            <div className="pm-actions">
-              <button
-                type="button"
-                className="pm-btn-cancel"
-                onClick={() => window.history.back()}
-              >
-                Annuler
-              </button>
-              <button type="submit" className="pm-btn-save" disabled={saving}>
-                {saving && <span className="pm-spinner-sm" />}
-                {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
-              </button>
-            </div>
-
-          </form>
+        <div className="stats-card">
+          <h3>Activité récente</h3>
+          <ul className="stats-list">
+            <li><strong>12</strong> bilans validés ce mois</li>
+            <li><strong>5</strong> rapports d'anomalie créés</li>
+            <li><strong>98%</strong> de satisfaction patient</li>
+          </ul>
         </div>
       </div>
     </div>

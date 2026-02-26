@@ -1,42 +1,20 @@
-# backend/schemas/role.py
-
 from pydantic import BaseModel
-from typing import Optional, List
-
-
-class RoleCreate(BaseModel):
-    nom:         str
-    description: Optional[str] = None
-
-
-class RoleUpdate(BaseModel):
-    nom:         Optional[str] = None
-    description: Optional[str] = None
+from typing import List, Optional
 
 
 class RoleRead(BaseModel):
-    role_id:     int
-    nom:         str
-    description: Optional[str] = None
+    id: int
+    nom: str
+    description: Optional[str]
 
     class Config:
-        from_attributes = True  # Pydantic v2
+        orm_mode = True
 
 
 class PermissionRead(BaseModel):
-    id:             int
+    id: int
     nom_permission: str
-    description:    Optional[str] = None
+    description: Optional[str]
 
     class Config:
-        from_attributes = True
-
-
-class RoleWithPermissions(BaseModel):
-    role_id:     int
-    nom:         str
-    description: Optional[str]       = None
-    permissions: List[PermissionRead] = []
-
-    class Config:
-        from_attributes = True
+        orm_mode = True
