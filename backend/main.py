@@ -15,6 +15,7 @@ from api.routers.profil import router as profil_router
 from api.routers.Profil1 import router as profil_router1
 from api.routers.forgot_password import router as forgot_password_router
 from api.routers.otp import router as otp_router
+from api.routers.notifications import router as notifications_router
 from api.routers.admin_users import router as admin_users_router
 from api.routers.admin_medecins import router as admin_medecins_router
 from api.routers.admin_techniciens import router as admin_techniciens_router
@@ -73,6 +74,7 @@ app.include_router(profil_router, prefix="/api/profil")
 app.include_router(profil_router1, prefix="/api/profil1")
 app.include_router(forgot_password_router, prefix="/api")
 app.include_router(otp_router, prefix="/api")
+app.include_router(notifications_router)
 app.include_router(admin_users_router)
 app.include_router(admin_medecins_router)
 app.include_router(admin_techniciens_router)

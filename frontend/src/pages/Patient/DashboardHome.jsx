@@ -22,15 +22,15 @@ import {
 import axios from 'axios';
 import './DashboardHome.css';
 
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = 'http://localhost:8000';
 const PATIENT_ID = 1; // ← À remplacer par l'ID du patient connecté (via auth/context)
 
 export default function DashboardHome() {
   const [stats, setStats] = useState({
     total: 0,
-    validés: 0,
+    valides: 0,
     enAttente: 0,
-    cetteAnnée: 0,
+    cetteAnnee: 0,
     ceMois: 0,
   });
   const [monthlyBilans, setMonthlyBilans] = useState([]);
@@ -46,7 +46,9 @@ export default function DashboardHome() {
         setError(null);
 
         // 1. Statistiques globales (dashboard-stats)
-        const statsRes = await axios.get(`${API_BASE}/api/bilans-biologiques/patient/dashboard-stats`);
+        const statsRes = await axios.get(
+          `${API_BASE}/api/bilans-biologiques/patient/dashboard-stats?patient_id=${PATIENT_ID}`
+        );
         setStats(statsRes.data);
 
         // 2. Bilans du patient connecté (limite 20 derniers)
@@ -123,7 +125,7 @@ export default function DashboardHome() {
     // Simulation – à remplacer par vraies données agrégées si endpoint existe
     return monthly.map(m => ({
       month: m.month,
-      validés: Math.floor(m.count * 0.8),
+      valides: Math.floor(m.count * 0.8),
       attente: Math.floor(m.count * 0.2),
     }));
   };
@@ -187,7 +189,7 @@ export default function DashboardHome() {
 
         <div className="stat-card validated">
           <CheckCircle size={32} />
-          <div className="stat-value">{stats.validés}</div>
+          <div className="stat-value">{stats.valides}</div>
           <div className="stat-label">Bilans validés</div>
         </div>
 
@@ -199,7 +201,7 @@ export default function DashboardHome() {
 
         <div className="stat-card year">
           <Calendar size={32} />
-          <div className="stat-value">{stats.cetteAnnée}</div>
+          <div className="stat-value">{stats.cetteAnnee}</div>
           <div className="stat-label">Cette année</div>
         </div>
 
@@ -231,13 +233,13 @@ export default function DashboardHome() {
           <h3>Tendance validés vs en attente</h3>
           <div className="chart-wrapper">
             <ResponsiveContainer width="100%" height={360}>
-              <LineChart data={trendData.length > 0 ? trendData : [{ month: 'Aucun', validés: 0, attente: 0 }]}>
+              <LineChart data={trendData.length > 0 ? trendData : [{ month: 'Aucun', valides: 0, attente: 0 }]}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.4} />
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="validés" stroke="#10b981" strokeWidth={3} dot={false} />
+                <Line type="monotone" dataKey="valides" stroke="#10b981" strokeWidth={3} dot={false} />
                 <Line type="monotone" dataKey="attente" stroke="#f59e0b" strokeWidth={3} dot={false} />
               </LineChart>
             </ResponsiveContainer>

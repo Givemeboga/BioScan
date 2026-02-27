@@ -22,7 +22,7 @@ const handleSubmit = async (e) => {
 
   try {
     const res = await axios.post(
-      "http://127.0.0.1:8000/api/auth/login",  // <- URL propre
+      "http://localhost:8000/api/auth/login",
       { email: email.trim(), password: password.trim() },
       { headers: { "Content-Type": "application/json" } }
     );

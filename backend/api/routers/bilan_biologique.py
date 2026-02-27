@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from database import get_db
 from schemas.bilan import BilanBiologiqueList
@@ -18,6 +18,7 @@ def get_bilans(
         db: Session = Depends(get_db),
         search: str = Query(None, description="Recherche dans le nom du patient ou le type de bilan"),
         statut: str = Query(None, description="Filtre par statut (ex: BROUILLON, EN_COURS, TERMINE, VALIDE)"),
+    patient_id: Optional[int] = Query(None, description="Filtre par patient_id"),
         limit: int = Query(50, ge=1, le=500, description="Nombre max de résultats"),
         offset: int = Query(0, ge=0, description="Décalage pour la pagination")
 ):
@@ -64,6 +65,11 @@ def get_bilans(
         sql_str += " AND bb.statut = :statut "
         params["statut"] = statut.strip().upper()
 
+    # Filtre patient
+    if patient_id is not None:
+        sql_str += " AND bb.patient_id = :patient_id "
+        params["patient_id"] = patient_id
+
     # Tri + pagination
     sql_str += """
         ORDER BY bb.date_generation DESC NULLS LAST
@@ -105,3 +111,73 @@ def get_bilans(
         print("Paramètres :", params)
         # On renvoie une liste vide pour éviter crash de validation FastAPI
         return []
+
+
+@router.get("/patient/", response_model=List[BilanBiologiqueList])
+def get_bilans_patient(
+        db: Session = Depends(get_db),
+        patient_id: int = Query(..., description="ID du patient"),
+        limit: int = Query(50, ge=1, le=500, description="Nombre max de résultats"),
+        offset: int = Query(0, ge=0, description="Décalage pour la pagination")
+):
+    """
+    Récupère les bilans biologiques pour un patient spécifique.
+    """
+    return get_bilans(
+        db=db,
+        search=None,
+        statut=None,
+        patient_id=patient_id,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@router.get("/patient/dashboard-stats")
+def get_patient_dashboard_stats(
+        db: Session = Depends(get_db),
+        patient_id: int = Query(..., description="ID du patient")
+):
+    """
+    Statistiques du tableau de bord patient.
+    """
+    sql_str = """
+        SELECT
+            COUNT(*) AS total,
+            COUNT(*) FILTER (WHERE bb.statut = 'VALIDE') AS valides,
+            COUNT(*) FILTER (WHERE bb.statut IN ('BROUILLON', 'EN_COURS')) AS en_attente,
+            COUNT(*) FILTER (WHERE DATE_PART('year', bb.date_generation) = DATE_PART('year', CURRENT_DATE)) AS cette_annee,
+            COUNT(*) FILTER (WHERE DATE_PART('month', bb.date_generation) = DATE_PART('month', CURRENT_DATE)
+                              AND DATE_PART('year', bb.date_generation) = DATE_PART('year', CURRENT_DATE)) AS ce_mois
+        FROM bilan_biologique bb
+        WHERE bb.patient_id = :patient_id
+    """
+
+    try:
+        result = db.execute(text(sql_str), {"patient_id": patient_id}).mappings().first()
+        if not result:
+            return {
+                "total": 0,
+                "valides": 0,
+                "enAttente": 0,
+                "cetteAnnee": 0,
+                "ceMois": 0,
+            }
+
+        return {
+            "total": int(result.get("total") or 0),
+            "valides": int(result.get("valides") or 0),
+            "enAttente": int(result.get("en_attente") or 0),
+            "cetteAnnee": int(result.get("cette_annee") or 0),
+            "ceMois": int(result.get("ce_mois") or 0),
+        }
+    except Exception as e:
+        print("=== ERREUR SQL DANS DASHBOARD STATS ===")
+        print("Message :", str(e))
+        return {
+            "total": 0,
+            "valides": 0,
+            "enAttente": 0,
+            "cetteAnnee": 0,
+            "ceMois": 0,
+        }
