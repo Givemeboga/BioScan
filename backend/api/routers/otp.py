@@ -2,7 +2,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
 from pydantic import BaseModel, EmailStr
 from database import get_db
 from utils.email_utils import send_email
@@ -10,7 +9,6 @@ import random, logging
 
 logger = logging.getLogger(__name__)
 
-# ✅ prefix="/auth" → combiné avec prefix="/api" dans main.py → /api/auth/...
 router = APIRouter(prefix="/auth", tags=["OTP"])
 
 
@@ -30,12 +28,12 @@ def generate_otp_code(length=6) -> str:
     return ''.join(str(random.randint(0, 9)) for _ in range(length))
 
 
-# ── POST /api/auth/send-otp ───────────────────────────────────
 @router.post("/send-otp", response_model=OtpResponse)
 def send_otp(request: OtpRequest, db: Session = Depends(get_db)):
 
+    # ✅ public.utilisateur — c'est là que sont les données
     user = db.execute(
-        text("SELECT utilisateur_id, email FROM utilisateur WHERE LOWER(email) = LOWER(:email)"),
+        text("SELECT utilisateur_id, email FROM public.utilisateur WHERE LOWER(email) = LOWER(:email)"),
         {"email": request.email.strip()}
     ).mappings().first()
 
@@ -44,19 +42,16 @@ def send_otp(request: OtpRequest, db: Session = Depends(get_db)):
 
     uid  = user["utilisateur_id"]
     code = generate_otp_code()
-    exp  = datetime.utcnow() + timedelta(minutes=5)
 
-    # Désactiver OTP existants
     db.execute(
-        text("UPDATE code_otp SET statut = 'EXPIRE' WHERE utilisateur_id = :uid AND statut = 'ACTIF'"),
+        text("UPDATE public.code_otp SET statut = 'EXPIRE' WHERE utilisateur_id = :uid AND statut = 'ACTIF'"),
         {"uid": uid}
     )
 
-    # Créer nouvel OTP
     db.execute(text("""
-        INSERT INTO code_otp (code_generer, raison, statut, date_generation, expiration, utilisateur_id)
-        VALUES (:code, :raison, 'ACTIF', NOW(), :exp, :uid)
-    """), {"code": code, "raison": request.raison, "exp": exp, "uid": uid})
+        INSERT INTO public.code_otp (code_generer, raison, statut, date_generation, expiration, utilisateur_id)
+        VALUES (:code, :raison, 'ACTIF', NOW(), NOW() + INTERVAL '10 minutes', :uid)
+    """), {"code": code, "raison": request.raison, "uid": uid})
 
     db.commit()
 
@@ -70,12 +65,11 @@ def send_otp(request: OtpRequest, db: Session = Depends(get_db)):
     return {"message": "OTP envoyé avec succès"}
 
 
-# ── POST /api/auth/verify-otp ─────────────────────────────────
 @router.post("/verify-otp", response_model=OtpResponse)
 def verify_otp(request: VerifyOtpRequest, db: Session = Depends(get_db)):
 
     user = db.execute(
-        text("SELECT utilisateur_id FROM utilisateur WHERE LOWER(email) = LOWER(:email)"),
+        text("SELECT utilisateur_id FROM public.utilisateur WHERE LOWER(email) = LOWER(:email)"),
         {"email": request.email.strip()}
     ).mappings().first()
 
@@ -85,31 +79,31 @@ def verify_otp(request: VerifyOtpRequest, db: Session = Depends(get_db)):
     uid = user["utilisateur_id"]
 
     otp_entry = db.execute(text("""
-        SELECT code_otp_id, code_generer, expiration
-        FROM code_otp
+        SELECT otp_id, code_generer,
+               (expiration < NOW()) AS est_expire
+        FROM public.code_otp
         WHERE utilisateur_id = :uid AND statut = 'ACTIF'
         ORDER BY date_generation DESC
         LIMIT 1
     """), {"uid": uid}).mappings().first()
 
     if not otp_entry:
-        raise HTTPException(status_code=400, detail="OTP non généré ou expiré")
-
-    # ✅ Vérifier expiration AVANT le code (meilleure UX)
-    if datetime.utcnow() > otp_entry["expiration"]:
-        db.execute(
-            text("UPDATE code_otp SET statut = 'EXPIRE' WHERE code_otp_id = :id"),
-            {"id": otp_entry["code_otp_id"]}
-        )
-        db.commit()
-        raise HTTPException(status_code=400, detail="Code OTP expiré")
+        raise HTTPException(status_code=400, detail="Aucun OTP actif. Demandez un nouveau code.")
 
     if otp_entry["code_generer"] != request.otp:
         raise HTTPException(status_code=400, detail="Code OTP incorrect")
 
+    if otp_entry["est_expire"]:
+        db.execute(
+            text("UPDATE public.code_otp SET statut = 'EXPIRE' WHERE otp_id = :id"),
+            {"id": otp_entry["otp_id"]}
+        )
+        db.commit()
+        raise HTTPException(status_code=400, detail="Code OTP expiré. Cliquez sur 'Renvoyer le code'.")
+
     db.execute(
-        text("UPDATE code_otp SET statut = 'UTILISE' WHERE code_otp_id = :id"),
-        {"id": otp_entry["code_otp_id"]}
+        text("UPDATE public.code_otp SET statut = 'UTILISE' WHERE otp_id = :id"),
+        {"id": otp_entry["otp_id"]}
     )
     db.commit()
 

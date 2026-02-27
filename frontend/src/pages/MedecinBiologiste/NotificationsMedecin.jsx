@@ -1,298 +1,286 @@
+// src/pages/MedecinBiologiste/NotificationsMedecin.jsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bell, CheckCheck, Trash2, RefreshCw, FileText, AlertTriangle, Info, CheckCircle } from 'lucide-react';
 import './NotificationsMedecin.css';
 
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = 'http://localhost:8000/api';
 
-const getToken = () =>
-  localStorage.getItem('token') ||
-  localStorage.getItem('access_token') ||
-  sessionStorage.getItem('token') ||
-  null;
+function getToken() {
+  return (
+    localStorage.getItem('access_token') ||
+    sessionStorage.getItem('access_token') ||
+    localStorage.getItem('token') ||
+    sessionStorage.getItem('token')
+  );
+}
 
-const authHeaders = () => {
+function getUserId() {
+  try {
+    const raw = localStorage.getItem('user_id') || sessionStorage.getItem('user_id');
+    if (raw) return parseInt(raw, 10);
+    const token = getToken();
+    if (!token) return null;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.user_id || parseInt(payload.sub, 10) || null;
+  } catch (_) { return null; }
+}
+
+function authHeaders() {
   const token = getToken();
-  if (!token) throw new Error('Aucun token trouvé');
   return {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
+}
+
+const TYPE_META = {
+  bilan:    { icon: '🧪', label: 'Bilan',    bg: '#dbeafe', color: '#1d4ed8', iconBg: '#dbeafe' },
+  anomalie: { icon: '⚠️', label: 'Anomalie', bg: '#fef3c7', color: '#b45309', iconBg: '#fef3c7' },
+  system:   { icon: '🔄', label: 'Système',  bg: '#dcfce7', color: '#15803d', iconBg: '#dcfce7' },
+  message:  { icon: '✉️', label: 'Message',  bg: '#ede9fe', color: '#7c3aed', iconBg: '#ede9fe' },
 };
 
-const NotifIcon = ({ type }) => {
-  const p = { size: 18 };
-  const t = (type || 'info').toUpperCase();
-  switch (t) {
-    case 'BILAN':   return <FileText      {...p} />;
-    case 'RAPPORT': return <FileText      {...p} />;
-    case 'ALERTE':  return <AlertTriangle {...p} />;
-    case 'SUCCES':  return <CheckCircle   {...p} />;
-    default:        return <Info          {...p} />;
-  }
-};
+function getType(titre = '') {
+  const t = titre.toLowerCase();
+  if (t.includes('bilan'))     return 'bilan';
+  if (t.includes('anomal'))    return 'anomalie';
+  if (t.includes('message'))   return 'message';
+  return 'system';
+}
 
-const formatDate = (iso) => {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return 'Date invalide';
-  
-  const diff = Math.floor((Date.now() - d.getTime()) / 1000);
-  if (diff < 60)     return "À l'instant";
-  if (diff < 3600)   return `Il y a ${Math.floor(diff / 60)} min`;
-  if (diff < 86400)  return `Il y a ${Math.floor(diff / 3600)} h`;
-  if (diff < 172800) return 'Hier';
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-};
-
-// Normalisation des champs
-const getId     = (n) => n.id || n.notification_id || null;
-const getStatut = (n) => (n.statut_notification || n.statut || 'READ').toUpperCase();
-const getMessage= (n) => n.titre || n.message || n.contenu || 'Notification sans titre';
-const getType   = (n) => n.type || 'info';
-const getDate   = (n) => n.date_generation || n.date_envoi || n.created_at;
-
-const FILTERS = [
-  { value: 'ALL',    label: 'Toutes'   },
-  { value: 'UNREAD', label: 'Non lues' },
-  { value: 'READ',   label: 'Lues'     },
-];
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const diff  = Date.now() - new Date(dateStr).getTime();
+  const mins  = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days  = Math.floor(diff / 86400000);
+  if (mins  < 1)  return "À l'instant";
+  if (mins  < 60) return `Il y a ${mins} min`;
+  if (hours < 24) return `Il y a ${hours} h`;
+  if (days  < 7)  return `Il y a ${days} j`;
+  return new Date(dateStr).toLocaleDateString('fr-FR');
+}
 
 export default function NotificationsMedecin() {
-  const [notifs,       setNotifs]       = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [error,        setError]        = useState(null);
-  const [filter,       setFilter]       = useState('ALL');
-  const [actionMap,    setActionMap]    = useState({}); // id → 'read'|'delete'|null
+  const [notifications, setNotifications] = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState(null);
+  const [filter,        setFilter]        = useState('ALL');
 
-  const fetchNotifs = useCallback(async () => {
+  const userId = getUserId();
+
+  const fetchNotifications = useCallback(async () => {
+    if (!userId) {
+      setError('Identifiant introuvable. Reconnectez-vous.');
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
-
     try {
-      const headers = authHeaders();
-      const params = new URLSearchParams({ limit: '100', offset: '0' });
-      if (filter !== 'ALL') params.append('statut', filter);
-
-      const url = `${API_BASE}/api/notifications/me?${params}`;
-      const res = await fetch(url, { headers, method: 'GET' });
-
-      if (res.status === 401 || res.status === 403) {
-        throw new Error('Session expirée ou accès refusé. Veuillez vous reconnecter.');
-      }
-      if (res.status === 405) {
-        throw new Error('Méthode non autorisée (405). Vérifiez la configuration backend.');
-      }
+      const params = new URLSearchParams({ limit: 100, offset: 0 });
+      const res = await fetch(
+        `${API_BASE}/notifications/patient/${userId}?${params}`,
+        { headers: authHeaders() }
+      );
+      if (res.status === 401) throw new Error('Session expirée, reconnectez-vous.');
       if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        throw new Error(`Erreur ${res.status} : ${txt || res.statusText}`);
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || `Erreur ${res.status}`);
       }
-
-      const data = await res.json();
-      setNotifs(Array.isArray(data) ? data : []);
+      setNotifications(await res.json());
     } catch (err) {
-      console.error('[fetchNotifs]', err);
-      setError(err.message || 'Impossible de charger les notifications');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [userId]);
 
-  useEffect(() => {
-    fetchNotifs();
-  }, [fetchNotifs]);
+  useEffect(() => { fetchNotifications(); }, [fetchNotifications]);
 
-  const updateAction = (id, actionType = null) => {
-    setActionMap(prev => ({ ...prev, [id]: actionType }));
-  };
+  // ── Computed ─────────────────────────────────────────────
+  const unreadCount = notifications.filter(n => n.statut === 'UNREAD').length;
+  const displayed   = notifications.filter(n => {
+    if (filter === 'UNREAD') return n.statut === 'UNREAD';
+    if (filter === 'READ')   return n.statut === 'READ';
+    return true;
+  });
 
-  const markAsRead = async (id) => {
-    if (!id) return;
-    updateAction(id, 'read');
+  // ── Actions ──────────────────────────────────────────────
+  const markAsRead = async (notification_id) => {
     try {
-      const res = await fetch(`${API_BASE}/api/notifications/${id}/read`, {
-        method: 'PUT',
-        headers: authHeaders(),
+      const res = await fetch(`${API_BASE}/notifications/${notification_id}/lire`, {
+        method: 'PUT', headers: authHeaders(),
       });
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        throw new Error(`Erreur ${res.status}: ${txt || 'Échec'}`);
-      }
-
-      setNotifs(prev =>
-        prev.map(n => getId(n) === id ? { ...n, statut_notification: 'READ' } : n)
+      if (!res.ok) return;
+      setNotifications(prev =>
+        prev.map(n => n.notification_id === notification_id ? { ...n, statut: 'READ' } : n)
       );
-    } catch (err) {
-      console.error('[markAsRead]', err);
-      alert('Échec de la mise à jour : ' + err.message);
-    } finally {
-      updateAction(id, null);
-    }
+    } catch (err) { console.error('[markAsRead]', err); }
   };
 
-  const deleteNotif = async (id) => {
-    if (!id || !window.confirm('Supprimer cette notification ?')) return;
-    updateAction(id, 'delete');
+  const markAllAsRead = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/notifications/${id}`, {
-        method: 'DELETE',
-        headers: authHeaders(),
+      const res = await fetch(`${API_BASE}/notifications/patient/${userId}/lire-tout`, {
+        method: 'PUT', headers: authHeaders(),
       });
-      if (!res.ok) throw new Error(`Erreur ${res.status}`);
-      
-      setNotifs(prev => prev.filter(n => getId(n) !== id));
-    } catch (err) {
-      console.error('[deleteNotif]', err);
-      alert('Impossible de supprimer');
-    } finally {
-      updateAction(id, null);
-    }
+      if (!res.ok) return;
+      setNotifications(prev => prev.map(n => ({ ...n, statut: 'READ' })));
+    } catch (err) { console.error('[markAllAsRead]', err); }
   };
 
-  const markAllRead = async () => {
-    if (!window.confirm('Marquer toutes les notifications comme lues ?')) return;
-    
+  const deleteNotification = async (notification_id, e) => {
+    e.stopPropagation();
     try {
-      const res = await fetch(`${API_BASE}/api/notifications/me/read-all`, {
-        method: 'PUT',
-        headers: authHeaders(),
+      const res = await fetch(`${API_BASE}/notifications/${notification_id}`, {
+        method: 'DELETE', headers: authHeaders(),
       });
-      if (!res.ok) throw new Error(`Erreur ${res.status}`);
-
-      setNotifs(prev => prev.map(n => ({ ...n, statut_notification: 'READ' })));
-    } catch (err) {
-      console.error('[markAllRead]', err);
-      alert('Échec : ' + err.message);
-    }
+      if (!res.ok) return;
+      setNotifications(prev => prev.filter(n => n.notification_id !== notification_id));
+    } catch (err) { console.error('[deleteNotification]', err); }
   };
 
-  const unreadCount = notifs.filter(n => getStatut(n) === 'UNREAD').length;
-
+  // ── Render ────────────────────────────────────────────────
   return (
     <div className="nm-page">
-      <div className="nm-header">
-        <div className="nm-header-left">
-          <div className="nm-header-icon">
-            <Bell size={22} />
-            {unreadCount > 0 && <span className="nm-header-badge">{unreadCount}</span>}
-          </div>
-          <div>
-            <h1 className="nm-title">Notifications</h1>
-            <p className="nm-subtitle">
-              {unreadCount > 0
-                ? `${unreadCount} notification${unreadCount > 1 ? 's' : ''} non lue${unreadCount > 1 ? 's' : ''}`
-                : 'Aucune notification en attente'}
-            </p>
-          </div>
-        </div>
 
-        <div className="nm-header-actions">
+      {/* Header */}
+      <div className="nm-header">
+        <div>
+          <h1>🔔 Mes Notifications</h1>
+          <p>
+            Vous avez <strong>{unreadCount}</strong>{' '}
+            notification{unreadCount !== 1 ? 's' : ''} non lue{unreadCount !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <div className="nm-actions">
           {unreadCount > 0 && (
-            <button className="nm-btn nm-btn-secondary" onClick={markAllRead}>
-              <CheckCheck size={15} /> Tout marquer lu
+            <button className="nm-btn-primary" onClick={markAllAsRead}>
+              ✅ Tout marquer comme lu
             </button>
           )}
-          <button
-            className="nm-btn nm-btn-icon"
-            onClick={fetchNotifs}
-            disabled={loading}
-            title="Actualiser"
-          >
-            <RefreshCw size={15} className={loading ? 'nm-spin' : ''} />
+          <button className="nm-btn-secondary" onClick={fetchNotifications}>
+            🔄 Rafraîchir
           </button>
         </div>
       </div>
 
-      <div className="nm-filters">
-        {FILTERS.map(f => (
+      {/* Filters */}
+      <div className="nm-tabs">
+        {[
+          { key: 'ALL',    label: 'Toutes',   count: notifications.length },
+          { key: 'UNREAD', label: 'Non lues', count: unreadCount },
+          { key: 'READ',   label: 'Lues',     count: notifications.length - unreadCount },
+        ].map(f => (
           <button
-            key={f.value}
-            className={`nm-filter-btn ${filter === f.value ? 'active' : ''}`}
-            onClick={() => setFilter(f.value)}
+            key={f.key}
+            className={`nm-tab ${filter === f.key ? 'active' : ''}`}
+            onClick={() => setFilter(f.key)}
           >
             {f.label}
-            {f.value === 'UNREAD' && unreadCount > 0 && (
-              <span className="nm-filter-count">{unreadCount}</span>
+            {f.count > 0 && (
+              <span className="nm-badge">{f.count}</span>
             )}
           </button>
         ))}
       </div>
 
-      {loading ? (
+      {/* Stats */}
+      {!loading && !error && (
+        <div className="nm-stats">
+          <strong>{displayed.length}</strong> notification{displayed.length !== 1 ? 's' : ''} affichée{displayed.length !== 1 ? 's' : ''}
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading && (
         <div className="nm-loading">
-          <RefreshCw size={30} className="nm-spin" />
-          <p>Chargement des notifications...</p>
+          <div className="nm-spinner" />
+          <p>Chargement des notifications…</p>
         </div>
-      ) : error ? (
+      )}
+
+      {/* Error */}
+      {error && !loading && (
         <div className="nm-error">
-          <AlertTriangle size={26} />
-          <p>{error}</p>
-          <button className="nm-btn nm-btn-primary" onClick={fetchNotifs}>
-            Réessayer
-          </button>
+          <span>⚠️ {error}</span>
+          <button onClick={fetchNotifications}>Réessayer</button>
         </div>
-      ) : notifs.length === 0 ? (
-        <div className="nm-empty">
-          <div className="nm-empty-icon">
-            <Bell size={38} strokeWidth={1.2} />
-          </div>
-          <p className="nm-empty-title">Aucune notification</p>
-          <p className="nm-empty-sub">
-            {filter === 'UNREAD'
-              ? 'Toutes vos notifications sont lues.'
-              : "Vous n'avez reçu aucune notification pour le moment."}
-          </p>
-        </div>
-      ) : (
+      )}
+
+      {/* List */}
+      {!loading && !error && (
         <div className="nm-list">
-          {notifs.map((n) => {
-            const id     = getId(n);
-            if (!id) return null;
+          {displayed.length === 0 ? (
+            <div className="nm-empty">
+              <div className="nm-empty-icon">🔔</div>
+              <h3>Aucune notification</h3>
+              <p>Vous serez notifié(e) dès qu'il y aura du nouveau.</p>
+            </div>
+          ) : (
+            displayed.map((notif) => {
+              const isRead = notif.statut === 'READ';
+              const type   = getType(notif.titre);
+              const meta   = TYPE_META[type];
 
-            const statut   = getStatut(n);
-            const isUnread = statut === 'UNREAD';
-            const typeKey  = getType(n).toLowerCase();
-            const action   = actionMap[id] || null;
+              return (
+                <div
+                  key={notif.notification_id}
+                  className={`nm-item ${isRead ? 'read' : 'unread'}`}
+                  onClick={() => !isRead && markAsRead(notif.notification_id)}
+                >
+                  {/* Icon */}
+                  <div className="nm-icon" style={{ background: meta.iconBg }}>
+                    {meta.icon}
+                  </div>
 
-            return (
-              <div
-                key={id}
-                className={`nm-item ${isUnread ? 'nm-item--unread' : ''} nm-item--${typeKey}`}
-              >
-                {isUnread && <div className="nm-unread-dot" />}
+                  {/* Content */}
+                  <div className="nm-content">
+                    <div className="nm-content-header">
+                      <h3 className="nm-title">{notif.titre || '(Sans titre)'}</h3>
+                      <span
+                        className="nm-type-badge"
+                        style={{ background: meta.bg, color: meta.color }}
+                      >
+                        {meta.label}
+                      </span>
+                    </div>
 
-                <div className={`nm-item-icon nm-item-icon--${typeKey}`}>
-                  <NotifIcon type={typeKey} />
-                </div>
+                    {notif.description && (
+                      <p className="nm-desc">{notif.description}</p>
+                    )}
 
-                <div className="nm-item-body">
-                  <p className="nm-item-message">{getMessage(n)}</p>
-                  <span className="nm-item-date">{formatDate(getDate(n))}</span>
-                </div>
+                    <div className="nm-meta">
+                      <span className="nm-time">🕐 {timeAgo(notif.date_generation)}</span>
+                      {notif.date_generation && (
+                        <span className="nm-date">
+                          {new Date(notif.date_generation).toLocaleString('fr-FR')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                <div className="nm-item-actions">
-                  {isUnread && (
+                  {/* Actions */}
+                  <div className="nm-item-actions">
+                    {!isRead && (
+                      <button
+                        className="nm-btn-read"
+                        title="Marquer comme lu"
+                        onClick={(e) => { e.stopPropagation(); markAsRead(notif.notification_id); }}
+                      >✓</button>
+                    )}
                     <button
-                      className="nm-action-btn nm-action-btn--read"
-                      onClick={() => markAsRead(id)}
-                      disabled={!!action}
-                      title="Marquer comme lu"
-                    >
-                      <CheckCheck size={14} />
-                    </button>
-                  )}
-                  <button
-                    className="nm-action-btn nm-action-btn--delete"
-                    onClick={() => deleteNotif(id)}
-                    disabled={!!action}
-                    title="Supprimer"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                      className="nm-btn-del"
+                      title="Supprimer"
+                      onClick={(e) => deleteNotification(notif.notification_id, e)}
+                    >✕</button>
+                  </div>
+
+                  {/* Unread dot */}
+                  {!isRead && <div className="nm-dot" />}
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       )}
     </div>
