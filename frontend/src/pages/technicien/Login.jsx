@@ -1,93 +1,222 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  Box,
-  Paper,
-  TextField,
-  Typography,
-  Button,
-  Stack,
-  IconButton,
-  InputAdornment,
-  CircularProgress,
-  Link,
-  Fade
+  Box, Paper, TextField, Typography, Button, Stack, IconButton,
+  InputAdornment, CircularProgress, Link, Fade, Alert, FormControlLabel,
+  Checkbox, Snackbar
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import logo from "../../assets/BioScan2.jpg";
-
+import { loginTechnicien } from "../../services/Technicien/authService";
+import { useNavigate } from "react-router-dom";
 export default function LoginBioScan() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleLogin = async () => {
-    setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setLoading(false);
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    rememberMe: false
+  });
+
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success"
+  });
+
+  const COLORS = {
+    primaryDark: "#163554",
+    primary: "#0f9acf",
+    surface: "#ffffff",
+    textPrimary: "#163554",
+    textSecondary: "#64748b",
+    border: "#0f9acf33",
+    shadow: "#0f9acf22"
   };
+
+  // Charger username sauvegardé
+  useEffect(() => {
+    const savedData = localStorage.getItem("bioScanRemembered");
+    if (savedData) {
+      const { username, rememberMe } = JSON.parse(savedData);
+      setFormData(prev => ({ ...prev, username, rememberMe }));
+    }
+  }, []);
+
+  // Si déjà connecté → redirection
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (token && role === "technicien") {
+      navigate("/technicien");
+    }
+  }, [navigate]);
+
+  // Validation
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.username.trim()) {
+      newErrors.username = "Nom d'utilisateur requis";
+    } else if (formData.username.length < 3) {
+      newErrors.username = "Minimum 3 caractères";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Mot de passe requis";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Minimum 6 caractères";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setErrors({});
+
+    try {
+      const data = await loginTechnicien(
+        formData.username,
+        formData.password
+      );
+
+      // Vérifier rôle
+      if (data.role !== "technicien") {
+        throw new Error("Accès refusé : réservé aux techniciens");
+      }
+
+      // Remember me
+      if (formData.rememberMe) {
+        localStorage.setItem(
+          "bioScanRemembered",
+          JSON.stringify({
+            username: formData.username,
+            rememberMe: true
+          })
+        );
+      }
+
+      showSnackbar("Connexion réussie", "success");
+
+      setTimeout(() => {
+        navigate("/technicien");
+      }, 800);
+
+    } catch (err) {
+      const message = err.message || "Erreur de connexion";
+      setErrors({ general: message });
+      showSnackbar(message, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const showSnackbar = (message, severity) => {
+    setSnackbar({
+      open: true,
+      message,
+      severity
+    });
+  };
+
+  const handleClearRemembered = () => {
+    localStorage.removeItem("bioScanRemembered");
+    setFormData({
+      username: "",
+      password: "",
+      rememberMe: false
+    });
+  };
+
+  const isFormValid =
+    formData.username &&
+    formData.password;
 
   return (
     <Box
       sx={{
         minHeight: "100vh",
+        background: "linear-gradient(135deg, #e6f0fb, #f0faff)",
         display: "flex",
-        alignItems: "center",
         justifyContent: "center",
-        background:
-          "radial-gradient(circle at 20% 20%, #1e88e5 0%, #15314d 40%, #0f172a 100%)",
+        alignItems: "center",
+        p: 3,
         position: "relative",
         overflow: "hidden"
       }}
     >
-      {/* Glow background effect */}
+      {/* ECG animation */}
       <Box
         sx={{
           position: "absolute",
-          width: 500,
-          height: 500,
-          background: "rgba(0,170,186,0.2)",
-          filter: "blur(120px)",
-          borderRadius: "50%",
-          top: -100,
-          right: -100
+          width: "100%",
+          height: "100%",
+          opacity: 0.15,
+          zIndex: 0
         }}
-      />
+      >
+        <svg
+          width="200%"
+          height="200"
+          viewBox="0 0 1200 200"
+          style={{
+            animation: "ecgMove 8s linear infinite"
+          }}
+        >
+          <path
+            d="M0 100 L80 100 L100 60 L120 140 L140 100 L300 100 L320 70 L340 130 L360 100 L520 100 L540 60 L560 140 L580 100 L1200 100"
+            fill="none"
+            stroke="#0f9acf"
+            strokeWidth="2"
+          />
+        </svg>
+
+        <style>
+          {`
+          @keyframes ecgMove {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          `}
+        </style>
+      </Box>
 
       <Fade in timeout={800}>
         <Paper
-          elevation={0}
+          component="form"
+          onSubmit={handleSubmit}
           sx={{
             width: "100%",
             maxWidth: 420,
             p: 5,
             borderRadius: "24px",
-            background: "rgba(255,255,255,0.08)",
-            backdropFilter: "blur(18px)",
-            border: "1px solid rgba(255,255,255,0.15)",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
-            color: "#fff"
+            background: COLORS.surface,
+            boxShadow: `0 16px 48px ${COLORS.shadow}`,
+            zIndex: 1
           }}
         >
-          {/* Logo */}
           <Stack alignItems="center" spacing={2} mb={4}>
             <Box
               sx={{
-                width: 90,
-                height: 90,
+                width: 100,
+                height: 100,
                 borderRadius: "20px",
-                overflow: "hidden",
-                boxShadow: "0 10px 30px rgba(0,170,186,0.4)",
-                transition: "0.3s",
-                "&:hover": {
-                  transform: "scale(1.05)"
-                }
+                overflow: "hidden"
               }}
             >
               <Box
                 component="img"
                 src={logo}
-                alt="BioScan Logo"
+                alt="BioScan"
                 sx={{
                   width: "100%",
                   height: "100%",
@@ -96,121 +225,141 @@ export default function LoginBioScan() {
               />
             </Box>
 
-            <Typography variant="h5" fontWeight={700}>
-              BioScan
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              sx={{ color: COLORS.primaryDark }}
+            >
+              BioScan Lab
             </Typography>
 
-            <Typography variant="body2" sx={{ opacity: 0.7 }}>
-              Analyse biomédicale intelligente
+            <Typography
+              variant="body2"
+              sx={{ color: COLORS.textSecondary }}
+            >
+              Espace Technicien
             </Typography>
           </Stack>
 
-          {/* Email */}
-          <TextField
-            fullWidth
-            label="Adresse Email"
-            variant="outlined"
-            margin="normal"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            sx={{
-              input: { color: "#fff" },
-              label: { color: "rgba(255,255,255,0.7)" },
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "12px",
-                "& fieldset": {
-                  borderColor: "rgba(255,255,255,0.3)"
-                },
-                "&:hover fieldset": {
-                  borderColor: "#00abab"
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: "#1e88e5"
-                }
-              }
-            }}
-          />
+          {errors.general && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {errors.general}
+            </Alert>
+          )}
 
-          {/* Password */}
-          <TextField
-            fullWidth
-            label="Mot de passe"
-            type={showPassword ? "text" : "password"}
-            margin="normal"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            sx={{
-              input: { color: "#fff" },
-              label: { color: "rgba(255,255,255,0.7)" },
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "12px",
-                "& fieldset": {
-                  borderColor: "rgba(255,255,255,0.3)"
-                },
-                "&:hover fieldset": {
-                  borderColor: "#00abab"
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: "#1e88e5"
-                }
+          <Stack spacing={3}>
+            <TextField
+              label="Nom d'utilisateur"
+              fullWidth
+              value={formData.username}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  username: e.target.value
+                })
               }
-            }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowPassword(!showPassword)}
-                    sx={{ color: "rgba(255,255,255,0.7)" }}
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              )
-            }}
-          />
+              error={!!errors.username}
+              helperText={errors.username}
+              sx={inputStyle(COLORS)}
+            />
 
-          {/* Forgot */}
-          <Stack alignItems="flex-end" mt={1}>
-            <Link
-              href="#"
-              underline="hover"
+            <TextField
+              label="Mot de passe"
+              fullWidth
+              type={showPassword ? "text" : "password"}
+              value={formData.password}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  password: e.target.value
+                })
+              }
+              error={!!errors.password}
+              helperText={errors.password}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() =>
+                        setShowPassword(!showPassword)
+                      }
+                    >
+                      {showPassword ? (
+                        <VisibilityOff />
+                      ) : (
+                        <Visibility />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                )
+              }}
+              sx={inputStyle(COLORS)}
+            />
+
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={formData.rememberMe}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      rememberMe: e.target.checked
+                    })
+                  }
+                />
+              }
+              label="Rester connecté"
+            />
+
+            <Button
+              type="submit"
+              fullWidth
+              disabled={loading || !isFormValid}
               sx={{
-                fontSize: "0.8rem",
-                color: "#00abab"
+                height: 56,
+                borderRadius: "20px",
+                background: `linear-gradient(135deg, ${COLORS.primary}, ${COLORS.primaryDark})`,
+                color: "white"
               }}
             >
-              Mot de passe oublié ?
-            </Link>
-          </Stack>
+              {loading ? (
+                <CircularProgress size={22} />
+              ) : (
+                "Se connecter"
+              )}
+            </Button>
 
-          {/* Button */}
-          <Button
-            fullWidth
-            size="large"
-            onClick={handleLogin}
-            disabled={loading}
-            sx={{
-              mt: 4,
-              height: 50,
-              borderRadius: "14px",
-              fontWeight: 600,
-              textTransform: "none",
-              background:
-                "linear-gradient(90deg, #00abab 0%, #1e88e5 100%)",
-              boxShadow: "0 10px 30px rgba(30,136,229,0.4)",
-              "&:hover": {
-                transform: "translateY(-3px)"
-              }
-            }}
-          >
-            {loading ? (
-              <CircularProgress size={22} sx={{ color: "#fff" }} />
-            ) : (
-              "Se connecter"
-            )}
-          </Button>
+            <Button
+              onClick={handleClearRemembered}
+              variant="text"
+            >
+              Effacer données
+            </Button>
+          </Stack>
         </Paper>
       </Fade>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() =>
+          setSnackbar({
+            ...snackbar,
+            open: false
+          })
+        }
+      >
+        <Alert severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
+
+const inputStyle = (COLORS) => ({
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "16px",
+    border: `1px solid ${COLORS.border}`
+  }
+});

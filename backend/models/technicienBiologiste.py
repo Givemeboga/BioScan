@@ -26,3 +26,8 @@ class TechnicienBiologiste(Base):
         back_populates="technicien",
         uselist=False
     )
+    bilans = relationship(
+        "BilanBiologique",
+        back_populates="technicien",
+        foreign_keys="BilanBiologique.technicien_id"
+    )

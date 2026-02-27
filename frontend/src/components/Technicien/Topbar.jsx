@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState, useMemo } from "react";
+import React, { useRef, useCallback, useState, useMemo, useEffect } from "react";
 import PropTypes from "prop-types";
 import {
   Avatar,
@@ -12,6 +12,8 @@ import {
   IconButton,
   Divider,
   Box,
+  Skeleton,
+  Typography,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import NotificationsIcon from "@mui/icons-material/Notifications";
@@ -20,11 +22,11 @@ import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
+import { getCurrentTechnicien, isAuthenticated ,getProfilTechnicien} from "../../services/Technicien/authService"; // Ajuste le chemin
 
 export default function Topbar({
   isSidebarOpen = true,
   onToggleSidebar = () => {},
-  username = "tech.local",
   notifications = null,
   notificationsCount = undefined,
   onNotificationsOpen = () => {},
@@ -38,6 +40,42 @@ export default function Topbar({
   const fileInputRef = useRef(null);
   const [notifAnchor, setNotifAnchor] = useState(null);
   const [profileAnchor, setProfileAnchor] = useState(null);
+  
+  // 🚀 État technicien connecté depuis token
+  const [currentTechnicien, setCurrentTechnicien] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
+
+  // Récupère technicien au montage + écoute changements token
+useEffect(() => {
+  const fetchProfile = async () => {
+    if (!isAuthenticated()) {
+      setLoadingUser(false);
+      return;
+    }
+
+    try {
+      const data = await getProfilTechnicien();
+      setCurrentTechnicien(data);
+    } catch (e) {
+      console.error("Erreur profil:", e);
+    } finally {
+      setLoadingUser(false);
+    }
+  };
+
+  fetchProfile();
+}, []);
+
+const displayUsername = useMemo(() => {
+  return currentTechnicien?.nom_utilisateur ||
+         currentTechnicien?.username ||
+         currentTechnicien?.fullName ||
+         "tech.local";
+}, [currentTechnicien]);
+
+  const displayRole = useMemo(() => {
+    return currentTechnicien?.role || "Technicien";
+  }, [currentTechnicien]);
 
   const defaultNotifs = useMemo(
     () => [
@@ -196,7 +234,7 @@ export default function Topbar({
           {themeMode === "dark" ? <Brightness7Icon style={{ color: "white" }} /> : <Brightness4Icon style={{ color: "white" }} />}
         </IconButton>
 
-        {/* Profile */}
+        {/* Profile 🚀 AVEC TECHNICIEN REEL */}
         <div
           className="technicien-layout__topbar-user"
           title="Profil technicien"
@@ -207,12 +245,28 @@ export default function Topbar({
           aria-haspopup="true"
           aria-controls={profileAnchor ? "technicien-topbar-profile" : undefined}
         >
-          <Avatar className="technicien-layout__topbar-user-avatar" alt={username}>
-            {username ? username.charAt(0).toUpperCase() : "T"}
+          {loadingUser ? (
+            <Skeleton variant="circular" width={40} height={40} sx={{ mx: 1 }} />
+          ) : (
+            <Avatar
+            className="technicien-layout__topbar-user-avatar"
+            alt={displayUsername}
+            src={currentTechnicien?.photo_url || currentTechnicien?.photo_url || ""}
+          >
+            {!currentTechnicien?.photo_url &&
+            !currentTechnicien?.photo_url &&
+            (displayUsername ? displayUsername.charAt(0).toUpperCase() : "T")}
           </Avatar>
+          )}
           <Box className="technicien-layout__topbar-user-info">
-            <Box className="technicien-layout__topbar-user-name">{username}</Box>
-            <Box className="technicien-layout__topbar-user-role">Technicien</Box>
+            {loadingUser ? (
+              <Skeleton width={80} height={20} />
+            ) : (
+              <>
+                <Box className="technicien-layout__topbar-user-name">{displayUsername}</Box>
+                <Box className="technicien-layout__topbar-user-role">{displayRole}</Box>
+              </>
+            )}
           </Box>
         </div>
 
@@ -244,7 +298,6 @@ export default function Topbar({
 Topbar.propTypes = {
   isSidebarOpen: PropTypes.bool,
   onToggleSidebar: PropTypes.func,
-  username: PropTypes.string,
   notifications: PropTypes.array,
   notificationsCount: PropTypes.number,
   onNotificationsOpen: PropTypes.func,

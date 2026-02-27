@@ -1,17 +1,98 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query,HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import List
-
 from database import get_db
 from schemas.bilan import BilanBiologiqueList
-
+from schemas.bilan import BilanUpdate
 router = APIRouter(
     prefix="/bilans-biologiques",
     tags=["bilans-biologiques"]
 )
 
 
+
+@router.put("/{bilan_id}", response_model=BilanBiologiqueList)
+def update_bilan(
+    bilan_id: int,
+    data: BilanUpdate,
+    db: Session = Depends(get_db)
+):
+    bilan = db.query(BilanUpdate).filter(BilanUpdate.bilan_id == bilan_id).first()
+
+    if not bilan:
+        raise HTTPException(status_code=404, detail="Bilan non trouvé")
+
+    # update seulement champs envoyés
+    for key, value in data.dict(exclude_unset=True).items():
+        setattr(bilan, key, value)
+
+    db.commit()
+    db.refresh(bilan)
+
+    return bilan
+@router.delete("/{bilan_id}")
+def delete_bilan(bilan_id: int, db: Session = Depends(get_db)):
+
+    # Vérifier existence
+    check_sql = text("""
+        SELECT bilan_id 
+        FROM bilan_biologique 
+        WHERE bilan_id = :bilan_id
+    """)
+
+    result = db.execute(check_sql, {"bilan_id": bilan_id}).first()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Bilan non trouvé")
+
+    # Suppression
+    delete_sql = text("""
+        DELETE FROM bilan_biologique
+        WHERE bilan_id = :bilan_id
+    """)
+
+    db.execute(delete_sql, {"bilan_id": bilan_id})
+    db.commit()
+
+    return {"message": "Bilan supprimé avec succès"}
+@router.get("/{bilan_id}", response_model=BilanBiologiqueList)
+def get_bilan_detail(bilan_id: int, db: Session = Depends(get_db)):
+
+    sql = text("""
+        SELECT 
+            bb.bilan_id,
+            bb.type,
+            bb.statut,
+            bb.date_generation,
+            bb.nom_fichier,
+            bb.patient_id,
+            bb.technicien_id,
+            COALESCE(u.nom_utilisateur, 'Aucun patient associé') AS patient_nom_complet,
+            CASE 
+                WHEN u.date_naissance IS NOT NULL 
+                THEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_naissance))::integer 
+                ELSE NULL 
+            END AS age
+        FROM bilan_biologique bb
+        LEFT JOIN patient p     ON bb.patient_id = p.patient_id
+        LEFT JOIN utilisateur u ON p.utilisateur_id = u.utilisateur_id
+        WHERE bb.bilan_id = :bilan_id
+    """)
+
+    result = db.execute(sql, {"bilan_id": bilan_id}).mappings().first()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Bilan non trouvé")
+
+    row = dict(result)
+
+    row["patient_nom_complet"] = row.get("patient_nom_complet") or "—"
+    row["type"] = row.get("type") or "—"
+    row["statut"] = row.get("statut") or "BROUILLON"
+    row["age"] = int(row["age"]) if row.get("age") else None
+
+    return BilanBiologiqueList(**row)
 @router.get("/", response_model=List[BilanBiologiqueList])
 def get_bilans(
         db: Session = Depends(get_db),

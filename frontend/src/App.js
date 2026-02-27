@@ -18,12 +18,16 @@ import TwoFactorSetup from "./components/Auth/TwoFactorSetup";
 import TechnicienDashboard from "./pages/technicien/Dashboard";
 import UploadFiles from "./pages/technicien/UploadFiles";
 import LoginBioScan from "./pages/technicien/Login"; 
+import GestionFichiers from "./pages/technicien/FilesList";
+import BilanDetails from "./components/Technicien/FilesDetailsModal";
+import ProfilTechnicien from "./pages/technicien/Profil";
 
 // Pages médecin
 import MedecinDashboard from "./components/Médecin/BaseDashboardMedecin";
 import TableauDeBord from "./pages/MedecinBiologiste/TableauDeBord";
 import BilanBiologique from "./pages/MedecinBiologiste/BilanBiologique";
 import RapportAnomalie from "./pages/MedecinBiologiste/RapportAnomalie";
+import ProtectedTechnicienRoute from "./routes/ProtectedTechnicienRoute";
 
 function App() {
   return (
@@ -48,10 +52,21 @@ function App() {
         </Route>
 
         {/* === Routes technicien (layout parent) : garder UNE seule déclaration === */}
-        <Route path="/technicien" element={<TechnicienLayout />}>
+         <Route
+          path="/technicien"
+          element={
+            <ProtectedTechnicienRoute>
+              <TechnicienLayout />
+            </ProtectedTechnicienRoute>
+          }
+        >
           <Route index element={<TechnicienDashboard />} />
           <Route path="tableau" element={<TechnicienDashboard />} />
           <Route path="upload" element={<UploadFiles />} />
+          <Route path="files" element={<GestionFichiers/>}/>
+          <Route path="/technicien/bilans/:bilanId" element={<BilanDetails />} />
+          <Route path="/technicien/profil" element={<ProfilTechnicien />} />
+
         </Route>
 
         {/* Fallbacks */}

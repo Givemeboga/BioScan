@@ -23,3 +23,8 @@ class BilanBiologiqueList(BilanBiologiqueOut):
     age: Optional[int] = None
 
     model_config = {"from_attributes": True}
+
+class BilanUpdate(BaseModel):
+        type: Optional[str] = None
+        statut: Optional[str] = None
+        nom_fichier: Optional[str] = None
