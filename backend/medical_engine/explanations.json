@@ -1,0 +1,34 @@
+{
+  "hemoglobin_low": {
+    "doctor_text": "Suspicion d'anémie. À corréler avec ferritine et VGM.",
+    "patient_text": "Votre taux d’hémoglobine est inférieur à la normale. Cela peut indiquer une anémie, ce qui signifie que votre sang transporte moins bien l’oxygène."
+  },
+  "hemoglobin_high": {
+    "doctor_text": "Polyglobulie possible. Vérifier hydratation et contexte clinique.",
+    "patient_text": "Votre taux d’hémoglobine est supérieur à la normale. Cela peut être lié à une déshydratation ou à d’autres causes à évaluer par votre médecin."
+  },
+  "glucose_fasting_high": {
+    "doctor_text": "Hyperglycémie à jeun. Suspicion de diabète à confirmer.",
+    "patient_text": "Votre taux de sucre dans le sang est élevé. Cela peut indiquer un risque de diabète. Un suivi médical est recommandé."
+  },
+  "crp_high": {
+    "doctor_text": "Syndrome inflammatoire biologique.",
+    "patient_text": "Votre CRP est élevée, ce qui peut indiquer une inflammation ou une infection dans votre organisme."
+  },
+  "creatinine_high": {
+    "doctor_text": "Altération possible de la fonction rénale.",
+    "patient_text": "Votre taux de créatinine est élevé. Cela peut indiquer que vos reins fonctionnent moins efficacement."
+  },
+  "ldl_high": {
+    "doctor_text": "Hypercholestérolémie LDL.",
+    "patient_text": "Votre taux de mauvais cholestérol (LDL) est élevé, ce qui peut augmenter le risque cardiovasculaire."
+  },
+  "tsh_high": {
+    "doctor_text": "Suspicion d'hypothyroïdie.",
+    "patient_text": "Votre TSH est élevée. Cela peut indiquer un fonctionnement ralenti de la thyroïde."
+  },
+  "tsh_low": {
+    "doctor_text": "Suspicion d'hyperthyroïdie.",
+    "patient_text": "Votre TSH est basse. Cela peut indiquer un fonctionnement excessif de la thyroïde."
+  }
+}

@@ -44,7 +44,7 @@ INSERT INTO role (nom, description) VALUES
 ('Technicien biologiste', 'Responsable analyses biologiques'),
 ('Medecin', 'Médecin consultant');
 
-ALTER TABLE utilisateur ADD COLUMN photo_url VARCHAR(500);
+
 
 /* =========================
    SPECIALISATIONS UTILISATEUR

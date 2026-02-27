@@ -4,7 +4,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import Base
 import enum
-
+from models.rapport_anomalie import RapportAnomalie
 # Enum compatible avec votre schéma PostgreSQL
 class StatutDocument(str, enum.Enum):
     BROUILLON = "BROUILLON"
@@ -52,6 +52,7 @@ class BilanBiologique(Base):
         index=True
     )
 
+
     #medecin_id = Column(
     #     BigInteger,
     #     ForeignKey("medecin_biologiste.medecin_id", ondelete="SET NULL"),
@@ -66,8 +67,11 @@ class BilanBiologique(Base):
         foreign_keys=[technicien_id]
     )
     #  medecin = relationship("MedecinBiologiste", back_populates="bilans")
-
-    # Métadonnées supplémentaires
+    rapports_anomalie = relationship(
+        "RapportAnomalie",
+        back_populates="bilan",
+        cascade="all, delete-orphan"
+    )    # Métadonnées supplémentaires
     date_mise_a_jour = Column(
         TIMESTAMP,
         server_default=func.now(),

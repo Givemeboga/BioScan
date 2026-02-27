@@ -106,8 +106,6 @@ def login_technicien(data: LoginSchema, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "role": "technicien"
     }
-
-
 # =========================
 # ADD TECHNICIEN
 # =========================
