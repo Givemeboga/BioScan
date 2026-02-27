@@ -195,8 +195,8 @@ async def create_user(
         # Insert user
         insert_query = """
             INSERT INTO bioscan.utilisateur 
-            (nom_utilisateur, email, telephone, statut, role_id, mot_de_passe, date_creation)
-            VALUES (:username, :email, :telephone, :status, :role_id, :password, :date_creation)
+            (nom_utilisateur, email, telephone, statut, role_id, mot_de_passe)
+            VALUES (:username, :email, :telephone, :status, :role_id, :password)
             RETURNING utilisateur_id
         """
         
@@ -207,7 +207,6 @@ async def create_user(
             "status": status_val,
             "role_id": role_id,
             "password": password_hash,
-            "date_creation": datetime.now()
         })
         db.commit()
         user_id = result.scalar()
