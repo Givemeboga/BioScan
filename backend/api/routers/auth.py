@@ -35,8 +35,8 @@ def login(user: LoginRequest, db: Session = Depends(get_db)):
                 u.mot_de_passe,
                 u.statut::text          AS statut,
                 COALESCE(r.nom, 'UNKNOWN') AS role_name
-            FROM utilisateur u
-            LEFT JOIN role r ON r.role_id = u.role_id
+            FROM bioscan.utilisateur u
+            LEFT JOIN bioscan.role r ON r.role_id = u.role_id
             WHERE LOWER(u.email) = LOWER(:email)
         """), {"email": user.email.strip()}).mappings().first()
 
@@ -48,15 +48,26 @@ def login(user: LoginRequest, db: Session = Depends(get_db)):
 
         # ── Vérifier mot de passe ─────────────────────────────
         from passlib.context import CryptContext
-        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+        import hashlib
+        
+        pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
+        
         if not row["mot_de_passe"]:
             raise HTTPException(status_code=500, detail="Aucun mot de passe enregistré.")
 
         try:
-            ok = pwd_context.verify(user.password.strip()[:72], row["mot_de_passe"])
-        except Exception as ve:
-            raise HTTPException(status_code=500, detail=f"Erreur vérification : {ve}")
+            # Try passlib verification first (PBKDF2, bcrypt)
+            ok = pwd_context.verify(user.password.strip(), row["mot_de_passe"])
+        except:
+            # Fall back to plain SHA256 for legacy test users
+            try:
+                provided_hash = hashlib.sha256(user.password.strip().encode()).hexdigest()
+                ok = provided_hash == row["mot_de_passe"]
+            except:
+                ok = False
+        
+        if not ok and not ok:  # Both checks failed
+            raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
 
         if not ok:
             raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")

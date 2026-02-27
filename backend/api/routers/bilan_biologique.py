@@ -34,9 +34,9 @@ BASE_SELECT = """
             THEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_naissance))::integer
             ELSE NULL
         END AS age
-    FROM bilan_biologique bb
-    LEFT JOIN patient     p ON bb.patient_id    = p.patient_id
-    LEFT JOIN utilisateur u ON p.utilisateur_id = u.utilisateur_id
+    FROM bioscan.bilan_biologique bb
+    LEFT JOIN bioscan.patient     p ON bb.patient_id    = p.patient_id
+    LEFT JOIN bioscan.utilisateur u ON p.utilisateur_id = u.utilisateur_id
 """
 
 ORDER_CLAUSE = " ORDER BY bb.date_generation DESC NULLS LAST LIMIT :limit OFFSET :offset"
@@ -70,7 +70,7 @@ def execute_bilans(db: Session, sql: str, params: dict) -> List[BilanBiologiqueL
 def get_patient_id(db: Session, utilisateur_id: int) -> int:
     """Récupère patient_id depuis utilisateur_id ou lève 404"""
     row = db.execute(
-        text("SELECT patient_id FROM patient WHERE utilisateur_id = :uid"),
+        text("SELECT patient_id FROM bioscan.patient WHERE utilisateur_id = :uid"),
         {"uid": utilisateur_id}
     ).mappings().first()
 
@@ -193,7 +193,7 @@ def get_dashboard_stats(
                         WHERE EXTRACT(YEAR FROM date_generation) = :annee
                           AND EXTRACT(MONTH FROM date_generation) = :mois
                     ) AS ce_mois
-                FROM bilan_biologique
+                FROM bioscan.bilan_biologique
                 WHERE patient_id = :patient_id
             """),
             {

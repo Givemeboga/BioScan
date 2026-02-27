@@ -9,7 +9,7 @@ from typing import Optional
 import logging
 
 logger      = logging.getLogger(__name__)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 
 router = APIRouter(tags=["Profil1"])
 
@@ -41,7 +41,7 @@ def register_patient(user: UserCreate, db: Session = Depends(get_db)):
 
     # Email déjà utilisé ?
     existing = db.execute(
-        text("SELECT utilisateur_id FROM utilisateur WHERE LOWER(email) = LOWER(:email)"),
+        text("SELECT utilisateur_id FROM bioscan.utilisateur WHERE LOWER(email) = LOWER(:email)"),
         {"email": user.email.strip()}
     ).mappings().first()
     if existing:
@@ -49,7 +49,7 @@ def register_patient(user: UserCreate, db: Session = Depends(get_db)):
 
     # Récupérer role_id Patient
     role = db.execute(
-        text("SELECT role_id FROM role WHERE LOWER(nom) = 'patient'")
+        text("SELECT role_id FROM bioscan.role WHERE LOWER(nom) = 'patient'")
     ).mappings().first()
     if not role:
         raise HTTPException(status_code=500, detail="Rôle 'Patient' introuvable.")
@@ -58,7 +58,7 @@ def register_patient(user: UserCreate, db: Session = Depends(get_db)):
 
     try:
         result = db.execute(text("""
-            INSERT INTO utilisateur
+            INSERT INTO bioscan.utilisateur
                 (nom_utilisateur, email, mot_de_passe, telephone, adresse,
                  date_naissance, statut, role_id, date_generation, date_mise_a_jour)
             VALUES
@@ -77,7 +77,7 @@ def register_patient(user: UserCreate, db: Session = Depends(get_db)):
         new_user = result.mappings().first()
 
         db.execute(
-            text("INSERT INTO patient (utilisateur_id) VALUES (:uid)"),
+            text("INSERT INTO bioscan.patient (utilisateur_id) VALUES (:uid)"),
             {"uid": new_user["utilisateur_id"]}
         )
         db.commit()
