@@ -2,7 +2,6 @@ from sqlalchemy import Column, BigInteger, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 
-
 class TechnicienBiologiste(Base):
     __tablename__ = "technicien_biologiste"
 

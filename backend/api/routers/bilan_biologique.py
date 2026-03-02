@@ -3,6 +3,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from typing import List
 import os
+from datetime import datetime
 from database import get_db
 from schemas.bilan import BilanBiologiqueList
 from parsers.parser_factory import ParserFactory
@@ -12,7 +13,6 @@ router = APIRouter(
     prefix="/bilans-biologiques",
     tags=["bilans-biologiques"]
 )
-
 
 @router.get("/", response_model=List[BilanBiologiqueList])
 def get_bilans(
@@ -120,6 +120,8 @@ def analyse_bilan_route(bilan_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Bilan introuvable")
 
     file_path = bilan["nom_fichier"]
+    print(f"[DEBUG] Path du fichier : {file_path}")
+    print(f"[DEBUG] Existe ? {os.path.exists(file_path)}")
 
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Fichier introuvable sur le serveur")
@@ -127,6 +129,21 @@ def analyse_bilan_route(bilan_id: int, db: Session = Depends(get_db)):
     # 2️⃣ Parser automatiquement selon extension
     parser = ParserFactory.get_parser(file_path)
     extracted_data = parser.parse(file_path)
+
+    all_anomalies = []
+
+    # 🔥 Gère cas liste (multi patients)
+    if isinstance(extracted_data, list):
+        for patient in extracted_data:
+            anomalies = analyze_bilan(patient)
+            all_anomalies.extend(anomalies)
+    else:
+        all_anomalies = analyze_bilan(extracted_data)
+
+    return {
+        "bilan_id": bilan_id,
+        "anomalies_detectees": all_anomalies
+    }
 
     # 3️⃣ Analyse IA
     anomalies = analyze_bilan(extracted_data)
@@ -140,14 +157,85 @@ from fastapi import UploadFile, File
 import shutil
 
 @router.post("/upload")
-async def upload_bilan(file: UploadFile = File(...)):
+async def upload_bilan(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    try:
+        # 1️⃣ Sauvegarde fichier
+        upload_folder = "uploads"
+        os.makedirs(upload_folder, exist_ok=True)
 
-    upload_folder = "uploads"
-    os.makedirs(upload_folder, exist_ok=True)
+        file_path = os.path.join(upload_folder, file.filename)
+        file_path = os.path.normpath(file_path)  # ✅ mieux que replace
 
-    file_path = os.path.join(upload_folder, file.filename)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        # 2️⃣ Insertion bilan
+        result = db.execute(
+            text("""
+                INSERT INTO bilan_biologique
+                (statut, type, nom_fichier, date_generation)
+                VALUES ('EN_COURS', 'IMPORT_AUTO', :file_path, :date)
+                RETURNING bilan_id
+            """),
+            {
+                "file_path": file_path,
+                "date": datetime.now()
+            }
+        )
 
-    return {"message": "Fichier uploadé", "file_path": file_path}
+        bilan_id = result.scalar()
+
+        # 3️⃣ Parser
+        parser = ParserFactory.get_parser(file_path)
+        extracted_data = parser.parse(file_path)
+
+        # 4️⃣ Analyse
+        all_anomalies = []
+
+        if isinstance(extracted_data, list):
+            for patient in extracted_data:
+                anomalies = analyze_bilan(patient)
+                all_anomalies.extend(anomalies)
+        else:
+            all_anomalies = analyze_bilan(extracted_data)
+
+        # 5️⃣ Sauvegarde anomalies
+        for anomaly in all_anomalies:
+            db.execute(
+                text("""
+                    INSERT INTO rapport_anomalie
+                    (version, statut, type_anomalie, date_generation, bilan_id)
+                    VALUES ('1.0', 'EN_COURS', :type_anomalie, :date, :bilan_id)
+                """),
+                {
+                    "type_anomalie": anomaly,
+                    "date": datetime.now(),
+                    "bilan_id": bilan_id
+                }
+            )
+
+        # 6️⃣ Mise à jour statut
+        db.execute(
+            text("""
+                UPDATE bilan_biologique
+                SET statut = 'VALIDE'
+                WHERE bilan_id = :id
+            """),
+            {"id": bilan_id}
+        )
+
+        db.commit()
+
+        return {
+            "message": "Bilan analysé avec succès",
+            "bilan_id": bilan_id,
+            "anomalies_detectees": all_anomalies
+        }
+
+    except Exception as e:
+        db.rollback()  # 🔥 très important
+        print("❌ ERREUR UPLOAD:", str(e))
+        raise HTTPException(status_code=500, detail="Erreur lors du traitement du bilan")

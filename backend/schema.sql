@@ -77,6 +77,7 @@ CREATE TABLE bilan_biologique (
     technicien_id BIGINT REFERENCES technicien_biologiste(technicien_id)
 );
 
+
 /* =========================
    RAPPORT MEDICAL
 ========================= */
