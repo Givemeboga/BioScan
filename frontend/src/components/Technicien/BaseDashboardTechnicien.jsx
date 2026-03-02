@@ -75,6 +75,10 @@ const TechnicienLayout = () => {
       setIsLoading(false);
     }
   }, []);
+  // Chargement automatique au montage du composant
+useEffect(() => {
+  loadData();
+}, [loadData]);
 
   const formatFileSize = (bytes) => {
     if (!bytes) return "N/A";

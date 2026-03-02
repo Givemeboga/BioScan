@@ -324,47 +324,80 @@ body {
 }
 
 /* Notification button */
+/* Bouton notification */
+/* Bouton notification */
 .technicien-layout__topbar-btn-notif {
-  position: relative;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 8px;
-  transition: background 160ms ease, transform 120ms ease;
+  position: relative !important;
+  color: white;
+  transition: transform 0.2s ease;
 }
 
 .technicien-layout__topbar-btn-notif:hover {
-  background: rgba(255,255,255,0.08);
-  transform: translateY(-1px);
+  transform: scale(1.1);
 }
 
+/* Badge notification */
 .technicien-layout__notification-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  background: #ef4444;
+  top: -5px;
+  right: -5px;
+
+  background: linear-gradient(135deg, #ff4d4d, #d32f2f);
   color: white;
-  border-radius: 50%;
-  min-width: 18px;
-  height: 18px;
-  font-size: 0.68rem;
-  font-weight: 700;
+
+  border-radius: 20px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+
+  font-size: 11px;
+  font-weight: bold;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 4px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
-@keyframes notif-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(239,68,68,0.6); }
-  100% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+
+  border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+
+  z-index: 20;
+
+  /* Animation douce */
+  animation: notifPulse 2s infinite;
 }
 
-.technicien-layout__notification-badge {
-  animation: notif-pulse 1.6s infinite;
+/* Badge pour beaucoup de notifs */
+.technicien-layout__notification-badge.large {
+  min-width: 24px;
+  font-size: 10px;
 }
 
+/* Animation pulse douce */
+@keyframes notifPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.6);
+  }
+  70% {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 8px rgba(244, 67, 54, 0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Petit point si 0 < notif < 1 (optionnel) */
+.technicien-layout__notification-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  background: #ff3b30;
+  border-radius: 50%;
+  border: 2px solid white;
+}
 /* Theme toggle */
 .technicien-layout__topbar-theme-toggle {
   color: white;

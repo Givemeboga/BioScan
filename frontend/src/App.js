@@ -21,6 +21,8 @@ import LoginBioScan from "./pages/technicien/Login";
 import GestionFichiers from "./pages/technicien/FilesList";
 import BilanDetails from "./components/Technicien/FilesDetailsModal";
 import ProfilTechnicien from "./pages/technicien/Profil";
+import NotificationsPage from "./pages/technicien/NotificationsPage";
+import SettingsPage from "./pages/technicien/SettingsPage";
 
 // Pages médecin
 import MedecinDashboard from "./components/Médecin/BaseDashboardMedecin";
@@ -53,21 +55,23 @@ function App() {
 
         {/* === Routes technicien (layout parent) : garder UNE seule déclaration === */}
          <Route
-          path="/technicien"
-          element={
-            <ProtectedTechnicienRoute>
-              <TechnicienLayout />
-            </ProtectedTechnicienRoute>
-          }
-        >
-          <Route index element={<TechnicienDashboard />} />
-          <Route path="tableau" element={<TechnicienDashboard />} />
-          <Route path="upload" element={<UploadFiles />} />
-          <Route path="files" element={<GestionFichiers/>}/>
-          <Route path="/technicien/bilans/:bilanId" element={<BilanDetails />} />
-          <Route path="/technicien/profil" element={<ProfilTechnicien />} />
+  path="/technicien"
+  element={
+    <ProtectedTechnicienRoute>
+      <TechnicienLayout />
+    </ProtectedTechnicienRoute>
+  }
+>
+  <Route index element={<TechnicienDashboard />} />
+  <Route path="tableau" element={<TechnicienDashboard />} />
+  <Route path="upload" element={<UploadFiles />} />
+  <Route path="files" element={<GestionFichiers />} />
+  <Route path="bilans/:bilanId" element={<BilanDetails />} />
+  <Route path="profil" element={<ProfilTechnicien />} />
+  <Route path="notifications" element={<NotificationsPage />} />
+  <Route path="settings" element={<SettingsPage />} />
 
-        </Route>
+</Route>
 
         {/* Fallbacks */}
         <Route path="/404" element={<div style={{ padding: 40, textAlign: "center" }}><h1>404</h1><p>Page non trouvée</p></div>} />

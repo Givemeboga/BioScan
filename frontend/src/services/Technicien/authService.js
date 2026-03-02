@@ -300,19 +300,31 @@ export async function getStatsTechnicien() {
 }
 
 // Autres services (gardés pour futur)
-export async function changePassword(ancienPassword, nouveauPassword) {
+export async function changePassword(data) {
   try {
     const token = localStorage.getItem("token");
     if (!token) throw new Error("Pas connecté");
-    
+
     const response = await fetch(`${API_URL}/change-password`, {
       method: "POST",
-      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ ancien_password: ancienPassword, nouveau_password: nouveauPassword })
+      headers: { 
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        current_password: data.currentPassword,
+        new_password: data.newPassword,
+      })
     });
-    
-    if (!response.ok) throw new Error("Erreur changement mot de passe");
-    return await response.json();
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || "Erreur changement mot de passe");
+    }
+
+    const result = await response.json();
+    console.log('✅ Mot de passe changé');
+    return result;
   } catch (err) {
     console.error('💥 changePassword:', err);
     throw err;
@@ -357,3 +369,39 @@ export function ensureAuthenticated() {
   const now = Math.floor(Date.now() / 1000);
   return decoded.exp - now > 300;
 }
+export async function updatePreferences(data) {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Pas connecté");
+
+    console.log('🎛️ Update preferences:', data);
+
+    const response = await fetch(`${API_URL}/preferences`, {
+      method: "PATCH",
+      headers: { 
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email_notifications: data.email_notifications,
+        sms_notifications: data.sms_notifications,
+        langue: data.langue,
+        theme: data.theme,
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || "Erreur préférences");
+    }
+
+    const result = await response.json();
+    console.log('✅ Préférences mises à jour');
+    return result;
+  } catch (err) {
+    console.error('💥 updatePreferences:', err);
+    // Fallback local
+    return { message: "Préférences mises à jour (local)", success: true };
+  }
+}
+

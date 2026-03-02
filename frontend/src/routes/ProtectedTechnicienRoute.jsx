@@ -1,17 +1,11 @@
 import { Navigate } from "react-router-dom";
+import { ensureAuthenticated } from "../services/Technicien/authService";
 
 export default function ProtectedTechnicienRoute({ children }) {
-  const token = localStorage.getItem("token");
-  const role = localStorage.getItem("role");
+  const isAuth = ensureAuthenticated();
 
-  // Pas connecté
-  if (!token) {
+  if (!isAuth) {
     return <Navigate to="/login-technicien" replace />;
-  }
-
-  // Pas technicien
-  if (role !== "technicien") {
-    return <Navigate to="/" replace />;
   }
 
   return children;

@@ -295,3 +295,53 @@ VALUES
 (1, 'Sang', 'BROUILLON', NOW(), 'bilan_sang_001.pdf', 1, 5),
 (2, 'Urine', 'EN_COURS', NOW(), 'bilan_urine_002.xlsx', 2, 5),
 (3, 'Cholestérol', 'VALIDE', NOW(), 'bilan_chol_003.pdf', 3, 5);
+
+INSERT INTO notifications (
+    titre,
+    description,
+    statut,
+    date_generation,
+    date_mise_a_jour,
+    utilisateur_id
+)
+VALUES
+(
+    'Analyse terminée',
+    'Le bilan sanguin du patient #1 est terminé.',
+    'UNREAD',
+    NOW(),
+    NOW(),
+    6
+),
+(
+    'Nouveau bilan',
+    'Un nouveau fichier a été uploadé.',
+    'UNREAD',
+    NOW(),
+    NOW(),
+    6
+),
+(
+    'Validation médecin',
+    'Le médecin a validé le rapport médical.',
+    'READ',
+    NOW(),
+    NOW(),
+    6
+),
+(
+    'Erreur fichier',
+    'Le fichier CSV contient des colonnes manquantes.',
+    'UNREAD',
+    NOW(),
+    NOW(),
+    6
+),
+(
+    'Rapport généré',
+    'Le rapport anomalie est disponible.',
+    'READ',
+    NOW(),
+    NOW(),
+    6
+);

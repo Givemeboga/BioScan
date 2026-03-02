@@ -5,6 +5,8 @@ from fastapi.staticfiles import StaticFiles
 from api.routers.bilan_biologique import router as bilan_router
 from api.routers.profil import router as profil_router
 from api.routers.Technicien import router as technicien_router
+from api.routers.notification import router as notification_router
+
 # Base de données
 from database import engine, Base
 
@@ -37,6 +39,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(bilan_router, prefix="/api")
 app.include_router(profil_router, prefix="/api")
 app.include_router(technicien_router, prefix="/api")
+app.include_router(notification_router, prefix="/api")
 
 @app.get("/", tags=["Root"])
 def root():
