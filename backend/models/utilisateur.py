@@ -1,4 +1,4 @@
-from sqlalchemy import Column, BigInteger, String, Boolean, Date, Enum, TIMESTAMP
+from sqlalchemy import Column, BigInteger, String, Date, Enum, TIMESTAMP, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from database import Base
@@ -15,6 +15,19 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class StatutUser(str, enum.Enum):
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
+
+
+# =========================
+# MODELE ROLE
+# =========================
+class Role(Base):
+    __tablename__ = "role"
+
+    role_id = Column(BigInteger, primary_key=True, index=True)
+    nom = Column(String(50), nullable=False)
+    description = Column(String)
+
+    utilisateurs = relationship("Utilisateur", back_populates="role")
 
 
 # =========================
@@ -37,11 +50,17 @@ class Utilisateur(Base):
     telephone = Column(String(30))
     adresse = Column(String)
     date_naissance = Column(Date)
+    photo_url=Column(String)
 
     statut = Column(
         Enum(StatutUser, name="statut_user"),
+        nullable=False,
         default=StatutUser.ACTIVE
     )
+
+    # 🔹 AJOUT DU ROLE
+    role_id = Column(BigInteger, ForeignKey("role.role_id"))
+    role = relationship("Role", back_populates="utilisateurs")
 
     date_generation = Column(
         TIMESTAMP,
@@ -50,14 +69,16 @@ class Utilisateur(Base):
 
     date_mise_a_jour = Column(
         TIMESTAMP,
+        server_default=func.now(),
         onupdate=func.now()
     )
 
     # Relations 1-1
-    technicien = relationship("TechnicienBiologiste", back_populates="utilisateur", uselist=False)
-    #medecin = relationship("MedecinBiologiste", back_populates="utilisateur", uselist=False)
-    #patient = relationship("Patient", back_populates="utilisateur", uselist=False)
-    #administrateur = relationship("Administrateur", back_populates="utilisateur", uselist=False)
+    technicien = relationship(
+        "TechnicienBiologiste",
+        back_populates="utilisateur",
+        uselist=False
+    )
 
 
 # =========================

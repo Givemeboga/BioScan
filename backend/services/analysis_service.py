@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from models import BilanBiologique, RapportAnomalie
+from models.bilan_biologique import BilanBiologique
+from models.rapport_anomalie import RapportAnomalie
 from medical_engine.analyzer import analyze_bilan
 from datetime import datetime
 

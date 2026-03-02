@@ -11,81 +11,100 @@ import {
   TableCell,
   TableBody,
   Chip,
-  Stack,
+  Stack
 } from "@mui/material";
+
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import ReplayIcon from "@mui/icons-material/Replay";
 import DeleteIcon from "@mui/icons-material/Delete";
 import GetAppIcon from "@mui/icons-material/GetApp";
-import { getAllBilans, createBilan, updateBilan, deleteBilan } from "../../services/Technicien/mockApi";
-import UploadFiles from "./UploadFiles"; // ton composant d'upload existant
+
+import {
+  getAllBilans,
+  createBilan,
+  updateBilan,
+  deleteBilan
+} from "../../services/Technicien/bilanService";
+
+import UploadFiles from "../../components/Technicien/UploadArea";
+import FileDetailsModal from "../../components/Technicien/FilesDetailsModal";
 
 export default function FilesList() {
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState([]);        
+  const [selectedFile, setSelectedFile] = useState(null); 
+
+  // Charge les fichiers
+  const loadFiles = () => {
+    getAllBilans()
+      .then((res) => setFiles(res || []))
+      .catch((err) => console.error("Erreur lors du chargement des bilans:", err));
+  };
 
   useEffect(() => {
-    load();
-    const onChange = () => load();
+    loadFiles();
+
+    const onChange = () => loadFiles();
     window.addEventListener("bioscan_bilan_changed", onChange);
     window.addEventListener("storage", onChange);
+
     return () => {
       window.removeEventListener("bioscan_bilan_changed", onChange);
       window.removeEventListener("storage", onChange);
     };
-    // eslint-disable-next-line
   }, []);
 
-  function load() {
-    getAllBilans().then(setFiles);
-  }
-
   const handleUploadComplete = (file) => {
-    // file: { name, type, ... } — adapte selon ton UploadFiles
     createBilan({
       nom_fichier: file.name || file.filename,
-      type: file.type || (file.name && (file.name.endsWith(".csv") ? "CSV" : "XLSX")),
+      type: file.type || (file.name?.endsWith(".csv") ? "CSV" : "XLSX"),
       statut: "BROUILLON",
       technicien_id: 11
-    }).then(() => load());
+    }).then(loadFiles);
   };
 
   const handleRelaunch = (id) => {
-    updateBilan(id, { statut: "EN_COURS" }).then(() => {
-      // simulate completion
-      setTimeout(() => updateBilan(id, { statut: "VALIDE" }).then(load), 900);
-      load();
-    });
+    updateBilan(id, { statut: "EN_COURS" })
+      .then(() => setTimeout(() => updateBilan(id, { statut: "VALIDE" }).then(loadFiles), 900))
+      .catch((err) => console.error("Erreur relance:", err));
   };
 
   const handleDelete = (id) => {
     if (!window.confirm("Confirmer la suppression du fichier ?")) return;
-    deleteBilan(id).then(load);
+    deleteBilan(id).then(loadFiles).catch((err) => console.error("Erreur suppression:", err));
   };
 
   const handleExport = () => {
     if (!files.length) return;
-    const header = ["bilan_id", "nom_fichier", "type", "statut", "date_generation", "patient_id"];
-    const rows = files.map((f) => header.map((h) => `"${(f[h] || "").toString().replace(/"/g,'""')}"`).join(","));
-    const csv = [header.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+
+    const headers = ["bilan_id", "nom_fichier", "type", "statut", "date_generation", "patient_id"];
+    const rows = files.map((f) =>
+      headers.map((h) => `"${(f[h] ?? "").toString().replace(/"/g, '""')}"`).join(",")
+    );
+
+    const csvContent = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "bilan_biologique_export.csv";
+    a.download = "bilans_biologiques.csv";
     a.click();
     URL.revokeObjectURL(url);
   };
 
   return (
     <Box sx={{ p: 3 }}>
+      {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h5">Fichiers biologiques</Typography>
         <Stack direction="row" spacing={1}>
           <UploadFiles onUploadComplete={handleUploadComplete} />
-          <Button variant="outlined" startIcon={<GetAppIcon />} onClick={handleExport}>Exporter</Button>
+          <Button variant="outlined" startIcon={<GetAppIcon />} onClick={handleExport}>
+            Exporter
+          </Button>
         </Stack>
       </Box>
 
+      {/* Table */}
       <Paper sx={{ p: 2 }}>
         <Table size="small">
           <TableHead>
@@ -98,36 +117,78 @@ export default function FilesList() {
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
-
           <TableBody>
-            {files.map((f) => (
-              <TableRow key={f.bilan_id}>
-                <TableCell>{f.bilan_id}</TableCell>
-                <TableCell>{f.nom_fichier}</TableCell>
-                <TableCell><Chip label={f.type} size="small" /></TableCell>
-                <TableCell>
-                  <Chip
-                    label={f.statut}
-                    color={f.statut === "VALIDE" ? "success" : f.statut === "EN_COURS" ? "primary" : f.statut === "REJETE" ? "error" : "default"}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>{new Date(f.date_generation).toLocaleString()}</TableCell>
-                <TableCell>
-                  <IconButton title="Voir"><VisibilityIcon fontSize="small" /></IconButton>
-                  <IconButton title="Relancer" onClick={() => handleRelaunch(f.bilan_id)}><ReplayIcon fontSize="small" /></IconButton>
-                  <IconButton title="Supprimer" onClick={() => handleDelete(f.bilan_id)} color="error"><DeleteIcon fontSize="small" /></IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            {files.length === 0 && (
+            {files.length > 0 ? (
+              files.map((f) => (
+                <TableRow key={f.bilan_id}>
+                  <TableCell>{f.bilan_id}</TableCell>
+                  <TableCell>{f.nom_fichier || "—"}</TableCell>
+                  <TableCell>
+                    <Chip label={f.type || "—"} size="small" />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={f.statut || "BROUILLON"}
+                      color={
+                        f.statut === "VALIDE"
+                          ? "success"
+                          : f.statut === "EN_COURS"
+                          ? "primary"
+                          : f.statut === "REJETE"
+                          ? "error"
+                          : "default"
+                      }
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {f.date_generation ? new Date(f.date_generation).toLocaleString() : "—"}
+                  </TableCell>
+                  <TableCell>
+                    <Stack direction="row" spacing={1}>
+                      <IconButton title="Voir" onClick={() => setSelectedFile(f)}>
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton title="Relancer" onClick={() => handleRelaunch(f.bilan_id)}>
+                        <ReplayIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        title="Supprimer"
+                        color="error"
+                        onClick={() => handleDelete(f.bilan_id)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
               <TableRow>
-                <TableCell colSpan={6}><Typography variant="body2">Aucun fichier</Typography></TableCell>
+                <TableCell colSpan={6} align="center">
+                  Aucun fichier
+                </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </Paper>
+
+      {/* Modal détails */}
+      {selectedFile && (
+        <FileDetailsModal
+          file={selectedFile}
+          onClose={() => setSelectedFile(null)}
+          onUpdate={(updatedFile) => {
+            updateBilan(updatedFile.bilan_id, updatedFile)
+              .then(() => {
+                setSelectedFile(null);
+                loadFiles();
+              })
+              .catch((err) => console.error("Erreur mise à jour:", err));
+          }}
+        />
+      )}
     </Box>
   );
 }

@@ -2,7 +2,7 @@ from parsers.parser_factory import ParserFactory
 from services.analysis_service import process_bilan
 from sqlalchemy.orm import Session
 from datetime import datetime
-from models.bilan_models import BilanBiologique
+from models.bilan_biologique import BilanBiologique
 import os
 def upload_bilan(db: Session, file, patient_id: int):
 

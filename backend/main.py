@@ -1,10 +1,12 @@
-from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 # Routers
 from api.routers.bilan_biologique import router as bilan_router
 from api.routers.profil import router as profil_router
 from api.routers.Technicien import router as technicien_router
+from api.routers.notification import router as notification_router
+
 # Base de données
 from database import engine, Base
 
@@ -36,7 +38,8 @@ Base.metadata.create_all(bind=engine)
 # Inclusion des routers
 app.include_router(bilan_router, prefix="/api")
 app.include_router(profil_router, prefix="/api")
-app.include_router(technicien_router, prefix="/api")  # Toutes les routes /api/auth/...
+app.include_router(technicien_router, prefix="/api")
+app.include_router(notification_router, prefix="/api")
 
 @app.get("/", tags=["Root"])
 def root():
@@ -45,3 +48,6 @@ def root():
 @app.get("/health", tags=["Health"])
 def health_check():
     return {"status": "OK"}
+
+
+app.mount("/static", StaticFiles(directory="static"), name="static")

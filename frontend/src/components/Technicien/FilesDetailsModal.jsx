@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+
 import {
   Dialog,
   DialogTitle,
@@ -11,59 +12,52 @@ import {
   Box,
   Stack,
   Divider,
-  LinearProgress  // ✅ CORRECT : Material Component
+  LinearProgress
 } from "@mui/material";
-import { 
-  FilePresent, Schedule, CheckCircle, ErrorOutline, CloudUpload  // ✅ SEULEMENT Icons
+
+import {
+  FilePresent,
+  Schedule,
+  CheckCircle,
+  ErrorOutline,
+  CloudUpload
 } from "@mui/icons-material";
 
 export default function FileDetailsModal({
   file,
   onClose = () => {},
-  onUpdate = () => {},
+  onUpdate = () => {}
 }) {
   const [notes, setNotes] = useState("");
-
   useEffect(() => {
-    if (file) {
-      setNotes(file.notes || "");
-    }
+    if (file) setNotes(file.notes || "");
   }, [file]);
 
   if (!file) return null;
 
   /* ---------------- Status Styling ---------------- */
-  const getStatusConfig = (status) => {
-    const s = status?.toString().toUpperCase() || "";
-    
-    // ✅ Adapté aux statuts du dashboard
-    if (["TERMINE", "TERMINÉ"].includes(s)) 
+  const getStatusConfig = (statut) => {
+    const s = (statut || "").toUpperCase();
+    if (["VALIDE", "TERMINE", "TERMINÉ"].includes(s))
       return { color: "#2E7D32", bg: "#E8F5E9", icon: <CheckCircle /> };
-    if (["EN_COURS", "EN COURS"].includes(s)) 
+    if (["EN_COURS", "EN COURS"].includes(s))
       return { color: "#1565C0", bg: "#E3F2FD", icon: <Schedule /> };
-    if (["ERREUR"].includes(s)) 
+    if (["REJETE", "ERREUR"].includes(s))
       return { color: "#C62828", bg: "#FDECEA", icon: <ErrorOutline /> };
     if (["UPLOADÉ", "UPLOADED"].includes(s))
       return { color: "#1976D2", bg: "#E3F2FD", icon: <CloudUpload /> };
-      
     return { color: "#374151", bg: "#F3F4F6", icon: <FilePresent /> };
   };
 
-  const statusConfig = getStatusConfig(file.status);
+  const statusConfig = getStatusConfig(file.statut);
 
   return (
     <Dialog
       open={Boolean(file)}
       onClose={onClose}
       fullWidth
-      maxWidth="md" // ✅ Plus large
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          maxHeight: "90vh",
-          overflow: "hidden",
-        },
-      }}
+      maxWidth="md"
+      PaperProps={{ sx: { borderRadius: 3, maxHeight: "90vh", overflow: "hidden" } }}
     >
       {/* ================= Header ================= */}
       <DialogTitle
@@ -80,13 +74,7 @@ export default function FileDetailsModal({
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Box sx={{ 
-            bgcolor: "primary.50", 
-            p: 1.5, 
-            borderRadius: 2, 
-            display: "flex", 
-            alignItems: "center"
-          }}>
+          <Box sx={{ bgcolor: "primary.50", p: 1.5, borderRadius: 2, display: "flex", alignItems: "center" }}>
             <FilePresent sx={{ fontSize: 32, color: "primary.main" }} />
           </Box>
           <Box>
@@ -94,7 +82,7 @@ export default function FileDetailsModal({
               Détails du fichier
             </Typography>
             <Typography variant="h6" color="text.secondary" sx={{ mt: 0.5 }}>
-              {file.filename}
+              {file.nom_fichier || "—"}
             </Typography>
           </Box>
         </Box>
@@ -103,7 +91,7 @@ export default function FileDetailsModal({
       {/* ================= Content ================= */}
       <DialogContent sx={{ p: 4, maxHeight: "60vh", overflow: "auto" }}>
         <Stack spacing={4}>
-          {/* ---- Métadonnées Principales ---- */}
+          {/* ---- Informations générales ---- */}
           <Box>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 700, mb: 2 }}>
               📋 Informations générales
@@ -113,24 +101,14 @@ export default function FileDetailsModal({
                 <Typography variant="body2" color="text.secondary" sx={{ minWidth: 80 }}>
                   ID :
                 </Typography>
-                <Chip 
-                  label={`#${file.id}`} 
-                  color="primary" 
-                  size="small" 
-                  sx={{ fontWeight: 700 }}
-                />
+                <Chip label={`#${file.bilan_id}`} color="primary" size="small" sx={{ fontWeight: 700 }} />
               </Stack>
-              
+
               <Stack direction="row" spacing={3} alignItems="center">
                 <Typography variant="body2" color="text.secondary" sx={{ minWidth: 80 }}>
                   Type :
                 </Typography>
-                <Chip 
-                  label={file.type} 
-                  variant="outlined" 
-                  color="info" 
-                  size="small"
-                />
+                <Chip label={file.type || "—"} variant="outlined" color="info" size="small" />
               </Stack>
 
               <Stack direction="row" spacing={3} alignItems="center">
@@ -138,7 +116,7 @@ export default function FileDetailsModal({
                   Statut :
                 </Typography>
                 <Chip
-                  label={file.status}
+                  label={file.statut || "BROUILLON"}
                   size="small"
                   icon={statusConfig.icon}
                   sx={{
@@ -154,14 +132,9 @@ export default function FileDetailsModal({
                 <Typography variant="body2" color="text.secondary" sx={{ minWidth: 80 }}>
                   Taille :
                 </Typography>
-                <Typography variant="body1" fontWeight={600}>{file.size}</Typography>
-              </Stack>
-
-              <Stack direction="row" spacing={3}>
-                <Typography variant="body2" color="text.secondary" sx={{ minWidth: 80 }}>
-                  Source :
+                <Typography variant="body1" fontWeight={600}>
+                  {file.size || "-"}
                 </Typography>
-                <Typography variant="body1" fontWeight={500}>{file.source}</Typography>
               </Stack>
 
               <Stack direction="row" spacing={3}>
@@ -169,24 +142,19 @@ export default function FileDetailsModal({
                   Uploadé :
                 </Typography>
                 <Typography variant="body2">
-                  {file.uploadedAt ? new Date(file.uploadedAt).toLocaleString('fr-FR') : "-"}
+                  {file.date_generation ? new Date(file.date_generation).toLocaleString("fr-FR") : "-"}
                 </Typography>
               </Stack>
             </Stack>
           </Box>
 
           {/* ---- Progression ---- */}
-          {file.progress && file.progress < 100 && (
+          {file.progress != null && file.progress < 100 && (
             <Box>
               <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                 Progression : {file.progress}%
               </Typography>
-              <LinearProgress 
-                variant="determinate" 
-                value={file.progress} 
-                sx={{ height: 8, borderRadius: 4 }}
-                color="primary"
-              />
+              <LinearProgress variant="determinate" value={file.progress} sx={{ height: 8, borderRadius: 4 }} color="primary" />
             </Box>
           )}
 
@@ -198,13 +166,7 @@ export default function FileDetailsModal({
               <Typography variant="h6" gutterBottom sx={{ color: "warning.main", fontWeight: 700 }}>
                 ⚠️ {file.anomalies} anomalie(s) détectée(s)
               </Typography>
-              <Chip
-                label={`${file.anomalies} erreurs`}
-                color="warning"
-                icon={<ErrorOutline />}
-                size="medium"
-                sx={{ fontWeight: 700, height: 40 }}
-              />
+              <Chip label={`${file.anomalies} erreurs`} color="warning" icon={<ErrorOutline />} size="medium" sx={{ fontWeight: 700, height: 40 }} />
             </Box>
           )}
 
@@ -219,12 +181,10 @@ export default function FileDetailsModal({
               fullWidth
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Ajoutez vos observations, commentaires sur les anomalies ou instructions pour le traitement..."
+              placeholder="Ajoutez vos observations, commentaires ou instructions..."
               variant="outlined"
-              sx={{ 
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                }
+              sx={{
+                "& .MuiOutlinedInput-root": { borderRadius: 2 }
               }}
             />
           </Box>
@@ -232,26 +192,12 @@ export default function FileDetailsModal({
       </DialogContent>
 
       {/* ================= Actions ================= */}
-      <DialogActions
-        sx={{
-          px: 4,
-          py: 2.5,
-          borderTop: "1px solid",
-          borderColor: "divider",
-          gap: 2,
-          backgroundColor: "grey.50"
-        }}
-      >
+      <DialogActions sx={{ px: 4, py: 2.5, borderTop: "1px solid", borderColor: "divider", gap: 2, backgroundColor: "grey.50" }}>
         <Button
           onClick={onClose}
           variant="outlined"
           size="large"
-          sx={{ 
-            textTransform: "none", 
-            borderRadius: 2, 
-            px: 4,
-            flex: 1
-          }}
+          sx={{ textTransform: "none", borderRadius: 2, px: 4, flex: 1 }}
         >
           Fermer
         </Button>
@@ -266,9 +212,7 @@ export default function FileDetailsModal({
             px: 4,
             flex: 1,
             boxShadow: "0 4px 20px rgba(25, 118, 210, 0.3)",
-            "&:hover": {
-              boxShadow: "0 6px 24px rgba(25, 118, 210, 0.4)"
-            }
+            "&:hover": { boxShadow: "0 6px 24px rgba(25, 118, 210, 0.4)" }
           }}
         >
           Enregistrer les modifications
