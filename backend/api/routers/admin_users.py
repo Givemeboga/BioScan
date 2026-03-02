@@ -275,16 +275,30 @@ async def update_user(
 
 @router.delete("/{user_id}", status_code=204)
 async def delete_user(user_id: int, db: Session = Depends(get_db)):
-    """Delete a user"""
+    """Delete a user and all dependent records"""
     try:
         user_exists = db.execute(text("SELECT utilisateur_id FROM bioscan.utilisateur WHERE utilisateur_id = :id"),
                                 {"id": user_id})
         if not user_exists.fetchone():
             raise HTTPException(status_code=404, detail="User not found")
         
+        # Delete from all dependent tables first (cascade delete)
+        # Delete from patient
+        db.execute(text("DELETE FROM bioscan.patient WHERE utilisateur_id = :id"), {"id": user_id})
+        
+        # Delete from medecin_biologiste
+        db.execute(text("DELETE FROM bioscan.medecin_biologiste WHERE utilisateur_id = :id"), {"id": user_id})
+        
+        # Delete from technicien_biologiste
+        db.execute(text("DELETE FROM bioscan.technicien_biologiste WHERE utilisateur_id = :id"), {"id": user_id})
+        
+        # Delete from administrateur
+        db.execute(text("DELETE FROM bioscan.administrateur WHERE utilisateur_id = :id"), {"id": user_id})
+        
+        # Now delete from utilisateur
         db.execute(text("DELETE FROM bioscan.utilisateur WHERE utilisateur_id = :id"), {"id": user_id})
         db.commit()
-        logger.info(f"Deleted user {user_id}")
+        logger.info(f"Deleted user {user_id} and all dependent records")
         
     except HTTPException:
         raise
