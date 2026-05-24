@@ -1,202 +1,452 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+// components/Technicien/TechnicienLayout.jsx - VERSION 100% FONCTIONNELLE
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
-  Box,
-  Grid,
-  Paper,
-  Typography,
-  Button,
-  IconButton,
-  Stack,
-  CircularProgress,
+  Box, Stack, Typography, Chip, Button, IconButton, Paper, Alert,
+  Grid, LinearProgress, Fade, Dialog, DialogTitle, DialogContent,
+  DialogActions, TextField, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, TablePagination, Tooltip, Snackbar, CircularProgress
 } from "@mui/material";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import DownloadIcon from "@mui/icons-material/Download";
-import RefreshIcon from "@mui/icons-material/Refresh";
+import {
+  Search, Refresh, CloudUpload, ErrorOutline, CheckCircle,
+  NotificationsActive, Dashboard, FilePresent, Schedule, BarChart,
+  MoreVert, Visibility, Today, AccessTimeFilled, CalendarToday, FileDownload
+} from "@mui/icons-material";
+import { Calendar, momentLocalizer } from "react-big-calendar";
+import moment from "moment";
+import "react-big-calendar/lib/css/react-big-calendar.css";
+
+// ✅ IMPORTS SERVICES ET COMPOSANTS LOCAUX
+import { getAllBilans, updateBilan } from "../../services/Technicien/bilanService.js";
 import StatCard from "./StatCard";
-import UploadArea from "./UploadArea";
 import UploadChart from "./UploadChart";
-import FilesTable from "./FilesTable";
+import UploadArea from "./UploadArea";
 import FileDetailsModal from "./FilesDetailsModal";
-import "./TechnicienLayout.css";
+const localizer = momentLocalizer(moment);
 
-const LOCAL_KEY = "bioscan_files";
+const StatCardsContainer = ({ children }) => (
+  <Box sx={{
+    display: "grid",
+    gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+    gap: { xs: 2, md: 3 },
+    alignItems: "stretch"
+  }}>
+    {children}
+  </Box>
+);
 
-export default function BaseDashboardTechnicien() {
-  const [files, setFiles] = useState(null);
+const TechnicienLayout = () => {
+  // États principaux
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [files, setFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "info" });
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const raw = localStorage.getItem(LOCAL_KEY);
-    if (!raw) {
-      const seed = [
-        { id: 1057, filename: "tests_covid_2026.csv", type: "CSV", uploadedAt: new Date().toISOString(), status: "REJETE", source: "Labo Ariana", anomalyCount: 2, notes: "Colonnes manquantes sur lignes 4..10" },
-        { id: 1056, filename: "resultats_patient_b56.csv", type: "CSV", uploadedAt: new Date().toISOString(), status: "VALIDE", source: "Labo Tunis" },
-        { id: 1055, filename: "etude_glucose_mod_01.xlsx", type: "XLSX", uploadedAt: new Date().toISOString(), status: "EN_COURS", source: "CHU" },
-      ];
-      localStorage.setItem(LOCAL_KEY, JSON.stringify(seed));
-      setFiles(seed);
-      return;
-    }
+  // Chargement données avec service réel ✅
+  const loadData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      setFiles(JSON.parse(raw));
-    } catch {
-      setFiles([]);
+      const bilans = await getAllBilans();
+      
+      const uiFiles = bilans.map(bilan => ({
+        id: bilan.bilan_id,
+        filename: bilan.nom_fichier || `Bilan_${bilan.bilan_id}`,
+        status: bilan.statut === "VALIDE" ? "Terminé" : 
+                bilan.statut === "EN_COURS" ? "En cours" : "Erreur",
+        type: bilan.type || "PDF",
+        size: bilan.taille ? formatFileSize(bilan.taille) : "N/A",
+        date: bilan.date_generation ? new Date(bilan.date_generation).toLocaleDateString('fr-FR') : "N/A",
+        anomalies: bilan.anomaly_count || 0,
+        progress: bilan.progress || 100,
+        notes: bilan.notes || "",
+        uploadedAt: bilan.date_generation,
+        rawData: bilan
+      }));
+
+      setFiles(uiFiles);
+    } catch (error) {
+      setError(error.message);
+      showSnackbar(`Erreur: ${error.message}`, "error");
+    } finally {
+      setIsLoading(false);
     }
   }, []);
+  // Chargement automatique au montage du composant
+useEffect(() => {
+  loadData();
+}, [loadData]);
 
-  useEffect(() => {
-    const onChange = () => setFiles(JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]"));
-    window.addEventListener("bioscan_files_changed", onChange);
-    window.addEventListener("storage", onChange);
-    return () => {
-      window.removeEventListener("bioscan_files_changed", onChange);
-      window.removeEventListener("storage", onChange);
-    };
-  }, []);
+  const formatFileSize = (bytes) => {
+    if (!bytes) return "N/A";
+    const sizes = ['o', 'Ko', 'Mo', 'Go'];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+  };
 
-  const kpis = useMemo(() => {
-    if (!files) return { uploadedToday: 0, processing: 0, pending: 0, errors: 0 };
-    const today = new Date().toISOString().slice(0, 10);
-    return {
-      uploadedToday: files.filter(f => f.uploadedAt?.startsWith(today)).length,
-      processing: files.filter(f => ["EN_COURS"].includes(f.status)).length,
-      pending: files.filter(f => ["uploaded", "BROUILLON", "EN_ATTENTE"].includes(f.status)).length,
-      errors: files.filter(f => ["REJETE", "error"].includes(f.status)).length,
-    };
+  // Stats calculées
+  const stats = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    
+    const todayCount = files.filter(f => {
+      const fileDate = new Date(f.uploadedAt);
+      return fileDate.toDateString() === today.toDateString();
+    }).length;
+    
+    const yesterdayCount = files.filter(f => {
+      const fileDate = new Date(f.uploadedAt);
+      return fileDate.toDateString() === yesterday.toDateString();
+    }).length;
+
+    return [
+      { 
+        title: "Aujourd'hui", value: todayCount, variant: "today",
+        color: "#3B82F6", subtitle: `${todayCount} fichiers`,
+        trend: todayCount >= yesterdayCount ? "up" : "down",
+        icon: <Today />, trendValue: `vs ${yesterdayCount}`
+      },
+      { 
+        title: "En cours", value: files.filter(f => f.status === "En cours").length, 
+        variant: "pending", color: "#F59E0B", subtitle: "Traitement actif",
+        icon: <AccessTimeFilled />
+      },
+      { 
+        title: "Erreurs", value: files.filter(f => f.status === "Erreur").length, 
+        variant: "error", color: "#EF4444", subtitle: "À corriger",
+        icon: <ErrorOutline />
+      },
+      { 
+        title: "Validées", value: files.filter(f => f.status === "Terminé").length, 
+        variant: "success", color: "#10B981", subtitle: "Terminées",
+        icon: <CheckCircle />
+      }
+    ];
   }, [files]);
 
-  const onUploadComplete = useCallback((fileMeta) => {
-    const normalized = {
-      id: fileMeta.id || Date.now(),
-      filename: fileMeta.filename || fileMeta.name,
-      type: fileMeta.type || (fileMeta.name?.endsWith?.(".csv") ? "CSV" : "XLSX"),
-      uploadedAt: fileMeta.uploadedAt || new Date().toISOString(),
-      status: fileMeta.status || "UPLOADED",
-      source: fileMeta.source || "Upload local",
-      anomalyCount: fileMeta.anomalyCount || 0,
-      notes: fileMeta.notes || "",
-    };
-    const updated = [normalized, ...(JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]"))];
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(updated));
-    window.dispatchEvent(new Event("bioscan_files_changed"));
-    setFiles(updated);
+  const calendarEvents = useMemo(() => 
+    files.map(file => ({
+      id: file.id,
+      title: `${file.status === "Erreur" ? "❌" : "✅"} ${file.filename.substring(0, 20)}...`,
+      start: new Date(file.uploadedAt),
+      end: new Date(new Date(file.uploadedAt).getTime() + 60 * 60 * 1000),
+      status: file.status,
+      anomalies: file.anomalies,
+      color: file.status === "Erreur" ? "#ef4444" : 
+             file.status === "En cours" ? "#f59e0b" : "#10b981"
+    })), [files]);
+
+  const filteredFiles = useMemo(() => {
+    const result = files.filter(f => 
+      f.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      f.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      f.date.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    return result.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+  }, [searchTerm, files]);
+
+  // Export CSV
+  const exportToCSV = useCallback(() => {
+    const headers = ['ID', 'Fichier', 'Statut', 'Date', 'Anomalies', 'Taille', 'Notes'];
+    const csvContent = [
+      headers.join(','),
+      ...filteredFiles.map(f => [
+        f.id,
+        `"${f.filename.replace(/"/g, '""')}"`,
+        f.status,
+        f.date,
+        f.anomalies,
+        f.size,
+        `"${f.notes.replace(/"/g, '""')}"`
+      ].join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `bilans_technicien_${new Date().toISOString().split('T')[0]}.csv`);
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [filteredFiles]);
+
+  // Mise à jour avec service réel ✅
+  const handleUpdateFile = useCallback(async (updatedFile) => {
+    try {
+      await updateBilan(updatedFile.id, { notes: updatedFile.notes });
+      setFiles(prev => prev.map(f => f.id === updatedFile.id ? { ...f, notes: updatedFile.notes } : f));
+      showSnackbar("Notes mises à jour !", "success");
+    } catch (error) {
+      showSnackbar(`Erreur: ${error.message}`, "error");
+    }
+    setSelectedFile(null);
   }, []);
 
-  const handleExport = () => {
-    if (!files || files.length === 0) return;
-    const header = ["id", "filename", "type", "uploadedAt", "status", "source"];
-    const rows = files.map(f => header.map(h => `"${(f[h] || "").toString().replace(/"/g, '""')}"`).join(","));
-    const csv = [header.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "bioscan_files_export.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+  const showSnackbar = (message, severity = "info") => {
+    setSnackbar({ open: true, message, severity });
   };
 
-  const handleRefresh = () => {
-    const updated = (files || []).map(f => (f.status === "EN_COURS" ? { ...f, status: "VALIDE" } : f));
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(updated));
-    window.dispatchEvent(new Event("bioscan_files_changed"));
-    setFiles(updated);
-  };
+  const handleCloseSnackbar = () => setSnackbar(prev => ({ ...prev, open: false }));
 
-  if (files === null) {
+  // Loading
+  if (isLoading) {
     return (
-      <Box className="modern-root" sx={{ p: 4 }}>
-        <CircularProgress />
-      </Box>
+      <Fade in>
+        <Box sx={{ bgcolor: "#f8fafc", minHeight: "100vh", p: 3 }}>
+          <Stack spacing={3} alignItems="center" justifyContent="center" sx={{ minHeight: 400 }}>
+            <CircularProgress size={60} sx={{ color: "primary.main" }} />
+            <Typography variant="h5" color="text.secondary">Chargement des bilans...</Typography>
+            <LinearProgress sx={{ width: 300 }} />
+          </Stack>
+        </Box>
+      </Fade>
     );
   }
 
   return (
-    <Box className="modern-root" sx={{ p: { xs: 2, md: 4 } }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h4" gutterBottom>Bonjour, Technicien 👋</Typography>
-          <Typography variant="body2" color="text.secondary">Tableau de bord professionnel — BioScan</Typography>
-        </Box>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <UploadArea onUploadComplete={onUploadComplete} />
-          <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleExport}>Exporter</Button>
-          <IconButton color="primary" onClick={handleRefresh}><RefreshIcon /></IconButton>
-        </Stack>
-      </Box>
-
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard title="Upload aujourd'hui" value={kpis.uploadedToday} color="var(--primary)" icon={<CloudUploadIcon />} />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard title="Analyses en cours" value={kpis.processing} color="var(--success)" icon={<RefreshIcon />} />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard title="En attente" value={kpis.pending} color="var(--navy)" icon={<CloudUploadIcon />} />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard title="Erreurs" value={kpis.errors} color="#D32F2F" icon={<RefreshIcon />} />
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={8}>
-          <Paper className="paper-card" sx={{ p: 2 }}>
-            <Typography variant="h6" mb={1}>Activité d'upload</Typography>
-            <UploadChart files={files} />
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Paper className="paper-card" sx={{ p: 2 }}>
-            <Typography variant="h6" mb={1}>Notifications récentes</Typography>
-            <Typography variant="body2" color="text.secondary">Aucune notification réelle pour l'instant.</Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12}>
-          <Paper className="paper-card" sx={{ p: 2 }}>
-            <Box display="flex" justifyContent="space-between" mb={1}>
-              <Typography variant="h6">Fichiers biologiques</Typography>
-              <Typography variant="caption" color="text.secondary">{files.length} fichiers</Typography>
+    <Box sx={{ bgcolor: "#f8fafc", minHeight: "100vh", p: { xs: 2, md: 3 } }}>
+      {/* HEADER */}
+      <Paper sx={{ p: 4, mb: 4, borderRadius: 3, boxShadow: "0 20px 60px rgba(0,0,0,0.08)" }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Dashboard sx={{ fontSize: 48, color: "primary.main" }} />
+            <Box>
+              <Typography variant="h2" sx={{ fontWeight: 900 }}>Dashboard Technicien</Typography>
+              <Typography variant="h6" color="text.secondary">
+                {files.length} bilans traités
+              </Typography>
             </Box>
-            <FilesTable
-              files={files}
-              onRelaunch={(id) => {
-                const updated = files.map(f => f.id === id ? { ...f, status: "EN_COURS" } : f);
-                localStorage.setItem(LOCAL_KEY, JSON.stringify(updated));
-                window.dispatchEvent(new Event("bioscan_files_changed"));
-                setFiles(updated);
-                setTimeout(() => {
-                  const done = updated.map(f => f.id === id ? { ...f, status: "VALIDE" } : f);
-                  localStorage.setItem(LOCAL_KEY, JSON.stringify(done));
-                  window.dispatchEvent(new Event("bioscan_files_changed"));
-                  setFiles(done);
-                }, 900);
-              }}
-              onDelete={(id) => {
-                const updated = files.filter(f => f.id !== id);
-                localStorage.setItem(LOCAL_KEY, JSON.stringify(updated));
-                window.dispatchEvent(new Event("bioscan_files_changed"));
-                setFiles(updated);
-              }}
-              onView={(f) => setSelectedFile(f)}
-            />
-          </Paper>
-        </Grid>
-      </Grid>
+          </Stack>
+          <Stack direction="row" spacing={1}>
+            <Tooltip title="Exporter CSV">
+              <Button variant="outlined" startIcon={<FileDownload />} onClick={exportToCSV}
+                sx={{ textTransform: "none", borderRadius: 2, px: 3, borderColor: "success.main", color: "success.main",
+                  "&:hover": { borderColor: "success.dark", bgcolor: "success.50" } }}>
+                Exporter CSV
+              </Button>
+            </Tooltip>
+            <Tooltip title="Actualiser">
+              <IconButton sx={{ width: 56, height: 56, bgcolor: "primary.50", color: "primary.main",
+                "&:hover": { bgcolor: "primary.200", transform: "rotate(90deg)", transition: "all 0.4s" } }}
+                onClick={loadData}>
+                <Refresh />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        </Stack>
+      </Paper>
 
-      <FileDetailsModal
-        file={selectedFile}
-        onClose={() => setSelectedFile(null)}
-        onUpdate={(patch) => {
-          if (!selectedFile) return;
-          const updated = files.map(f => f.id === selectedFile.id ? { ...f, ...patch } : f);
-          localStorage.setItem(LOCAL_KEY, JSON.stringify(updated));
-          window.dispatchEvent(new Event("bioscan_files_changed"));
-          setFiles(updated);
-          setSelectedFile(null);
-        }}
-      />
+      {/* ERREUR */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+          <strong>Erreur:</strong> {error}
+          <Button size="small" onClick={loadData} sx={{ ml: 2 }}>Réessayer</Button>
+        </Alert>
+      )}
+
+      {/* STATS */}
+      <Paper sx={{ p: { xs: 3, md: 4 }, mb: 4, borderRadius: 3, boxShadow: "0 10px 40px rgba(0,0,0,0.1)" }}>
+        <Typography variant="h4" sx={{ mb: 4, fontWeight: 800, display: "flex", alignItems: "center" }}>
+          <BarChart sx={{ mr: 2, fontSize: 36 }} />Statistiques
+        </Typography>
+        <StatCardsContainer>
+          {stats.map((stat, i) => <StatCard key={i} {...stat} />)}
+        </StatCardsContainer>
+      </Paper>
+
+      {/* CALENDRIER + CHART */}
+     <Stack 
+    direction={{ xs: 'column', lg: 'row' }} 
+    spacing={3} 
+    sx={{ mb: 5 }}
+    useFlexGap
+  >
+        <Box flex={{ xs: 1, lg: 0.5 }}>
+          <Paper sx={{ p: 3, height: 500, borderRadius: 3, boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            display: "flex", flexDirection: "column" }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
+              <Stack direction="row" alignItems="center" spacing={1.5}>
+                <CalendarToday sx={{ fontSize: 28, color: "primary.main" }} />
+                <Typography variant="h4" fontWeight={800}>Planning</Typography>
+              </Stack>
+              <Chip label={calendarEvents.length} color="primary" size="small" />
+            </Stack>
+            <Box sx={{ flexGrow: 1 }}>
+              <Calendar 
+                localizer={localizer} 
+                culture="fr-FR" events={calendarEvents}
+                startAccessor="start" endAccessor="end"
+                style={{ height: "100%" }}
+                messages={{
+                  next: "Suivant", previous: "Précédent", today: "Aujourd'hui",
+                  month: "Mois", week: "Semaine", day: "Jour"
+                }}
+              />
+            </Box>
+          </Paper>
+        </Box>
+        <Box flex={{ xs: 1, lg: 0.5 }}>
+          <Paper sx={{ p: 3, height: 500, borderRadius: 3, boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            display: "flex", flexDirection: "column" }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
+              <Stack direction="row" alignItems="center" spacing={1.5}>
+                <BarChart sx={{ fontSize: 28, color: "primary.main" }} />
+                <Typography variant="h4" fontWeight={800}>7 derniers jours</Typography>
+              </Stack>
+              <Chip label="Live" color="success" size="small" />
+            </Stack>
+             <Box sx={{ flexGrow: 1, height: 'calc(100% - 60px)', minHeight: 400 }}>
+      <UploadChart files={files} />
+    </Box>
+          </Paper>
+        </Box>
+      </Stack>
+
+ {/* 🚀 TABLE PLEINE LARGEUR - SANS COLONNE DROITE */}
+      <Paper sx={{ 
+        borderRadius: 3, 
+        boxShadow: "0 20px 60px rgba(0,0,0,0.1)", 
+        overflow: "hidden",
+        width: "100%" // ✅ Pleine largeur
+      }}>
+        <Box sx={{ p: 4 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <FilePresent sx={{ fontSize: 36, color: "primary.main" }} />
+              <Typography variant="h3" sx={{ fontWeight: 900 }}>Bilans récents</Typography>
+            </Stack>
+            <Chip label={filteredFiles.length} color="primary" size="large" />
+          </Stack>
+          
+          {/* Barre recherche + Upload - RESPONSIVE */}
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 4, alignItems: "stretch" }}>
+            <TextField
+              size="small" 
+              placeholder="Rechercher fichiers, statuts, dates..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              sx={{ flex: 1, minWidth: { xs: "100%", sm: 350 } }}
+              InputProps={{ startAdornment: <Search /> }}
+            />
+            <UploadArea onUploadComplete={loadData} />
+          </Stack>
+        </Box>
+
+        {/* ✅ TABLE RESPONSIVE ADAPTATIVE */}
+        <TableContainer sx={{ 
+          maxHeight: { xs: 600, md: 650, lg: 700 }, // ✅ Hauteur adaptative
+          width: "100%",
+          // Responsive horizontal scroll sur mobile
+          overflowX: { xs: "auto", md: "visible" }
+        }}>
+          <Table stickyHeader sx={{ minWidth: { xs: 800, md: 1200 } }}>
+            <TableHead>
+              <TableRow sx={{ bgcolor: "primary.50" }}>
+                <TableCell sx={{ fontWeight: 700, fontSize: "1.1rem", width: "35%" }}>Fichier</TableCell>
+                <TableCell sx={{ fontWeight: 700, fontSize: "1.1rem", width: "20%" }}>Statut</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: "15%" }}>Date</TableCell>
+                <TableCell sx={{ fontWeight: 700, width: "15%" }}>Anomalies</TableCell>
+                <TableCell sx={{ width: 120, minWidth: 120 }} align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredFiles
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map(file => (
+                  <TableRow key={file.id} hover sx={{ "&:hover": { bgcolor: "action.hover" } }}>
+                    <TableCell>
+                      <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Box sx={{ bgcolor: "primary.50", p: 1, borderRadius: 2 }}>
+                          <FilePresent sx={{ fontSize: 20, color: "primary.main" }} />
+                        </Box>
+                        <Box sx={{ minWidth: 0 }}> {/* ✅ Truncate long names */}
+                          <Typography sx={{ fontWeight: 600 }} noWrap title={file.filename}>
+                            {file.filename}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            ID: {file.id}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={file.status} 
+                        size="small" 
+                        color={file.status === "En cours" ? "warning" : 
+                               file.status === "Erreur" ? "error" : "success"}
+                        sx={{ fontWeight: 700, minWidth: 100, justifyContent: "center" }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={500}>
+                        {file.date}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {file.anomalies > 0 ? (
+                        <Chip label={file.anomalies} color="warning" size="small" />
+                      ) : (
+                        <Chip label="✓" color="success" size="small" />
+                      )}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="Voir détails">
+                        <IconButton size="small" onClick={() => setSelectedFile(file)}>
+                          <Visibility />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              {filteredFiles.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
+                    <Stack spacing={2} alignItems="center">
+                      <FilePresent sx={{ fontSize: 64, color: "grey.300" }} />
+                      <Typography variant="h6" color="text.secondary">
+                        Aucun bilan trouvé
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Essayez de modifier votre recherche ou uploadez un nouveau fichier
+                      </Typography>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        
+        {/* Pagination - TOUJOURS VISIBLE */}
+        <TablePagination
+          rowsPerPageOptions={[10, 25, 50, 100]}
+          count={filteredFiles.length}
+          rowsPerPage={rowsPerPage} 
+          page={page}
+          onPageChange={(_, p) => setPage(p)}
+          onRowsPerPageChange={(_, v) => { setRowsPerPage(v); setPage(0); }}
+          sx={{ px: 4, py: 3, borderTop: 1, bgcolor: "grey.50" }}
+          showFirstButton showLastButton
+        />
+      </Paper>
+
+      {/* MODAL, SNACKBAR - IDENTIQUES */}
+      <FileDetailsModal file={selectedFile} onClose={() => setSelectedFile(null)} onUpdate={handleUpdateFile} />
+      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>{snackbar.message}</Alert>
+      </Snackbar>
     </Box>
   );
-}
+};
+
+export default TechnicienLayout;
+
+
+

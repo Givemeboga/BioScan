@@ -8,9 +8,9 @@ import HistoryIcon from "@mui/icons-material/History";
 import SettingsIcon from "@mui/icons-material/Settings";
 import SecurityIcon from "@mui/icons-material/Security";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-import logo from "../../assets/logo.png";
+import logo from "../../assets/BioScan2.jpg";
 import './TechnicienLayout.css'; // CSS spécifique
-
+import { logout } from "../../services/Technicien/authService";
 export default function Sidebar({ isOpen = true }) {
   const navigate = useNavigate();
 
@@ -24,10 +24,10 @@ export default function Sidebar({ isOpen = true }) {
     { label: "Paramètres", icon: <SettingsIcon />, to: "/technicien/settings" },
   ];
 
-  const handleLogout = () => {
-    localStorage.removeItem("bioscan_user");
-    navigate("/login");
-  };
+ const handleLogout = () => {
+  logout();
+  navigate("/login-technicien", { replace: true });
+};
 
   return (
     <aside

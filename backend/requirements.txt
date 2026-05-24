@@ -15,3 +15,12 @@ PyJWT
 security
 utils
 python-jose
+argon2-cffi
+cloudinary
+python-docx
+PyMuPDF
+pdfplumber
+pandas
+numpy
+openpyxl
+lxml

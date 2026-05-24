@@ -1,33 +1,43 @@
-import React, { useRef, useCallback, useState, useMemo } from "react";
+import React, { useRef, useCallback, useState, useMemo, useEffect } from "react";
 import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 import {
   Avatar,
   Button,
+  IconButton,
+  Box,
+  Skeleton,
+  Typography,
   Menu,
   MenuItem,
   ListItemIcon,
-  ListItemText,
-  Badge,
   Tooltip,
-  IconButton,
   Divider,
-  Box,
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import PersonIcon from "@mui/icons-material/Person";
-import LogoutIcon from "@mui/icons-material/Logout";
-import Brightness4Icon from "@mui/icons-material/Brightness4";
-import Brightness7Icon from "@mui/icons-material/Brightness7";
+import {
+  Menu as MenuIcon,
+  CloudUpload as CloudUploadIcon,
+  Person as PersonIcon,
+  Logout as LogoutIcon,
+  Brightness4 as Brightness4Icon,
+  Brightness7 as Brightness7Icon,
+} from "@mui/icons-material";
+import NotificationsPopover from "./NotificationsPopover";  // ← RELATIF
+import {
+  isAuthenticated,
+  getProfilTechnicien,
+} from "../../services/Technicien/authService";
+import {
+  getNotifications,
+  getUnreadCount,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification as deleteNotifAPI,
+} from "../../services/Technicien/notificationService";
 
 export default function Topbar({
   isSidebarOpen = true,
   onToggleSidebar = () => {},
-  username = "tech.local",
-  notifications = null,
-  notificationsCount = undefined,
-  onNotificationsOpen = () => {},
   onUploadClick = () => {},
   onProfile = () => {},
   onLogout = () => {},
@@ -35,81 +45,146 @@ export default function Topbar({
   themeMode = "light",
   onToggleTheme = () => {},
 }) {
+  const navigate = useNavigate();
+  const handleProfileClick = () => {
+  closeProfile();
+  navigate("/technicien/profil");
+};
   const fileInputRef = useRef(null);
-  const [notifAnchor, setNotifAnchor] = useState(null);
   const [profileAnchor, setProfileAnchor] = useState(null);
+  const [currentTechnicien, setCurrentTechnicien] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
 
-  const defaultNotifs = useMemo(
-    () => [
-      { id: 1, title: "Upload réussi", message: "patient_2026-02-05.csv", time: "10:02", severity: "info" },
-      { id: 2, title: "Erreur format", message: "bulk_2026-02.xlsx - colonnes manquantes", time: "09:54", severity: "error" },
-      { id: 3, title: "Analyse terminée", message: "hemoglobine_anomalie.csv", time: "08:33", severity: "success" },
-    ],
-    []
-  );
+  // ÉTAT NOTIFICATIONS (passé au composant)
+  const [notificationsData, setNotificationsData] = useState([]);
+  const [notifCount, setNotifCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [actionFeedback, setActionFeedback] = useState("");
 
-  const effectiveNotifs = notifications || defaultNotifs;
-  const badgeCount = typeof notificationsCount === "number" ? notificationsCount : effectiveNotifs.length;
-
-  const handleUploadBtnClick = useCallback(() => {
-    if (fileInputRef.current) fileInputRef.current.click();
-    else onUploadClick();
-  }, [onUploadClick]);
-
-  const onFileSelected = useCallback(
-    (e) => {
-      const f = e.target.files?.[0];
-      if (f) {
-        onUploadClick(f);
-        e.target.value = "";
+  /* PROFIL */
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!isAuthenticated()) {
+        setLoadingUser(false);
+        return;
       }
-    },
-    [onUploadClick]
-  );
+      try {
+        const data = await getProfilTechnicien();
+        setCurrentTechnicien(data);
+      } catch (e) {
+        console.error("Erreur profil:", e);
+      } finally {
+        setLoadingUser(false);
+      }
+    };
+    fetchProfile();
+  }, []);
 
-  const openNotifs = (e) => {
-    setNotifAnchor(e.currentTarget);
-    onNotificationsOpen();
+  /* NOTIFICATIONS */
+  const mapNotificationData = useCallback((n) => ({
+    id: n.notification_id,
+    title: n.titre,
+    message: n.description,
+    severity: n.statut === "UNREAD" ? "info" : "success",
+    date: n.date_generation,
+  }), []);
+
+  const fetchNotifs = async () => {
+    try {
+      const rawData = await getNotifications();
+      const countData = await getUnreadCount();
+      const mapped = (rawData || []).map(mapNotificationData);
+      setNotificationsData(mapped);
+      setNotifCount(countData?.count || 0);
+    } catch (err) {
+      console.error("Erreur notifications:", err);
+    }
   };
-  const closeNotifs = () => setNotifAnchor(null);
+
+  useEffect(() => {
+    fetchNotifs();
+  }, []);
+
+  /* ACTIONS NOTIFICATIONS */
+  const handleMarkAsRead = async (id) => {
+    setLoading(true);
+    try {
+      await markAsRead(id);
+      setNotificationsData((prev) =>
+        prev.map((n) => n.id === id ? { ...n, severity: "success" } : n)
+      );
+      setNotifCount((prev) => Math.max(0, prev - 1));
+      setActionFeedback("Notification marquée comme lue ✅");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    setLoading(true);
+    try {
+      await deleteNotifAPI(id);
+      setNotificationsData((prev) => prev.filter((n) => n.id !== id));
+      setActionFeedback("Notification supprimée 🗑️");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMarkAll = async () => {
+    setLoading(true);
+    try {
+      await markAllAsRead();
+      setNotificationsData((prev) =>
+        prev.map((n) => ({ ...n, severity: "success" }))
+      );
+      setNotifCount(0);
+      setActionFeedback("Toutes marquées comme lues ✅");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* USER */
+  const displayUsername = useMemo(() =>
+    currentTechnicien?.nom_utilisateur || currentTechnicien?.username || "Technicien",
+  [currentTechnicien]);
+
+  /* HANDLERS */
+  const handleUploadBtnClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const onFileSelected = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onUploadClick(file);
+      e.target.value = "";
+    }
+  }, [onUploadClick]);
 
   const openProfile = (e) => setProfileAnchor(e.currentTarget);
   const closeProfile = () => setProfileAnchor(null);
 
-  const handleProfile = () => {
-    closeProfile();
-    onProfile();
-  };
-
-  const handleLogout = () => {
-    closeProfile();
-    onLogout();
-  };
-
   return (
-    <header
-      className={`technicien-layout__topbar ${isSidebarOpen ? "technicien-layout__topbar--sidebar-open" : ""}`}
-      role="banner"
-      aria-label="Topbar technicien"
-    >
-      {/* Left section */}
+    <header className={`technicien-layout__topbar ${isSidebarOpen ? "technicien-layout__topbar--sidebar-open" : ""}`}>
+      {/* LEFT */}
       <div className="technicien-layout__topbar-left">
-        <button
-          className="technicien-layout__topbar-btn-menu"
-          onClick={onToggleSidebar}
-          aria-label={isSidebarOpen ? "Fermer le menu" : "Ouvrir le menu"}
-        >
+        <IconButton onClick={onToggleSidebar}>
           <MenuIcon style={{ color: "white" }} />
-        </button>
-
-        <h2 className="technicien-layout__topbar-page-title" aria-live="polite">
-          {pageTitle}
-        </h2>
+        </IconButton>
+        <h2 className="technicien-layout__topbar-page-title">{pageTitle}</h2>
       </div>
 
-      {/* Right section */}
+      {/* RIGHT */}
       <div className="technicien-layout__topbar-right">
-        {/* Hidden file input */}
+        {/* UPLOAD */}
         <input
           ref={fileInputRef}
           type="file"
@@ -117,125 +192,154 @@ export default function Topbar({
           onChange={onFileSelected}
           style={{ display: "none" }}
         />
-
-        <Tooltip title="Uploader un fichier">
-          <Button
-            className="technicien-layout__topbar-upload-btn"
-            startIcon={<CloudUploadIcon />}
-            onClick={handleUploadBtnClick}
-            sx={{ color: "white" }}
-          >
+        <Tooltip title="Uploader">
+          <Button startIcon={<CloudUploadIcon />} onClick={handleUploadBtnClick} sx={{ color: "white" }}>
             Upload
           </Button>
         </Tooltip>
 
-        {/* Notifications */}
-        <button
-          className="technicien-layout__topbar-btn-notif"
-          title="Notifications"
-          onClick={openNotifs}
-          aria-haspopup="true"
-          aria-controls={notifAnchor ? "technicien-topbar-notifs" : undefined}
-        >
-          <Badge badgeContent={badgeCount} color="error">
-            <NotificationsIcon style={{ color: "white" }} />
-          </Badge>
-        </button>
+        {/* NOTIFICATIONS ← COMPOSANT RÉUTILISABLE */}
+        <NotificationsPopover
+          notificationsData={notificationsData}
+          notifCount={notifCount}
+          loading={loading}
+          actionFeedback={actionFeedback}
+          onMarkAsRead={handleMarkAsRead}
+          onDelete={handleDelete}
+          onMarkAllAsRead={handleMarkAll}
+        />
 
-        <Menu
-          id="technicien-topbar-notifs"
-          anchorEl={notifAnchor}
-          open={Boolean(notifAnchor)}
-          onClose={closeNotifs}
-          PaperProps={{ sx: { width: 360 } }}
-        >
-          <MenuItem disabled dense>
-            <ListItemText
-              primary="Notifications récentes"
-              secondary={`${effectiveNotifs.length} éléments`}
-            />
-          </MenuItem>
-          <Divider />
-          {effectiveNotifs.length === 0 && (
-            <MenuItem disabled>
-              <ListItemText primary="Aucune notification" />
-            </MenuItem>
+        {/* THEME */}
+        <IconButton onClick={onToggleTheme}>
+          {themeMode === "dark" ? (
+            <Brightness7Icon style={{ color: "white" }} />
+          ) : (
+            <Brightness4Icon style={{ color: "white" }} />
           )}
-          {effectiveNotifs.map((n) => (
-            <MenuItem
-              key={n.id}
-              onClick={closeNotifs}
-              sx={{ alignItems: "flex-start", whiteSpace: "normal" }}
-            >
-              <ListItemText
-                primary={n.title}
-                secondary={
-                  <Box component="span" sx={{ display: "block", fontSize: 12, color: "text.secondary" }}>
-                    {n.message}
-                    <Box component="span" sx={{ display: "block", fontSize: 11, color: "text.disabled" }}>
-                      {n.time}
-                    </Box>
-                  </Box>
-                }
-              />
-            </MenuItem>
-          ))}
-          <Divider />
-          <MenuItem onClick={closeNotifs} sx={{ justifyContent: "center", opacity: 0.85 }}>
-            Voir toutes les notifications
-          </MenuItem>
-        </Menu>
-
-        {/* Theme toggle */}
-        <IconButton
-          className="technicien-layout__topbar-theme-toggle"
-          onClick={onToggleTheme}
-          aria-label="Basculer thème"
-          size="small"
-        >
-          {themeMode === "dark" ? <Brightness7Icon style={{ color: "white" }} /> : <Brightness4Icon style={{ color: "white" }} />}
         </IconButton>
 
-        {/* Profile */}
-        <div
-          className="technicien-layout__topbar-user"
-          title="Profil technicien"
-          onClick={openProfile}
-          onKeyDown={(e) => e.key === "Enter" && openProfile(e)}
-          role="button"
-          tabIndex={0}
-          aria-haspopup="true"
-          aria-controls={profileAnchor ? "technicien-topbar-profile" : undefined}
-        >
-          <Avatar className="technicien-layout__topbar-user-avatar" alt={username}>
-            {username ? username.charAt(0).toUpperCase() : "T"}
-          </Avatar>
-          <Box className="technicien-layout__topbar-user-info">
-            <Box className="technicien-layout__topbar-user-name">{username}</Box>
-            <Box className="technicien-layout__topbar-user-role">Technicien</Box>
+        {/* USER */}
+        <div className="technicien-layout__topbar-user" onClick={openProfile}>
+          {loadingUser ? (
+            <Skeleton variant="circular" width={40} height={40} />
+          ) : (
+            <Avatar src={currentTechnicien?.photo_url || ""}>
+              {displayUsername.charAt(0).toUpperCase()}
+            </Avatar>
+          )}
+          <Box>
+            <Typography variant="body2">{displayUsername}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Technicien
+            </Typography>
           </Box>
         </div>
 
+        {/* PROFILE MENU */}
         <Menu
-          id="technicien-topbar-profile"
-          anchorEl={profileAnchor}
-          open={Boolean(profileAnchor)}
-          onClose={closeProfile}
-        >
-          <MenuItem onClick={handleProfile}>
-            <ListItemIcon>
-              <PersonIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Profil</ListItemText>
-          </MenuItem>
-          <Divider />
-          <MenuItem onClick={handleLogout}>
-            <ListItemIcon>
-              <LogoutIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Se déconnecter</ListItemText>
-          </MenuItem>
-        </Menu>
+  anchorEl={profileAnchor}
+  open={Boolean(profileAnchor)}
+  onClose={closeProfile}
+  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+  transformOrigin={{ vertical: "top", horizontal: "right" }}
+  PaperProps={{
+    sx: {
+      width: 240,
+      mt: 1,
+      borderRadius: 3,
+      boxShadow: 6,
+      overflow: "hidden",
+    },
+  }}
+>
+
+  {/* HEADER PROFIL */}
+  <Box
+    sx={{
+      p: 2,
+      textAlign: "center",
+      background: "linear-gradient(135deg, #1976d2, #42a5f5)",
+      color: "white",
+    }}
+  >
+    <Avatar
+      src={currentTechnicien?.photo_url || ""}
+      sx={{
+        width: 52,
+        height: 52,
+        margin: "0 auto 8px auto",
+        border: "2px solid white",
+        fontSize: 20,
+        fontWeight: "bold"
+      }}
+    >
+      {displayUsername?.charAt(0)?.toUpperCase()}
+    </Avatar>
+
+    <Typography variant="subtitle1" fontWeight="bold">
+      {displayUsername}
+    </Typography>
+
+    <Typography variant="caption">
+      Technicien
+    </Typography>
+  </Box>
+
+  <Divider />
+
+  {/* PROFIL */}
+  <MenuItem
+    onClick={() => {
+      closeProfile();
+      handleProfileClick();
+    }}
+    sx={{
+      py: 1.2,
+      px: 2,
+      gap: 1,
+      transition: "0.2s",
+      "&:hover": {
+        backgroundColor: "#e3f2fd",
+        transform: "translateX(4px)",
+      },
+    }}
+  >
+    <ListItemIcon sx={{ minWidth: 30 }}>
+      <PersonIcon color="primary" />
+    </ListItemIcon>
+
+    <Typography fontWeight={500}>
+      Mon profil
+    </Typography>
+  </MenuItem>
+
+  {/* LOGOUT */}
+  <MenuItem
+    onClick={() => {
+      closeProfile();
+      onLogout();
+    }}
+    sx={{
+      py: 1.2,
+      px: 2,
+      gap: 1,
+      transition: "0.2s",
+      "&:hover": {
+        backgroundColor: "#ffebee",
+        transform: "translateX(4px)",
+      },
+    }}
+  >
+    <ListItemIcon sx={{ minWidth: 30 }}>
+      <LogoutIcon color="error" />
+    </ListItemIcon>
+
+    <Typography color="error" fontWeight={500}>
+      Déconnexion
+    </Typography>
+  </MenuItem>
+
+</Menu>
       </div>
     </header>
   );
@@ -244,10 +348,6 @@ export default function Topbar({
 Topbar.propTypes = {
   isSidebarOpen: PropTypes.bool,
   onToggleSidebar: PropTypes.func,
-  username: PropTypes.string,
-  notifications: PropTypes.array,
-  notificationsCount: PropTypes.number,
-  onNotificationsOpen: PropTypes.func,
   onUploadClick: PropTypes.func,
   onProfile: PropTypes.func,
   onLogout: PropTypes.func,

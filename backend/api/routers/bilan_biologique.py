@@ -214,3 +214,47 @@ def get_dashboard_stats(
     except Exception as e:
         logger.exception("Erreur stats dashboard patient %d", patient_id)
         raise HTTPException(500, "Erreur lors du calcul des statistiques")
+
+
+from fastapi import UploadFile, File
+import os
+import shutil
+
+from parsers.parser_factory import ParserFactory
+from medical_engine.analyzer import analyze_bilan
+
+
+@router.post("/analyse/{bilan_id}")
+def analyse_bilan_route(bilan_id: int, db: Session = Depends(get_db)):
+    bilan = db.execute(
+        text("SELECT * FROM bioscan.bilan_biologique WHERE bilan_id = :id"),
+        {"id": bilan_id}
+    ).mappings().first()
+
+    if not bilan:
+        raise HTTPException(status_code=404, detail="Bilan introuvable")
+
+    file_path = bilan["nom_fichier"]
+    if not file_path or not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Fichier introuvable sur le serveur")
+
+    parser = ParserFactory.get_parser(file_path)
+    extracted_data = parser.parse(file_path)
+    anomalies = analyze_bilan(extracted_data)
+
+    return {
+        "bilan_id": bilan_id,
+        "anomalies_detectees": anomalies,
+    }
+
+
+@router.post("/upload")
+async def upload_bilan(file: UploadFile = File(...)):
+    upload_folder = "uploads"
+    os.makedirs(upload_folder, exist_ok=True)
+
+    file_path = os.path.join(upload_folder, file.filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {"message": "Fichier uploadé", "file_path": file_path}
