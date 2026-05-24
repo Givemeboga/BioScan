@@ -15,7 +15,7 @@ from .profil import (
     ProfilMedecinUpdate,
 )
 
-from .Notification import (
+from .notification import (
     NotificationOut,
 
 )

@@ -63,7 +63,7 @@ from api.routers.forgot_password   import router as forgot_password_router
 from api.routers.bilan_biologique  import router as bilan_router
 from api.routers.profil_patient    import router as profil_patient_router
 from api.routers.profil_medecin    import router as profil_medecin_router
-from api.routers.Notification      import router as notifications_router
+from api.routers.notification      import router as notifications_router
 from api.routers.dashboard_patient import router as dashboard_patient_router
 from api.routers.rapport_medical   import router as rapport_router
 from api.routers.parametres        import router as parametres_router
@@ -76,6 +76,34 @@ from api.routers.admin_reports     import router as admin_reports_router
 from api.routers.admin_settings    import router as admin_settings_router
 from api.routers.admin_roles       import router as admin_roles_router
 from api.routers.admin_dashboard   import router as admin_dashboard_router
+
+try:
+    from api.routers.analyse_biologique import router as analyse_router
+    app.include_router(analyse_router, prefix="/api")
+    logger.info("[main] analyse_router monté sur /api")
+except ImportError:
+    logger.warning("[main] analyse_biologique router non trouvé, ignoré")
+
+try:
+    from api.routers.rapport_pdf import router as rapport_pdf_router
+    app.include_router(rapport_pdf_router, prefix="/api")
+    logger.info("[main] rapport_pdf_router monté sur /api")
+except ImportError:
+    logger.warning("[main] rapport_pdf router non trouvé, ignoré")
+
+try:
+    from api.routers.document_security import router as document_security_router
+    app.include_router(document_security_router, prefix="/api")
+    logger.info("[main] document_security_router monté sur /api")
+except ImportError:
+    logger.warning("[main] document_security router non trouvé, ignoré")
+
+try:
+    from api.routers.Technicien import router as technicien_router
+    app.include_router(technicien_router)
+    logger.info("[main] technicien_router monté")
+except ImportError:
+    logger.warning("[main] Technicien router non trouvé, ignoré")
 
 # ── ✅ Auth router
 # auth.py n'a PAS de prefix interne → prefix="/api/auth"

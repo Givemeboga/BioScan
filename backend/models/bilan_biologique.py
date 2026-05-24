@@ -15,6 +15,7 @@ class StatutDocument(str, enum.Enum):
 
 class BilanBiologique(Base):
     __tablename__ = "bilan_biologique"
+    __table_args__ = {"schema": "bioscan"}
 
     bilan_id = Column(
         BigInteger,
@@ -39,11 +40,12 @@ class BilanBiologique(Base):
     )
 
     # Relations Foreign Keys
-   # patient_id = Column(
-    #    BigInteger,
-    #     ForeignKey("patient.patient_id", ondelete="SET NULL"),
-    #    nullable=True
-    # )
+    patient_id = Column(
+        BigInteger,
+        ForeignKey("bioscan.patient.patient_id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
 
     technicien_id = Column(
         BigInteger,
@@ -51,27 +53,31 @@ class BilanBiologique(Base):
         nullable=True,
         index=True
     )
-
-
-    #medecin_id = Column(
-    #     BigInteger,
-    #     ForeignKey("medecin_biologiste.medecin_id", ondelete="SET NULL"),
-    #    nullable=True
-    # )
+    medecin_id = Column(
+        BigInteger,
+        ForeignKey("bioscan.medecin_biologiste.medecin_id", ondelete="SET NULL"),
+        nullable=True
+    )
 
     # Relations bidirectionnelles
-    # patient = relationship("Patient", back_populates="bilans")
+    patient = relationship(
+        "Patient",
+        back_populates="bilans",
+        foreign_keys=[patient_id]
+    )
     technicien = relationship(
         "TechnicienBiologiste",
         back_populates="bilans",
         foreign_keys=[technicien_id]
     )
-    #  medecin = relationship("MedecinBiologiste", back_populates="bilans")
+    medecin = relationship("MedecinBiologiste", back_populates="bilans")
     rapports_anomalie = relationship(
         "RapportAnomalie",
         back_populates="bilan",
         cascade="all, delete-orphan"
-    )    # Métadonnées supplémentaires
+    )
+
+    # Métadonnées supplémentaires
     date_mise_a_jour = Column(
         TIMESTAMP,
         server_default=func.now(),

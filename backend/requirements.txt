@@ -24,3 +24,10 @@ pandas
 numpy
 openpyxl
 lxml
+reportlab
+pytesseract
+Pillow
+pyclamd
+cryptography
+aiofiles
+scikit-learn

@@ -27,6 +27,7 @@ class Patient(Base):
 
     # ✅ Relation ORM
     utilisateur = relationship("Utilisateur", back_populates="patient")
+    bilans = relationship("BilanBiologique", back_populates="patient")
 
     def __repr__(self):
         return f"<Patient id={self.patient_id} utilisateur_id={self.utilisateur_id}>"

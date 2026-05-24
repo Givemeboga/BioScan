@@ -11,3 +11,4 @@ class MedecinBiologiste(Base):
     utilisateur_id = Column(BigInteger, ForeignKey("bioscan.utilisateur.utilisateur_id"), unique=True)
 
     utilisateur = relationship("Utilisateur", backref="medecin")
+    bilans = relationship("BilanBiologique", back_populates="medecin")

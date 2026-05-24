@@ -1,15 +1,20 @@
 # backend/utils/security.py
 from datetime import datetime, timedelta
+import os
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
+from dotenv import load_dotenv
 from passlib.context import CryptContext
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from database import get_db
 
-SECRET_KEY = "MON_SECRET_KEY_SUPER_SECRET"
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback-dev-key-change-in-production")
 ALGORITHM  = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24h
 
@@ -64,8 +69,8 @@ def get_current_user(
     row = db.execute(
         text("""
             SELECT u.utilisateur_id, u.statut, COALESCE(r.nom, :role_from_token) AS role_name
-            FROM utilisateur u
-            LEFT JOIN role r ON r.role_id = u.role_id
+            FROM bioscan.utilisateur u
+            LEFT JOIN bioscan.role r ON r.role_id = u.role_id
             WHERE u.utilisateur_id = :uid
         """),
         {"uid": uid, "role_from_token": role or "UNKNOWN"}
