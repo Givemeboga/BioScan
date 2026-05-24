@@ -30,6 +30,4 @@ class TechnicienRead(TechnicienBase):
     derniereActivite: Optional[datetime] = None
     tempsTraitementMoyen: Optional[float] = None
     bilansEnAttente: Optional[int] = None
-
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}

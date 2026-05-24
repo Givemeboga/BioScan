@@ -6,15 +6,11 @@ class RoleRead(BaseModel):
     id: int
     nom: str
     description: Optional[str]
-
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 
 class PermissionRead(BaseModel):
     id: int
     nom_permission: str
     description: Optional[str]
-
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}

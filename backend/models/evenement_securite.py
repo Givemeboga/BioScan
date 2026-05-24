@@ -1,8 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.ext.declarative import declarative_base
 import datetime
 
-Base = declarative_base()
+from database import Base
 
 
 class EvenementSecurite(Base):

@@ -26,6 +26,4 @@ class MedecinRead(MedecinBase):
     status: Optional[str] = None
     dateInscription: Optional[datetime] = None
     derniereActivite: Optional[datetime] = None
-
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}

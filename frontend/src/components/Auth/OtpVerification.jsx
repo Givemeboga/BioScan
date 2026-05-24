@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import './OtpVerification.css';
 import logoLocal from '../../assets/logo bioscan1.png';
 
+const API_BASE_URL = (process.env.REACT_APP_API_URL || '').replace(/\/$/, '');
+
 export default function OtpVerification() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -29,7 +31,7 @@ export default function OtpVerification() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:8000/auth/send-otp', {
+      const res = await fetch(`${API_BASE_URL || ''}/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, raison: 'Inscription' })
@@ -105,7 +107,7 @@ export default function OtpVerification() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:8000/auth/verify-otp', {
+      const res = await fetch(`${API_BASE_URL || ''}/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code })

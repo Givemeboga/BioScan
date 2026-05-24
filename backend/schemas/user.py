@@ -25,6 +25,4 @@ class UserUpdate(UserBase):
 class UserRead(UserBase):
     id: int
     dateCreation: Optional[datetime]
-
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}

@@ -4,6 +4,8 @@ import './SignUp.css';
 import logoLocal from '../../assets/logo bioscan1.png';
 import logogoogle from '../../assets/google.png';
 
+const API_BASE_URL = (process.env.REACT_APP_API_URL || '').replace(/\/$/, '');
+
 export default function SignUp() {
   const navigate = useNavigate();
   
@@ -78,7 +80,7 @@ const handleSubmit = async (e) => {
       confirm_password: formData.confirmPassword
     };
 
-const response = await fetch("http://localhost:8000/api/profil1/auth/register/patient", {
+const response = await fetch(`${API_BASE_URL || ''}/api/profil1/auth/register/patient`, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(payload)

@@ -1,10 +1,33 @@
 // API Base Configuration
 const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 
+const normalizeEndpoint = (endpoint) => {
+  if (!endpoint) {
+    return '';
+  }
+
+  if (/^https?:\/\//i.test(endpoint)) {
+    return endpoint;
+  }
+
+  return endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+};
+
+const buildUrl = (endpoint) => {
+  const normalizedEndpoint = normalizeEndpoint(endpoint);
+
+  if (!API_BASE_URL) {
+    return normalizedEndpoint;
+  }
+
+  const normalizedBase = API_BASE_URL.replace(/\/$/, '');
+  return `${normalizedBase}${normalizedEndpoint}`;
+};
+
 export const apiClient = {
   // Helper function for API calls
   async request(endpoint, options = {}) {
-    const url = API_BASE_URL ? `${API_BASE_URL}${endpoint}` : endpoint;
+    const url = buildUrl(endpoint);
     const defaultOptions = {
       headers: {
         'Content-Type': 'application/json',

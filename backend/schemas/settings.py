@@ -28,6 +28,4 @@ class SettingsRead(BaseModel):
     security: SecuritySettings
     ai: AISettings
     notifications: NotificationSettings
-
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}

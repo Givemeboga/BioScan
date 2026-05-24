@@ -6,11 +6,13 @@ from database import get_db
 from schemas.user import UserRead
 from pydantic import BaseModel
 import logging
-import hashlib
 from datetime import datetime
 
+from models.utilisateur import pwd_context
+from utils.security import get_current_user
+
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/admin/users", tags=["Admin Users"])
+router = APIRouter(prefix="/api/admin/users", tags=["Admin Users"], dependencies=[Depends(get_current_user)])
 
 # Request models
 class UserCreateRequest(BaseModel):
@@ -36,8 +38,8 @@ class UserStatusRequest(BaseModel):
     status: str
 
 def hash_password(password: str) -> str:
-    """Simple password hashing - sha256"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash password using pbkdf2_sha256."""
+    return pwd_context.hash(password)
 
 def get_role_id(db: Session, role_name: str) -> Optional[int]:
     """Get role ID from role name"""
