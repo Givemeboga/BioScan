@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from database import get_db
-from schemas.Notification import NotificationList, NotificationOut, NotificationCreate
+from schemas.notification import NotificationList, NotificationOut, NotificationCreate
 from utils.security import get_current_user
 
 router = APIRouter(
