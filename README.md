@@ -1,6 +1,19 @@
-# BioScan
+<div align="center">
+  <img src="assets/logo.png" alt="BioScan Logo" width="200"/>
 
-**Hybrid Cloud Platform for Medical Data Analysis and Security**
+  <h1>BioScan</h1>
+  <p><strong>Hybrid Cloud Platform for Medical Data Analysis and Security</strong></p>
+
+  <p>
+    <img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=flat-square&logo=fastapi" />
+    <img src="https://img.shields.io/badge/Frontend-React%2018-61DAFB?style=flat-square&logo=react" />
+    <img src="https://img.shields.io/badge/Database-PostgreSQL-4169E1?style=flat-square&logo=postgresql" />
+    <img src="https://img.shields.io/badge/Security-JWT%20%7C%20AES--256-red?style=flat-square&logo=letsencrypt" />
+    <img src="https://img.shields.io/badge/Cloud-Render%20%2F%20Railway-black?style=flat-square&logo=render" />
+  </p>
+</div>
+
+---
 
 BioScan is an intelligent web platform that automatically analyzes biological lab results and secures sensitive medical documents. Built as an academic project by a team of 5 students specializing in Cloud Computing and Cybersecurity.
 
