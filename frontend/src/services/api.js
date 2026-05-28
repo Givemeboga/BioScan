@@ -6,6 +6,9 @@ export const apiClient = {
   async request(endpoint, options = {}) {
     const url = API_BASE_URL ? `${API_BASE_URL}${endpoint}` : endpoint;
     const defaultOptions = {
+      // Toujours récupérer des données fraîches — évite que le navigateur
+      // serve une réponse GET en cache (dashboard/stats périmés).
+      cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
       },

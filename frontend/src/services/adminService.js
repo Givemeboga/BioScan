@@ -141,6 +141,10 @@ export const dashboardService = {
     return apiClient.get('/api/admin/stats/account-status');
   },
 
+  async getRolesBreakdown() {
+    return apiClient.get('/api/admin/stats/roles-breakdown');
+  },
+
   async getRecentActivities(limit = 10) {
     return apiClient.get('/api/admin/stats/recent-activities', { limit });
   },

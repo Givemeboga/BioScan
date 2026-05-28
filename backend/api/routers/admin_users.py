@@ -80,6 +80,10 @@ async def list_users(
     if status:
         query = query.filter(Utilisateur.statut == status)
 
+    # Les comptes les plus récents en premier (les nouvelles inscriptions
+    # apparaissent en haut de la liste plutôt que noyées dans la pagination)
+    query = query.order_by(Utilisateur.utilisateur_id.desc())
+
     # Apply pagination
     offset = (page - 1) * limit
     users = query.offset(offset).limit(limit).all()
