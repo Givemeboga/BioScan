@@ -28,48 +28,54 @@ class TokenResponse(BaseModel):
 @router.post("/login", response_model=TokenResponse)
 def login(user: LoginRequest, db: Session = Depends(get_db)):
     try:
+        # Newest account wins when duplicate emails exist
         row = db.execute(text("""
             SELECT
                 u.utilisateur_id,
                 u.email,
                 u.mot_de_passe,
-                u.statut::text          AS statut,
+                u.statut::text             AS statut,
                 COALESCE(r.nom, 'UNKNOWN') AS role_name
             FROM bioscan.utilisateur u
             LEFT JOIN bioscan.role r ON r.role_id = u.role_id
             WHERE LOWER(u.email) = LOWER(:email)
+            ORDER BY u.utilisateur_id DESC
+            LIMIT 1
         """), {"email": user.email.strip()}).mappings().first()
 
         if not row:
+            logger.warning("[login] email not found: %s", user.email)
             raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
 
-        # Debug
-        logger.info("[login] email=%s statut=%r role=%s", user.email, row["statut"], row["role_name"])
+        logger.info("[login] found user_id=%s statut=%s role=%s hash_prefix=%s",
+                    row["utilisateur_id"], row["statut"], row["role_name"],
+                    (row["mot_de_passe"] or "")[:20])
+
+        if not row["mot_de_passe"]:
+            raise HTTPException(status_code=500, detail="Aucun mot de passe enregistré.")
 
         # ── Vérifier mot de passe ─────────────────────────────
         from passlib.context import CryptContext
         import hashlib
-        
+
         pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
-        
-        if not row["mot_de_passe"]:
-            raise HTTPException(status_code=500, detail="Aucun mot de passe enregistré.")
+        ok = False
 
         try:
-            # Try passlib verification first (PBKDF2, bcrypt)
             ok = pwd_context.verify(user.password.strip(), row["mot_de_passe"])
-        except:
-            # Fall back to plain SHA256 for legacy test users
+            logger.info("[login] passlib verify → %s", ok)
+        except Exception as e:
+            logger.warning("[login] passlib verify raised %s — trying SHA256 fallback", e)
             try:
                 provided_hash = hashlib.sha256(user.password.strip().encode()).hexdigest()
-                ok = provided_hash == row["mot_de_passe"]
-            except:
+                ok = (provided_hash == row["mot_de_passe"])
+                logger.info("[login] SHA256 fallback → %s", ok)
+            except Exception as e2:
+                logger.error("[login] SHA256 fallback also failed: %s", e2)
                 ok = False
-        
-        if not ok and not ok:  # Both checks failed
-            raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
 
         if not ok:
+            logger.warning("[login] password mismatch for user_id=%s", row["utilisateur_id"])
             raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
 
         # ── Vérifier statut — cast en str pour éviter pb enum ─
@@ -122,8 +128,8 @@ def debug_users(db: Session = Depends(get_db)):
     try:
         rows = db.execute(text("""
             SELECT u.utilisateur_id, u.email, u.statut::text as statut, r.nom as role
-            FROM utilisateur u
-            LEFT JOIN role r ON r.role_id = u.role_id
+            FROM bioscan.utilisateur u
+            LEFT JOIN bioscan.role r ON r.role_id = u.role_id
             LIMIT 20
         """)).mappings().all()
         return {"count": len(rows), "users": [dict(r) for r in rows]}

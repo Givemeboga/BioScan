@@ -17,46 +17,25 @@ const getToken = () =>
   sessionStorage.getItem('token') ||
   null;
 
-// ── Horloge animée ──────────────────────────────────────────
-function LiveClock() {
+// ── Badge date / heure (sobre) ──────────────────────────────
+function DateBadge() {
   const [time, setTime] = useState(new Date());
   useEffect(() => {
     const id = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
 
-  const h = time.getHours() % 12;
-  const m = time.getMinutes();
-  const s = time.getSeconds();
+  const dateStr = time.toLocaleDateString('fr-FR', {
+    weekday: 'long', day: 'numeric', month: 'long',
+  });
 
   return (
-    <div className="wall-clock">
-      <svg viewBox="0 0 100 100" className="clock-svg">
-        <circle cx="50" cy="50" r="48" className="clock-bg" />
-        {Array.from({ length: 12 }).map((_, i) => {
-          const angle = (i * 30) - 90;
-          const rad   = (angle * Math.PI) / 180;
-          return (
-            <text key={i}
-              x={50 + 38 * Math.cos(rad)} y={50 + 38 * Math.sin(rad)}
-              className="clock-number" textAnchor="middle" dominantBaseline="middle">
-              {i === 0 ? 12 : i}
-            </text>
-          );
-        })}
-        <line x1="50" y1="50" x2="50" y2="30" className="hand hour"
-          transform={`rotate(${h * 30 + m * 0.5}, 50, 50)`} />
-        <line x1="50" y1="50" x2="50" y2="18" className="hand minute"
-          transform={`rotate(${m * 6 + s * 0.1}, 50, 50)`} />
-        <line x1="50" y1="50" x2="50" y2="14" className="hand second"
-          transform={`rotate(${s * 6}, 50, 50)`} />
-        <circle cx="50" cy="50" r="3" className="center-dot" />
-      </svg>
-      <div className="clock-digital">
+    <div className="date-badge">
+      <span className="date-badge-time">
         {String(time.getHours()).padStart(2, '0')}:
-        {String(m).padStart(2, '0')}:
-        {String(s).padStart(2, '0')}
-      </div>
+        {String(time.getMinutes()).padStart(2, '0')}
+      </span>
+      <span className="date-badge-date">{dateStr}</span>
     </div>
   );
 }
@@ -172,11 +151,10 @@ export default function DashboardHome() {
           <h1>
             {getGreeting()}
             {userName && <span className="greeting-name"> {userName}</span>}
-            <span className="wave"> 👋</span>
           </h1>
           <p className="greeting-sub">Vos analyses médicales – Laboratoire BioScan</p>
         </div>
-        <LiveClock />
+        <DateBadge />
       </div>
 
       <div className="stats-grid">
@@ -216,7 +194,7 @@ export default function DashboardHome() {
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
               <Tooltip />
-              <Bar dataKey="count" name="Bilans" fill="#4f46e5" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="count" name="Bilans" fill="#2563eb" radius={[6, 6, 0, 0]} maxBarSize={44} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -230,8 +208,8 @@ export default function DashboardHome() {
               <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="validés" stroke="#10b981" strokeWidth={3} dot={false} />
-              <Line type="monotone" dataKey="attente" stroke="#f59e0b" strokeWidth={3} dot={false} />
+              <Line type="monotone" dataKey="validés" stroke="#0d9488" strokeWidth={2.5} dot={false} />
+              <Line type="monotone" dataKey="attente" stroke="#f59e0b" strokeWidth={2.5} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>

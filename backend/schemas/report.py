@@ -21,5 +21,4 @@ class ReportRead(ReportBase):
     dateCreation: Optional[datetime]
     dateValidation: Optional[datetime]
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}

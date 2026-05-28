@@ -22,6 +22,7 @@ export default function SignUp() {
   const [showConfirmPassword,  setShowConfirmPassword]  = useState(false);
   const [submitting,           setSubmitting]           = useState(false);
   const [serverError,          setServerError]          = useState('');
+  const [serverWarning,        setServerWarning]        = useState('');
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -60,6 +61,7 @@ export default function SignUp() {
   const handleSubmit = async (evt) => {
     evt.preventDefault();
     setServerError('');
+    setServerWarning('');
     if (!validateForm()) return;
 
     setSubmitting(true);
@@ -83,6 +85,8 @@ export default function SignUp() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || `Erreur ${res.status}`);
 
+      if (data.warning) setServerWarning(data.warning);
+
       localStorage.setItem('email_register', formData.email.trim());
       navigate('/otp');
 
@@ -99,6 +103,16 @@ export default function SignUp() {
         <img src={logoLocal} alt="BioScan" className="logo-img" />
         <h2 className="auth-title">Créer un compte</h2>
         <p className="subtitle">Rejoignez BioScan dès maintenant</p>
+
+        {serverWarning && (
+          <div className="warning-message" role="alert" style={{
+            background: '#fff8e1', border: '1px solid #f9a825',
+            color: '#7a5800', borderRadius: 6, padding: '10px 14px',
+            marginBottom: 12, fontSize: 14
+          }}>
+            ⚠️ {serverWarning}
+          </div>
+        )}
 
         {serverError && (
           <div className="error-message" role="alert">

@@ -55,7 +55,7 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
     """
     # ── Chercher l'utilisateur par email (SQL pur) ────────────
     row = db.execute(
-        text("SELECT utilisateur_id, email FROM utilisateur WHERE LOWER(email) = LOWER(:email)"),
+        text("SELECT utilisateur_id, email FROM bioscan.utilisateur WHERE LOWER(email) = LOWER(:email)"),
         {"email": request.email.strip()}
     ).mappings().first()
 
@@ -69,7 +69,7 @@ def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db
     # ── Mettre à jour en DB ───────────────────────────────────
     try:
         db.execute(
-            text("UPDATE utilisateur SET mot_de_passe = :pwd WHERE utilisateur_id = :uid"),
+            text("UPDATE bioscan.utilisateur SET mot_de_passe = :pwd WHERE utilisateur_id = :uid"),
             {"pwd": hashed_password, "uid": row["utilisateur_id"]}
         )
         db.commit()

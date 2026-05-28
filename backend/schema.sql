@@ -73,17 +73,17 @@ CREATE TABLE patient (
 -- Migration : table patient_preferences
 -- À exécuter une seule fois dans votre base PostgreSQL
 
-CREATE TABLE IF NOT EXISTS patient_preferences (
-    patient_id    INTEGER PRIMARY KEY REFERENCES patient(patient_id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS bioscan.patient_preferences (
+    patient_id    INTEGER PRIMARY KEY REFERENCES bioscan.patient(patient_id) ON DELETE CASCADE,
     notifications BOOLEAN NOT NULL DEFAULT true,
     newsletter    BOOLEAN NOT NULL DEFAULT false,
     updated_at    TIMESTAMP DEFAULT NOW()
 );
 
 -- Insérer des préférences par défaut pour tous les patients existants
-INSERT INTO patient_preferences (patient_id, notifications, newsletter)
+INSERT INTO bioscan.patient_preferences (patient_id, notifications, newsletter)
 SELECT patient_id, true, false
-FROM patient
+FROM bioscan.patient
 ON CONFLICT (patient_id) DO NOTHING;
 /* =========================
    BILAN BIOLOGIQUE

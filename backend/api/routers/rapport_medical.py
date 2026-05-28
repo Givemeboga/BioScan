@@ -46,10 +46,10 @@ def get_rapports(
             END AS age,
             bb.type        AS bilan_type,
             bb.nom_fichier AS bilan_nom_fichier
-        FROM rapport_medical r
-        INNER JOIN patient          p  ON r.patient_id  = p.patient_id
-        INNER JOIN utilisateur      u  ON p.utilisateur_id = u.utilisateur_id
-        LEFT  JOIN bilan_biologique bb ON r.bilan_id    = bb.bilan_id
+        FROM bioscan.rapport_medical r
+        INNER JOIN bioscan.patient          p  ON r.patient_id  = p.patient_id
+        INNER JOIN bioscan.utilisateur      u  ON p.utilisateur_id = u.utilisateur_id
+        LEFT  JOIN bioscan.bilan_biologique bb ON r.bilan_id    = bb.bilan_id
     """
 
     params = {}

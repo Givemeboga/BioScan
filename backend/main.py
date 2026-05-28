@@ -160,7 +160,7 @@ app.include_router(admin_techniciens_router, prefix="/api/admin/techniciens")
 app.include_router(admin_reports_router,     prefix="/api/admin/reports")
 app.include_router(admin_settings_router,    prefix="/api/admin/settings")
 app.include_router(admin_roles_router,       prefix="/api/admin/roles")
-app.include_router(admin_dashboard_router,   prefix="/api/admin/dashboard")
+app.include_router(admin_dashboard_router)   # router already declares prefix="/api/admin/stats"
 
 # ── Health ────────────────────────────────────────────────────
 @app.get("/", tags=["Root"])

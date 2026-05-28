@@ -18,12 +18,12 @@ async function fetchJSON(url, options = {}) {
     try {
       const data = await res.json();
       if (data.detail) errorMessage = data.detail;
-    } catch {}
+    } catch { /* response body is not JSON — keep default message */ }
     throw new Error(errorMessage);
   }
 
   // Certaines routes DELETE renvoient juste un 200 sans body
-  if (res.status === 204 || res.status === 200 && res.headers.get("Content-Length") === "0") {
+  if (res.status === 204 || (res.status === 200 && res.headers.get("Content-Length") === "0")) {
     return true;
   }
 

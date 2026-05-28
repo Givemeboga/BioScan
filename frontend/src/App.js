@@ -60,7 +60,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Routes publiques */}
-        <Route path="/" element={<Welcome />} />
+        <Route path="/" element={<VisiteurPage />} />
+        <Route path="/welcome" element={<Welcome />} />
         <Route path="/f" element={<Welcome />} />
         <Route path="/sign-in" element={<AuthCard />} />
         <Route path="/signup" element={<SignUp />} />
@@ -129,6 +130,15 @@ function App() {
           <Route path="parametres" element={<Parametres />} />
           <Route path="profil" element={<Profil />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route
+            path="messages"
+            element={
+              <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
+                <h2 style={{ marginBottom: 8 }}>Messages</h2>
+                <p>Fonctionnalité bientôt disponible.</p>
+              </div>
+            }
+          />
         </Route>
 
         {/* Fallbacks */}

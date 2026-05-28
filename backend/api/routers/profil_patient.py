@@ -67,8 +67,8 @@ def fetch_profil_by_user_id(db: Session, user_id: int) -> Optional[dict]:
             u.adresse,
             TO_CHAR(u.date_naissance, 'YYYY-MM-DD') AS date_naissance,
             u.photo_url
-        FROM utilisateur u
-        LEFT JOIN patient p ON p.utilisateur_id = u.utilisateur_id
+        FROM bioscan.utilisateur u
+        LEFT JOIN bioscan.patient p ON p.utilisateur_id = u.utilisateur_id
         WHERE u.utilisateur_id = :user_id
     """
     row = db.execute(text(sql), {"user_id": user_id}).mappings().first()
@@ -126,8 +126,8 @@ def get_profil(
             u.adresse,
             TO_CHAR(u.date_naissance, 'YYYY-MM-DD') AS date_naissance,
             u.photo_url
-        FROM patient p
-        JOIN utilisateur u ON u.utilisateur_id = p.utilisateur_id
+        FROM bioscan.patient p
+        JOIN bioscan.utilisateur u ON u.utilisateur_id = p.utilisateur_id
         WHERE p.patient_id = :patient_id
     """
     row = db.execute(text(sql), {"patient_id": patient_id}).mappings().first()
@@ -167,8 +167,8 @@ async def update_profil(
     check = db.execute(
         text("""
             SELECT u.utilisateur_id, u.photo_url
-            FROM patient p
-            JOIN utilisateur u ON u.utilisateur_id = p.utilisateur_id
+            FROM bioscan.patient p
+            JOIN bioscan.utilisateur u ON u.utilisateur_id = p.utilisateur_id
             WHERE p.patient_id = :pid
         """),
         {"pid": patient_id}
@@ -264,7 +264,7 @@ async def update_profil(
     try:
         updated_row = db.execute(
             text(f"""
-                UPDATE utilisateur
+                UPDATE bioscan.utilisateur
                 SET {', '.join(fields)}
                 WHERE utilisateur_id = :utilisateur_id
                 RETURNING

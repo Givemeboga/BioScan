@@ -14,7 +14,7 @@ router = APIRouter(
     tags=["parametres-patient"]
 )
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -38,9 +38,9 @@ def get_parametres(
             u.adresse,
             COALESCE(pp.notifications, true)  AS notifications,
             COALESCE(pp.newsletter,    false) AS newsletter
-        FROM utilisateur u
-        JOIN patient p ON p.utilisateur_id = u.utilisateur_id
-        LEFT JOIN patient_preferences pp ON pp.patient_id = p.patient_id
+        FROM bioscan.utilisateur u
+        JOIN bioscan.patient p ON p.utilisateur_id = u.utilisateur_id
+        LEFT JOIN bioscan.patient_preferences pp ON pp.patient_id = p.patient_id
         WHERE u.utilisateur_id = :user_id
     """
 
@@ -76,8 +76,8 @@ def update_parametres(
     check = db.execute(
         text("""
             SELECT u.utilisateur_id, p.patient_id
-            FROM utilisateur u
-            JOIN patient p ON p.utilisateur_id = u.utilisateur_id
+            FROM bioscan.utilisateur u
+            JOIN bioscan.patient p ON p.utilisateur_id = u.utilisateur_id
             WHERE u.utilisateur_id = :user_id
         """),
         {"user_id": caller_id}
@@ -112,7 +112,7 @@ def update_parametres(
     if u_fields:
         db.execute(
             text(f"""
-                UPDATE utilisateur
+                UPDATE bioscan.utilisateur
                 SET {', '.join(u_fields)}
                 WHERE utilisateur_id = :utilisateur_id
             """),
@@ -126,7 +126,7 @@ def update_parametres(
 
         db.execute(
             text("""
-                INSERT INTO patient_preferences (patient_id, notifications, newsletter)
+                INSERT INTO bioscan.patient_preferences (patient_id, notifications, newsletter)
                 VALUES (:patient_id, :notifications, :newsletter)
                 ON CONFLICT (patient_id) DO UPDATE
                 SET notifications = EXCLUDED.notifications,
@@ -158,7 +158,7 @@ def change_password(
     print(f"[DEBUG parametres] PUT /password | caller_id={caller_id}")
 
     row = db.execute(
-        text("SELECT mot_de_passe FROM utilisateur WHERE utilisateur_id = :uid"),
+        text("SELECT mot_de_passe FROM bioscan.utilisateur WHERE utilisateur_id = :uid"),
         {"uid": caller_id}
     ).mappings().first()
 
@@ -180,7 +180,7 @@ def change_password(
 
     try:
         db.execute(
-            text("UPDATE utilisateur SET mot_de_passe = :hash WHERE utilisateur_id = :uid"),
+            text("UPDATE bioscan.utilisateur SET mot_de_passe = :hash WHERE utilisateur_id = :uid"),
             {"hash": new_hash, "uid": caller_id}
         )
         db.commit()

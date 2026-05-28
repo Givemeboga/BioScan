@@ -35,8 +35,7 @@ class TechnicienRead(TechnicienBase):
     tempsTraitementMoyen: Optional[float] = None
     bilansEnAttente: Optional[int] = None
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 
 class TechnicienResponse(BaseModel):
@@ -47,8 +46,7 @@ class TechnicienResponse(BaseModel):
     matricule: Optional[str] = None
     photo_url: Optional[str] = None
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 
 class PhotoResponse(BaseModel):

@@ -39,9 +39,9 @@ def get_bilans(
                 THEN EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.date_naissance))::integer 
                 ELSE NULL 
             END AS age
-        FROM bilan_biologique bb
-        LEFT JOIN patient p          ON bb.patient_id = p.patient_id
-        LEFT JOIN utilisateur u      ON p.utilisateur_id = u.utilisateur_id
+        FROM bioscan.bilan_biologique bb
+        LEFT JOIN bioscan.patient p          ON bb.patient_id = p.patient_id
+        LEFT JOIN bioscan.utilisateur u      ON p.utilisateur_id = u.utilisateur_id
         WHERE 1 = 1
     """
 

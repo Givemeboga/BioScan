@@ -19,8 +19,7 @@ class RoleRead(BaseModel):
     nom:         str
     description: Optional[str] = None
 
-    class Config:
-        from_attributes = True  # Pydantic v2
+    model_config = {"from_attributes": True}  # Pydantic v2
 
 
 class PermissionRead(BaseModel):
@@ -28,8 +27,7 @@ class PermissionRead(BaseModel):
     nom_permission: str
     description:    Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class RoleWithPermissions(BaseModel):
@@ -38,5 +36,4 @@ class RoleWithPermissions(BaseModel):
     description: Optional[str]       = None
     permissions: List[PermissionRead] = []
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

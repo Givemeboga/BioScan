@@ -232,7 +232,6 @@ export default function PatientLayout() {
                       />
                       <div className="patient-dropdown-user-info">
                         <span className="patient-dropdown-name">{userName || 'Patient'}</span>
-                        <span className="patient-dropdown-role">Patient</span>
                       </div>
                     </div>
 

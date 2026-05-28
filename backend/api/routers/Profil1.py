@@ -25,9 +25,10 @@ class UserCreate(BaseModel):
 
 
 class UserResponse(BaseModel):
-    id:    int
-    nom:   str
-    email: str
+    id:      int
+    nom:     str
+    email:   str
+    warning: Optional[str] = None
 
 
 # ── POST /api/profil1/register/patient ───────────────────────
@@ -39,13 +40,12 @@ def register_patient(user: UserCreate, db: Session = Depends(get_db)):
     if len(user.password) < 8:
         raise HTTPException(status_code=400, detail="Mot de passe trop court (minimum 8 caractères).")
 
-    # Email déjà utilisé ?
+    # Email déjà utilisé ? — on avertit mais on n'empêche pas la création
     existing = db.execute(
         text("SELECT utilisateur_id FROM bioscan.utilisateur WHERE LOWER(email) = LOWER(:email)"),
         {"email": user.email.strip()}
     ).mappings().first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Email déjà utilisé.")
+    email_warning = "Cet email est déjà associé à un compte existant." if existing else None
 
     # Récupérer role_id Patient
     role = db.execute(
@@ -87,6 +87,7 @@ def register_patient(user: UserCreate, db: Session = Depends(get_db)):
             id=new_user["utilisateur_id"],
             nom=new_user["nom_utilisateur"],
             email=new_user["email"],
+            warning=email_warning,
         )
 
     except HTTPException:
@@ -101,7 +102,7 @@ def register_patient(user: UserCreate, db: Session = Depends(get_db)):
 @router.get("/profil/{user_id}", response_model=UserResponse)
 def get_profil(user_id: int, db: Session = Depends(get_db)):
     row = db.execute(
-        text("SELECT utilisateur_id, nom_utilisateur, email FROM utilisateur WHERE utilisateur_id = :uid"),
+        text("SELECT utilisateur_id, nom_utilisateur, email FROM bioscan.utilisateur WHERE utilisateur_id = :uid"),
         {"uid": user_id}
     ).mappings().first()
     if not row:

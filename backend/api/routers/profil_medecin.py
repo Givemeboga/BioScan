@@ -49,7 +49,7 @@ def _fetch_profil(user_id: int, db: Session) -> dict:
                 u.date_generation,
                 u.photo_url,
                 u.role_id
-            FROM utilisateur u
+            FROM bioscan.utilisateur u
             WHERE u.utilisateur_id = :uid
         """),
         {"uid": user_id}

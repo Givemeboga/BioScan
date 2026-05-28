@@ -48,8 +48,7 @@ class UserResponse(BaseModel):
     nom:   str
     email: str
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class UserUpdate(BaseModel):
@@ -58,5 +57,4 @@ class UserUpdate(BaseModel):
     adresse:        Optional[str]  = None
     date_naissance: Optional[date] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

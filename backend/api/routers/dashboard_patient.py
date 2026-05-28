@@ -23,7 +23,7 @@ def _get_stats(db: Session, patient_id: int) -> dict:
             COUNT(*) FILTER (WHERE EXTRACT(YEAR  FROM date_generation) = :annee)  AS cette_annee,
             COUNT(*) FILTER (WHERE EXTRACT(YEAR  FROM date_generation) = :annee
                                AND EXTRACT(MONTH FROM date_generation) = :mois)   AS ce_mois
-        FROM bilan_biologique
+        FROM bioscan.bilan_biologique
         WHERE patient_id = :pid
     """), {"pid": patient_id, "annee": now.year, "mois": now.month}).mappings().first()
 
@@ -39,7 +39,7 @@ def _get_stats(db: Session, patient_id: int) -> dict:
 def _get_bilans_recents(db: Session, patient_id: int) -> list:
     rows = db.execute(text("""
         SELECT bilan_id, type, statut, date_generation, nom_fichier
-        FROM bilan_biologique
+        FROM bioscan.bilan_biologique
         WHERE patient_id = :pid
         ORDER BY date_generation DESC NULLS LAST
         LIMIT 5
@@ -52,7 +52,7 @@ def _get_monthly(db: Session, patient_id: int) -> list:
         SELECT
             TO_CHAR(date_generation, 'Mon YY') AS month,
             COUNT(*) AS count
-        FROM bilan_biologique
+        FROM bioscan.bilan_biologique
         WHERE patient_id = :pid
           AND date_generation >= NOW() - INTERVAL '6 months'
         GROUP BY TO_CHAR(date_generation, 'Mon YY'), EXTRACT(YEAR FROM date_generation), EXTRACT(MONTH FROM date_generation)
@@ -70,7 +70,7 @@ def get_dashboard_me(
     user_id = current_user.get("user_id") or current_user.get("utilisateur_id")
 
     patient = db.execute(
-        text("SELECT patient_id FROM patient WHERE utilisateur_id = :uid"),
+        text("SELECT patient_id FROM bioscan.patient WHERE utilisateur_id = :uid"),
         {"uid": user_id}
     ).mappings().first()
 
@@ -101,7 +101,7 @@ def get_dashboard_by_user(
         raise HTTPException(status_code=403, detail="Accès non autorisé")
 
     patient = db.execute(
-        text("SELECT patient_id FROM patient WHERE utilisateur_id = :uid"),
+        text("SELECT patient_id FROM bioscan.patient WHERE utilisateur_id = :uid"),
         {"uid": utilisateur_id}
     ).mappings().first()
 
