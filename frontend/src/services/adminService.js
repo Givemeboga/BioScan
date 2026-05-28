@@ -112,6 +112,21 @@ export const reportsService = {
   },
 };
 
+// NOTIFICATIONS (flux d'événements système / sécurité)
+export const notificationsService = {
+  async getNotifications(params = {}) {
+    return apiClient.get('/api/admin/notifications', params);
+  },
+
+  async getCount() {
+    return apiClient.get('/api/admin/notifications/count');
+  },
+
+  async deleteNotification(evenementId) {
+    return apiClient.delete(`/api/admin/notifications/${evenementId}`);
+  },
+};
+
 // DASHBOARD Stats
 export const dashboardService = {
   async getOverview() {

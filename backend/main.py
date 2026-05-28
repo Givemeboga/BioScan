@@ -76,6 +76,7 @@ from api.routers.admin_reports     import router as admin_reports_router
 from api.routers.admin_settings    import router as admin_settings_router
 from api.routers.admin_roles       import router as admin_roles_router
 from api.routers.admin_dashboard   import router as admin_dashboard_router
+from api.routers.admin_notifications import router as admin_notifications_router
 
 try:
     from api.routers.analyse_biologique import router as analyse_router
@@ -165,6 +166,7 @@ app.include_router(admin_reports_router)     # prefix="/api/admin/reports"
 app.include_router(admin_settings_router)    # prefix="/api/admin/settings"
 app.include_router(admin_roles_router)       # prefix="/api/admin/roles"
 app.include_router(admin_dashboard_router)   # prefix="/api/admin/stats"
+app.include_router(admin_notifications_router) # prefix="/api/admin/notifications"
 
 # ── Health ────────────────────────────────────────────────────
 @app.get("/", tags=["Root"])
