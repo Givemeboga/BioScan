@@ -20,6 +20,10 @@ engine = create_engine(
     DATABASE_URL,
     echo=False,
     pool_pre_ping=True,
+    # Résout les requêtes ORM non qualifiées vers le schéma `bioscan`
+    # (les vraies données s'y trouvent ; `public` ne contient que des stubs de test).
+    # Les requêtes SQL explicites `bioscan.*` / `public.*` restent inchangées.
+    connect_args={"options": "-csearch_path=bioscan,public"},
 )
 
 SessionLocal = sessionmaker(

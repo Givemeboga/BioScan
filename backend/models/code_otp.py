@@ -22,6 +22,7 @@ class CodeOTP(Base):
     date_generation = Column(DateTime, default=datetime.datetime.utcnow)
 
     utilisateur_id = Column(BigInteger, ForeignKey("bioscan.utilisateur.utilisateur_id"), nullable=False)
-    utilisateur = relationship("Utilisateur", back_populates="otps")
+    # backref crée `Utilisateur.otps` (1-N) uniquement lorsque CodeOTP est importé
+    utilisateur = relationship("Utilisateur", backref="otps")
 
     expiration = Column(DateTime, nullable=False)

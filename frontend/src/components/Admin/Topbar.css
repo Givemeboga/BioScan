@@ -1,0 +1,179 @@
+/* ══════════════════════════════════════════════════════════════
+   Admin Topbar.css — Modern medical
+   Aligné sur le dashboard patient : blanc, bordures fines,
+   accents bleu #2563eb / teal #0d9488, ombres légères
+   ══════════════════════════════════════════════════════════════ */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 64px;
+  background: #ffffff;
+  border-bottom: 1px solid #e7eef5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: padding 0.2s ease;
+}
+
+/* ── Gauche ──────────────────────────────────────────────────── */
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.btn-menu {
+  width: 38px; height: 38px;
+  border: none; background: transparent;
+  border-radius: 9px;
+  color: #475569;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.18s, color 0.18s;
+  flex-shrink: 0;
+}
+.btn-menu:hover { background: #f1f5f9; color: #0f172a; }
+
+.page-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* fine barre d'accent dégradée à gauche du titre */
+.page-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px; height: 20px;
+  background: linear-gradient(to bottom, #2563eb, #0d9488);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Droite ──────────────────────────────────────────────────── */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── Bouton notifications ────────────────────────────────────── */
+.topbar-btn {
+  position: relative;
+  width: 40px; height: 40px;
+  border: 1px solid #e7eef5;
+  background: #f8fafc;
+  border-radius: 11px;
+  color: #475569;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.18s, color 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+.topbar-btn:hover {
+  background: #e0edff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.12);
+}
+
+.topbar-btn .icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -7px; right: -7px;
+  min-width: 18px; height: 18px;
+  background: #ef4444;
+  color: white;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 4px;
+  border: 2px solid white;
+}
+
+/* ── Profil utilisateur ──────────────────────────────────────── */
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px 5px 5px;
+  border-radius: 12px;
+  border: 1px solid #e7eef5;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+.topbar-user:hover {
+  background: #e0edff;
+  border-color: #bfdbfe;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+}
+
+/* avatar du topbar — taille fixe, écrase toute règle globale .avatar */
+.topbar-user .avatar {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #dbeafe;
+  flex-shrink: 0;
+  background: none;
+  box-shadow: none;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.topbar-user .user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.topbar-user .username {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.topbar-user .user-role {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.chevron-down {
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .topbar { padding: 0 14px; }
+  .topbar-user .user-info { display: none; }
+  .chevron-down { display: none; }
+  .topbar-user { padding: 4px; border-radius: 50%; }
+  .page-title { font-size: 0.95rem; }
+}

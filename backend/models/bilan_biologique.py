@@ -49,7 +49,7 @@ class BilanBiologique(Base):
 
     technicien_id = Column(
         BigInteger,
-        ForeignKey("technicien_biologiste.technicien_id", ondelete="SET NULL"),
+        ForeignKey("bioscan.technicien_biologiste.technicien_id", ondelete="SET NULL"),
         nullable=True,
         index=True
     )

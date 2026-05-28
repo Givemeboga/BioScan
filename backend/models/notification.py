@@ -12,6 +12,7 @@ class StatutNotification(str, enum.Enum):
 
 class Notification(Base):
     __tablename__ = "notifications"
+    __table_args__ = {"schema": "bioscan"}
 
     notification_id = Column(BigInteger, primary_key=True, index=True)
 
@@ -27,6 +28,6 @@ class Notification(Base):
     date_generation = Column(TIMESTAMP, default=datetime.utcnow)
     date_mise_a_jour = Column(TIMESTAMP, default=datetime.utcnow)
 
-    utilisateur_id = Column(BigInteger, ForeignKey("utilisateur.utilisateur_id"))
+    utilisateur_id = Column(BigInteger, ForeignKey("bioscan.utilisateur.utilisateur_id"))
 
     utilisateur = relationship("Utilisateur")

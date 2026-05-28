@@ -154,13 +154,17 @@ app.include_router(rapport_router,           prefix="/api")
 app.include_router(parametres_router,        prefix="/api")
 
 # ── Routers admin ─────────────────────────────────────────────
-app.include_router(admin_users_router,       prefix="/api/admin/users")
-app.include_router(admin_medecins_router,    prefix="/api/admin/medecins")
-app.include_router(admin_techniciens_router, prefix="/api/admin/techniciens")
-app.include_router(admin_reports_router,     prefix="/api/admin/reports")
-app.include_router(admin_settings_router,    prefix="/api/admin/settings")
-app.include_router(admin_roles_router,       prefix="/api/admin/roles")
-app.include_router(admin_dashboard_router)   # router already declares prefix="/api/admin/stats"
+# ⚠️ Chaque router admin déclare DÉJÀ son propre prefix interne
+# (ex. APIRouter(prefix="/api/admin/users")). Il ne faut donc PAS
+# ré-ajouter le prefix ici, sinon les routes seraient doublées
+# (ex. /api/admin/users/api/admin/users → 404 côté frontend).
+app.include_router(admin_users_router)       # prefix="/api/admin/users"
+app.include_router(admin_medecins_router)    # prefix="/api/admin/medecins"
+app.include_router(admin_techniciens_router) # prefix="/api/admin/techniciens"
+app.include_router(admin_reports_router)     # prefix="/api/admin/reports"
+app.include_router(admin_settings_router)    # prefix="/api/admin/settings"
+app.include_router(admin_roles_router)       # prefix="/api/admin/roles"
+app.include_router(admin_dashboard_router)   # prefix="/api/admin/stats"
 
 # ── Health ────────────────────────────────────────────────────
 @app.get("/", tags=["Root"])

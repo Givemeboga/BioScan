@@ -69,8 +69,9 @@ export default function AdminDashboard() {
       {
         label: 'Comptes crees',
         data: monthlyData.map(d => d.count) || [35, 48, 62, 54, 70, 81],
-        backgroundColor: '#0ea5e9',
+        backgroundColor: '#2563eb',
         borderRadius: 6,
+        maxBarThickness: 44,
       },
     ],
   };
@@ -88,7 +89,7 @@ export default function AdminDashboard() {
     datasets: [
       {
         data: donutValues,
-        backgroundColor: ['#ef4444', '#10b981', '#f59e0b', '#3b82f6'],
+        backgroundColor: ['#2563eb', '#0d9488', '#f59e0b', '#94a3b8'],
         borderWidth: 1,
       },
     ],
