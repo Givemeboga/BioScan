@@ -39,6 +39,13 @@ BioScan is an intelligent web platform that automatically analyzes biological la
 - Forgot-password flow with email verification
 - Role-based access: each user role sees a dedicated dashboard
 
+### Administration Console
+- **User management**: searchable, filterable, paginated list of all accounts; create / edit / delete; activate-deactivate (single & bulk); password reset; per-user login history
+- **Doctor & technician management**: dedicated CRUD views for `Medecin` and `Technicien biologiste` accounts
+- **Dashboard analytics**: key metrics (total / active / inactive accounts, security events) plus charts — accounts created per month, status breakdown, and role distribution
+- **Security notifications**: live feed of system security events (account creation, etc.) sourced from the audit log, with severity filtering
+- **Reports overview**: consolidated view of generated medical reports
+
 ---
 
 ## Architecture
@@ -75,12 +82,14 @@ BioScan/
 | Backend | FastAPI (Python), Uvicorn |
 | Database | PostgreSQL, SQLAlchemy |
 | Frontend | React 18, Material UI v7, React Router v7 |
-| Charts | Chart.js, Recharts |
+| HTTP client | Fetch API (admin console) & Axios |
+| Icons | Material UI Icons, Lucide |
+| Charts | Chart.js (react-chartjs-2), Recharts |
 | AI / Analysis | Pandas, NumPy, Scikit-learn |
 | OCR | Tesseract (pytesseract + Pillow) |
 | Document parsing | PyMuPDF, pdfplumber, python-docx, openpyxl |
 | PDF generation | ReportLab |
-| Security | JWT (python-jose), Argon2 password hashing, AES-256 (cryptography), ClamAV (pyclamd) |
+| Security | JWT (python-jose / PyJWT), passlib password hashing (pbkdf2_sha256 / bcrypt), AES-256 (cryptography), ClamAV (pyclamd) |
 | Media storage | Cloudinary |
 | Cloud deployment | Render / Railway |
 
@@ -172,7 +181,11 @@ The backend exposes REST endpoints grouped by domain:
 | `/api/admin/users` | User management |
 | `/api/admin/medecins` | Doctor management |
 | `/api/admin/techniciens` | Technician management |
-| `/api/admin/dashboard` | Admin statistics |
+| `/api/admin/reports` | Reports overview |
+| `/api/admin/roles` | Role management |
+| `/api/admin/settings` | Admin settings |
+| `/api/admin/stats` | Dashboard statistics (overview, monthly accounts, status & role breakdown, recent activity) |
+| `/api/admin/notifications` | Security event feed |
 | `/media` | Uploaded files (photos, avatars) |
 
 Full interactive documentation: `http://localhost:8000/docs`
