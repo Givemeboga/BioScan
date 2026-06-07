@@ -1,32 +1,9 @@
-from sqlalchemy import Column, BigInteger, ForeignKey
-from sqlalchemy.orm import relationship
-from database import Base
+# Legacy module kept for backward-compatible imports.
+# The canonical TechnicienBiologiste model lives in models/technicien.py
+# (correct `bioscan` schema, qualified FK, backref="technicien").
+# Re-exporting avoids a duplicate class with the same __tablename__, which
+# made the string reference "TechnicienBiologiste" ambiguous in the ORM
+# registry and broke configuration for ALL mappers.
+from models.technicien import TechnicienBiologiste
 
-class TechnicienBiologiste(Base):
-    __tablename__ = "technicien_biologiste"
-
-    technicien_id = Column(
-        BigInteger,
-        primary_key=True,
-        index=True,
-        autoincrement=True
-    )
-
-    utilisateur_id = Column(
-        BigInteger,
-        ForeignKey("utilisateur.utilisateur_id", ondelete="CASCADE"),
-        unique=True,
-        nullable=False
-    )
-
-    # Relation 1-1 avec Utilisateur
-    utilisateur = relationship(
-        "Utilisateur",
-        back_populates="technicien",
-        uselist=False
-    )
-    bilans = relationship(
-        "BilanBiologique",
-        back_populates="technicien",
-        foreign_keys="BilanBiologique.technicien_id"
-    )
+__all__ = ["TechnicienBiologiste"]

@@ -80,6 +80,17 @@ def register_patient(user: UserCreate, db: Session = Depends(get_db)):
             text("INSERT INTO bioscan.patient (utilisateur_id) VALUES (:uid)"),
             {"uid": new_user["utilisateur_id"]}
         )
+
+        # Journaliser l'événement de sécurité (alimente les notifications admin)
+        db.execute(
+            text("""
+                INSERT INTO bioscan.evenement_securite
+                    (utilisateur_id, type_evenement, status)
+                VALUES (:uid, 'Creation_utilisateur', 'SUCCESS')
+            """),
+            {"uid": new_user["utilisateur_id"]}
+        )
+
         db.commit()
 
         logger.info("[register] user_id=%s créé", new_user["utilisateur_id"])

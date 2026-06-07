@@ -28,8 +28,9 @@
   gap: 8px;
   background: white;
   padding: 8px;
+  border: 1px solid #e7eef5;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   overflow-x: auto;
 }
 
@@ -52,16 +53,17 @@
 }
 
 .tab-btn.active {
-  background: #0ea5e9;
+  background: #2563eb;
   color: white;
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 .tab-container {
   background: white;
+  border: 1px solid #e7eef5;
   border-radius: 16px;
   padding: 32px;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .tab-content {
@@ -137,8 +139,8 @@
 
 .input-short:focus,
 .input-medium:focus {
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .toggle {
@@ -179,7 +181,7 @@
 }
 
 .toggle input:checked + .toggle-slider {
-  background-color: #0ea5e9;
+  background-color: #2563eb;
 }
 
 .toggle input:checked + .toggle-slider:before {
@@ -188,7 +190,7 @@
 
 .btn-save {
   align-self: flex-start;
-  background: #0ea5e9;
+  background: #2563eb;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -196,11 +198,11 @@
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(14, 165, 233, 0.2);
+  transition: background 0.2s ease;
 }
 
 .btn-save:hover {
-  background: #0284c7;
+  background: #1d4ed8;
 }
 
 /* Roles tab */
@@ -218,7 +220,7 @@
 }
 
 .btn-primary.small {
-  background: #0ea5e9;
+  background: #2563eb;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -228,7 +230,7 @@
 }
 
 .btn-primary.small:hover {
-  background: #0284c7;
+  background: #1d4ed8;
 }
 
 .roles-grid {
@@ -247,8 +249,8 @@
 }
 
 .role-card:hover {
-  border-color: #0ea5e9;
-  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.15);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .role-header {
@@ -312,7 +314,7 @@
 
 .btn-action {
   flex: 1;
-  background: #0ea5e9;
+  background: #2563eb;
   color: white;
   border: none;
   padding: 8px 12px;
@@ -323,7 +325,7 @@
 }
 
 .btn-action:hover {
-  background: #0284c7;
+  background: #1d4ed8;
 }
 
 .btn-action.outline {

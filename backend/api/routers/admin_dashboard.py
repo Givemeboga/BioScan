@@ -8,6 +8,27 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/admin/stats", tags=["Admin Dashboard"])
 
 
+def _role_counts(db: Session) -> dict:
+    """Compte des utilisateurs par nom de rôle (clé = nom du rôle)."""
+    rows = db.execute(text("""
+        SELECT r.nom AS role, count(u.utilisateur_id) AS count
+        FROM bioscan.utilisateur u
+        LEFT JOIN bioscan.role r ON u.role_id = r.role_id
+        GROUP BY r.nom
+    """)).all()
+    return {(r[0] or "Inconnu"): int(r[1]) for r in rows}
+
+
+def _match_role(counts: dict, *needles: str) -> int:
+    """Somme des comptes dont le nom de rôle contient l'un des mots-clés."""
+    total = 0
+    for name, n in counts.items():
+        low = (name or "").lower()
+        if any(k in low for k in needles):
+            total += n
+    return total
+
+
 @router.get("/overview")
 async def overview(db: Session = Depends(get_db)):
     total_users = db.execute(
@@ -16,16 +37,37 @@ async def overview(db: Session = Depends(get_db)):
     active_accounts = db.execute(
         text("SELECT count(*) FROM bioscan.utilisateur WHERE statut::text = 'ACTIVE'")
     ).scalar() or 0
-    signalements = 0
     rapports_generes = db.execute(
         text("SELECT count(*) FROM bioscan.rapport_medical")
     ).scalar() or 0
+    total_bilans = db.execute(
+        text("SELECT count(*) FROM bioscan.bilan_biologique")
+    ).scalar() or 0
+    total_evenements = db.execute(
+        text("SELECT count(*) FROM bioscan.evenement_securite")
+    ).scalar() or 0
+
+    counts = _role_counts(db)
     return {
         "totalUsers": total_users,
         "activeAccounts": active_accounts,
-        "signalements": signalements,
+        "inactiveAccounts": max(0, int(total_users) - int(active_accounts)),
         "rapportsGeneres": rapports_generes,
+        "totalBilans": total_bilans,
+        "totalEvenements": total_evenements,
+        # Répartition par rôle (utilisée aussi pour les cartes par rôle)
+        "patients": _match_role(counts, "patient"),
+        "medecins": _match_role(counts, "medecin", "médecin"),
+        "techniciens": _match_role(counts, "technicien"),
+        "administrateurs": _match_role(counts, "admin"),
     }
+
+
+@router.get("/roles-breakdown")
+async def roles_breakdown(db: Session = Depends(get_db)):
+    """Répartition des utilisateurs par rôle (pour le graphique en anneau)."""
+    counts = _role_counts(db)
+    return {"roles": [{"role": k, "count": v} for k, v in counts.items()]}
 
 
 @router.get("/accounts-monthly")

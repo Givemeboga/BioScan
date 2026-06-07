@@ -54,6 +54,7 @@ import AdminTechniciens from "./pages/Admin/Techniciens";
 import AdminReports from "./pages/Admin/Reports";
 import AdminParametres from "./pages/Admin/Parametres";
 import AdminProfile from "./pages/Admin/AdminProfile";
+import AdminNotifications from "./pages/Admin/Notifications";
 
 function App() {
   return (
@@ -93,10 +94,7 @@ function App() {
           <Route path="reports" element={<AdminReports />} />
           <Route path="parametres" element={<AdminParametres />} />
           <Route path="profile" element={<AdminProfile />} />
-          <Route
-            path="notifications"
-            element={<div style={{ padding: 40 }}><h2>Notifications</h2><p>Page à créer</p></div>}
-          />
+          <Route path="notifications" element={<AdminNotifications />} />
         </Route>
 
         {/* === Routes technicien (layout parent) === */}

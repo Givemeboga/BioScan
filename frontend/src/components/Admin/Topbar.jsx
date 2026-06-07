@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import '../Médecin/Topbar.css';
+import './Topbar.css';
 
 export default function Topbar({ pageTitle = 'Administration', onToggleSidebar, sidebarOpen = false }) {
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ export default function Topbar({ pageTitle = 'Administration', onToggleSidebar, 
           }}
         >
           <img
-            src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Admin')}&background=dc2626&color=fff&size=128`}
+            src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Admin')}&background=2563eb&color=fff&size=128`}
             alt="Avatar administrateur"
             className="avatar"
           />

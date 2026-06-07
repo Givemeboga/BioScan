@@ -24,21 +24,21 @@
 }
 
 .btn-primary {
-  background: #0ea5e9;
+  background: #2563eb;
   color: white;
   border: none;
   padding: 10px 18px;
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(14, 165, 233, 0.2);
+  transition: background 0.2s ease;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .btn-primary:hover {
-  background: #0284c7;
+  background: #1d4ed8;
 }
 
 .stats-overview {
@@ -49,32 +49,35 @@
 
 .stat-card {
   background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e7eef5;
+  border-radius: 16px;
+  padding: 22px 20px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   display: flex;
   align-items: center;
   gap: 16px;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
 }
 
 .stat-icon {
-  font-size: 2.2rem;
-  width: 60px;
-  height: 60px;
+  font-size: 1.6rem;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 12px;
+  flex-shrink: 0;
 }
 
 .stat-card.primary .stat-icon {
-  background: #dbeafe;
-  color: #0284c7;
+  background: #e0edff;
+  color: #2563eb;
 }
 
 .stat-card.warning .stat-icon {
@@ -83,8 +86,8 @@
 }
 
 .stat-card.success .stat-icon {
-  background: #dcfce7;
-  color: #059669;
+  background: #d6f5f1;
+  color: #0d9488;
 }
 
 .stat-card.info .stat-icon {
@@ -113,9 +116,10 @@
 
 .chart-card {
   background: white;
+  border: 1px solid #e7eef5;
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   max-width: 600px;
   margin: 0 auto;
 }
@@ -128,9 +132,10 @@
 
 .filters-card {
   background: white;
+  border: 1px solid #e7eef5;
   border-radius: 16px;
   padding: 20px 22px;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .filters-row {
@@ -163,15 +168,16 @@
 
 .field-group input:focus,
 .field-group select:focus {
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .table-card {
   background: white;
+  border: 1px solid #e7eef5;
   border-radius: 16px;
   padding: 20px 22px;
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .table-header {

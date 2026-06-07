@@ -1,11 +1,11 @@
 .admin-profile-container {
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color: #f6f9fc;
   padding: 20px;
 }
 
 .profile-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #0d9488 100%);
   color: white;
   padding: 40px 20px;
   border-radius: 12px;
@@ -40,15 +40,16 @@
 /* Main Profile Card */
 .profile-card {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e7eef5;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
   overflow: hidden;
   margin-bottom: 20px;
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.2s ease;
 }
 
 .profile-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
 }
 
 /* Card Header with Avatar */
@@ -71,7 +72,7 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #0d9488 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -79,7 +80,7 @@
   font-size: 24px;
   font-weight: 700;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .avatar-info {
@@ -109,9 +110,9 @@
 }
 
 .role-badge.system-admin {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #0d9488 100%);
   color: white;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
 }
 
 /* Profile Sections */
@@ -135,7 +136,7 @@
   content: '';
   width: 3px;
   height: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #0d9488 100%);
   border-radius: 2px;
 }
 
@@ -240,7 +241,7 @@
 }
 
 .role-text {
-  color: #667eea !important;
+  color: #2563eb !important;
   font-weight: 600;
 }
 

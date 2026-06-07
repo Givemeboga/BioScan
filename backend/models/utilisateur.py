@@ -1,6 +1,6 @@
 # backend/models/utilisateur.py
 
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey
 from sqlalchemy.orm import relationship, Session
 from passlib.context import CryptContext
 from database import Base
@@ -36,6 +36,7 @@ def get_user_by_id(db: Session, user_id: int) -> "Utilisateur | None":
 # ── Modèle ORM ─────────────────────────────────────────────────────────────
 class Utilisateur(Base):
     __tablename__ = "utilisateur"
+    __table_args__ = {"schema": "bioscan"}  # ✅ les vraies données sont dans bioscan
 
     utilisateur_id  = Column(Integer, primary_key=True, index=True, autoincrement=True)
     nom_utilisateur = Column(String(100), nullable=True)
@@ -48,9 +49,18 @@ class Utilisateur(Base):
     adresse         = Column(String(255), nullable=True)
     date_naissance  = Column(Date,        nullable=True)
 
-    # FK + relation
-    role_id = Column(Integer, ForeignKey("role.role_id"), nullable=True)
+    # ✅ Colonnes existantes en base (bioscan.utilisateur) — désormais mappées
+    photo_url               = Column(String(255), nullable=True)
+    date_generation         = Column(DateTime,    nullable=True)
+    date_mise_a_jour        = Column(DateTime,    nullable=True)
+    date_derniere_connexion = Column(DateTime,    nullable=True)
+
+    # FK + relation (FK qualifiée vers le schéma bioscan)
+    role_id = Column(Integer, ForeignKey("bioscan.role.role_id"), nullable=True)
     role    = relationship("Role", back_populates="utilisateurs")
+    # NB : les relations inverses `patient`, `otps`, `medecin`, `technicien`,
+    # `administrateur` sont créées via `backref` côté modèles enfants afin
+    # d'éviter toute dépendance d'ordre d'import sur ces classes.
 
     def __repr__(self):
         return f"<Utilisateur id={self.utilisateur_id} email={self.email}>"

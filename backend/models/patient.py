@@ -1,7 +1,7 @@
 # backend/models/patient.py
 
 from sqlalchemy import Column, Integer, String, Date, ForeignKey, Boolean
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from database import Base
 
 
@@ -25,8 +25,8 @@ class Patient(Base):
     allergies        = Column(String(500), nullable=True)
     medecin_traitant = Column(String(150), nullable=True)
 
-    # ✅ Relation ORM
-    utilisateur = relationship("Utilisateur", back_populates="patient")
+    # ✅ Relation ORM — backref crée `Utilisateur.patient` (1-1) sans dépendance d'import
+    utilisateur = relationship("Utilisateur", backref=backref("patient", uselist=False))
     bilans = relationship("BilanBiologique", back_populates="patient")
 
     def __repr__(self):

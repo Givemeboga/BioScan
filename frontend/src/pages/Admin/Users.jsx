@@ -4,6 +4,7 @@ import './Users.css';
 
 const roles = ['TOUS', 'Administrateur', 'Medecin', 'Technicien biologiste', 'Patient'];
 const statuses = ['TOUS', 'ACTIVE', 'INACTIVE'];
+const PAGE_SIZE = 5;
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -13,6 +14,7 @@ export default function AdminUsers() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -34,7 +36,8 @@ export default function AdminUsers() {
     const loadUsers = async () => {
       try {
         setLoading(true);
-        const data = await usersService.getUsers();
+        // Pas de pagination dans l'UI : on demande tous les comptes (max 100)
+        const data = await usersService.getUsers({ limit: 100 });
         if (isMounted) {
           setUsers(data || []);
           setError(null);
@@ -68,6 +71,26 @@ export default function AdminUsers() {
       return matchesSearch && matchesRole && matchesStatus;
     });
   }, [users, searchTerm, roleFilter, statusFilter]);
+
+  // ── Pagination (côté client sur la liste filtrée) ───────────────
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const pageSafe = Math.min(currentPage, totalPages);
+  const pagedUsers = filteredUsers.slice(
+    (pageSafe - 1) * PAGE_SIZE,
+    pageSafe * PAGE_SIZE
+  );
+
+  // Revenir à la page 1 quand les filtres/recherche changent
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter, statusFilter]);
+
+  // Recaler la page courante si elle dépasse le total (ex: après suppression)
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const allFilteredSelected =
     filteredUsers.length > 0 &&
@@ -541,7 +564,7 @@ export default function AdminUsers() {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map((user) => (
+              {pagedUsers.map((user) => (
                 <tr key={user.id}>
                   <td>
                     <input
@@ -608,6 +631,41 @@ export default function AdminUsers() {
             </tbody>
           </table>
         </div>
+
+        {filteredUsers.length > 0 && (
+          <div className="pagination">
+            <span className="pagination-info">
+              {(pageSafe - 1) * PAGE_SIZE + 1}–
+              {Math.min(pageSafe * PAGE_SIZE, filteredUsers.length)} sur{' '}
+              {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? 's' : ''}
+            </span>
+            <div className="pagination-controls">
+              <button
+                className="page-btn"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={pageSafe <= 1}
+              >
+                Précédent
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  className={`page-btn ${p === pageSafe ? 'active' : ''}`}
+                  onClick={() => setCurrentPage(p)}
+                >
+                  {p}
+                </button>
+              ))}
+              <button
+                className="page-btn"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={pageSafe >= totalPages}
+              >
+                Suivant
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </div>
   );
